@@ -104,19 +104,19 @@ GLOBAL.STRINGS.NOMU_QA = {
 
 GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
     SEASON = {
-        FORMATS = { DEFAULT = '{SEASON}天还有{DAYS_LEFT}天。' },
+        FORMATS = { DEFAULT = '{SEASON}还剩{DAYS_LEFT}天。' },
         MAPPINGS = {}
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
             START_RAIN = '{WORLD}气温：{TEMPERATURE}°，{WEATHER}：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
-            NO_RAIN = '{WORLD}气温：{TEMPERATURE}°，{SEASON}天不再{WEATHER}',
+            NO_RAIN = '{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。',
             STOP_RAIN = '{WORLD}气温：{TEMPERATURE}°，放晴：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪' },
+                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇' },
+                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
             }
         }
     },

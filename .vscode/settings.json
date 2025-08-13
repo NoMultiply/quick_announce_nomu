@@ -1,0 +1,30 @@
+{
+    "Lua.diagnostics.globals": [
+        "GLOBAL",
+        "AddPrefabPostInit",
+        "AddClassPostConstruct",
+        "LoadPOFile",
+        "modimport",
+        "gz_modname",
+        "gz_modversion",
+        "gz_description",
+        "gz_configuration_options",
+        "MODROOT",
+        "AddPlayerPostInit",
+        "AddComponentPostInit",
+        "AddSimPostInit",
+        "BRANCH",
+        "modname",
+        "gz_start",
+        "TheNet",
+        "json",
+        "MODS_ROOT",
+        "Download_nextfile",
+        "UpdateText",
+        "TheShard",
+        "TheSim",
+        "TheInventory",
+        "env",
+        "kleifileexists"
+    ]
+}

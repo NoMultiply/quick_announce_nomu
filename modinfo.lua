@@ -1,5 +1,5 @@
-name = "Status Announcements (NoMu)"
-author = "NoMu"
+name = "快捷宣告(NoMu)"
+author = "NoMu，冰冰羊"
 description = [[
 - 修改自“快捷宣告 - Shang 完美汉化”（https://steamcommunity.com/sharedfiles/filedetails/?id=610528767）
 - 兼容新版本的制作栏
@@ -11,7 +11,9 @@ description = [[
 - “shift + alt + 鼠标右键”宣告坐标
 - “shift + alt + 鼠标中键”宣告Ping
 - 删除了自定义宣告语言的功能
+]]
 
+--[[
 FINISHED
 旺达钟表CD
 网络状况
@@ -37,7 +39,8 @@ WX78电路和芯片宣告
 食谱
 兼容信息提示：礼物包装、暖石温度、食物剩余保鲜时间
 ]]
-version = "0.8123.30"
+
+version = "0.8124"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then
@@ -72,5 +75,6 @@ configuration_options = {
         label = "快捷键（Shortcut）",
         options = key_options,
         default = "KEY_J",
+        is_keybind = true, -- 兼容配置扩展模组
     },
 }
