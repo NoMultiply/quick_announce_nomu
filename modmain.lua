@@ -23,7 +23,7 @@ modimport('scripts/qa_default.lua')
 modimport('scripts/qa_utils.lua')
 
 local DEFAULT_SCHEME = json.decode(json.encode(GLOBAL.STRINGS.DEFAULT_NOMU_QA))
-local VERSION = 1
+local VERSION = 1.1
 local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil
 
 -- 数据 --
@@ -105,6 +105,23 @@ end
 
 AddSimPostInit(function()
     GLOBAL.NOMU_QA.LoadData()
+
+    -- 更新预设
+    if (GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version) == 1 then
+        print("[快捷宣告(NoMu)] 正在更新自定义宣告内容..")
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version = 1.1
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.SEASON.FORMATS.DEFAULT = "{SEASON}还剩{DAYS_LEFT}天。"
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = "{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。"
+        for k,v in pairs (GLOBAL.NOMU_QA.DATA.SCHEMES) do
+            if v.version == 1 then
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].version = 1.1
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS.DEFAULT = "{SEASON}还剩{DAYS_LEFT}天。"
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = "{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。"
+            end
+        end
+        GLOBAL.NOMU_QA.SaveData()
+        GLOBAL.NOMU_QA.ApplyScheme(GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME)
+    end
 end)
 
 -- 宣告消息
