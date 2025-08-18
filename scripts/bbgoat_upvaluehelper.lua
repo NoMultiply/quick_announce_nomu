@@ -1,3 +1,6 @@
+-- 此lua文件由冰冰羊参考其它模组的upvaluehelper.lua代码制作而成，如果你想使用我这个版本的upvaluehelper，建议去模组Chinese++ Pro模组的scripts/utils文件夹下获取最新版的
+-- https://steamcommunity.com/sharedfiles/filedetails/?id=2941527805
+
 -- 查看函数里有哪些上值，方便调试
 --- @param fn function
 local function LookUpvalue(fn)
@@ -18,11 +21,12 @@ end
 ---@param maxlevel integer|nil
 ---@param max integer|nil
 ---@param level integer|nil
----@param file string|nil
+---@param fnfile string|nil
+---@param valuefile string|nil
 ---@return any
 ---@return integer
 ---@return function
-local function FindUpvalue(fn, name, maxlevel, max, level, file)
+local function FindUpvalue(fn, name, maxlevel, max, level, fnfile, valuefile)
 	if type(fn) ~= "function" then return end
 	maxlevel = maxlevel or 5 	--默认最多追5层
 	level = level or 0    	--当前层数 建议默认
@@ -30,19 +34,41 @@ local function FindUpvalue(fn, name, maxlevel, max, level, file)
 	for i = 1, max, 1 do
 		local upname, upvalue = debug.getupvalue(fn, i)
 		if upname and upname == name then
-			if file and type(file) == "string" then --限定文件 防止被别人提前hook导致取错
+			if type(fnfile) == "string" then --限定文件 防止被别人提前hook导致取错
 				local fninfo = debug.getinfo(fn)
-				if fninfo.source and fninfo.source:match(file) then
+				local valueinfo = type(upvalue) == "function" and debug.getinfo(upvalue)
+
+				if (fninfo.source and fninfo.source:match(fnfile)) and (not valuefile or (valueinfo and valueinfo.source:match(valuefile))) then
 					return upvalue, i, fn
+				else
+					if level < maxlevel and type(upvalue) == "function" then
+						local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, maxlevel, max, level + 1, fnfile, valuefile) --找不到就递归查找
+						if upupvalue ~= nil then
+							return upupvalue, upupi, upupfn
+						end
+					end
+				end
+			elseif type(valuefile) == "string" and type(upvalue) == "function" then -- 限定获取到的上值来自某个文件
+				local valueinfo = debug.getinfo(upvalue)
+
+				if valueinfo and valueinfo.source:match(valuefile) then
+					return upvalue, i ,fn
+				else
+					if level < maxlevel then
+						local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, maxlevel, max, level + 1, fnfile, valuefile) --找不到就递归查找
+						if upupvalue ~= nil then
+							return upupvalue, upupi, upupfn
+						end
+					end
 				end
 			else
 				return upvalue, i, fn
 			end
 		end
-		if level < maxlevel and upvalue and type(upvalue) == "function" then
-			local upupvalue = FindUpvalue(upvalue, name, maxlevel, max, level + 1, file) --找不到就递归查找
-			if upupvalue then
-				return upupvalue, i, fn
+		if level < maxlevel and type(upvalue) == "function" then
+			local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, maxlevel, max, level + 1, fnfile, valuefile) --找不到就递归查找
+			if upupvalue ~= nil then
+				return upupvalue, upupi, upupfn
 			end
 		end
 	end
@@ -60,7 +86,7 @@ local function GetUpvalueHelper(fn, name)
         i = i + 1
     end
     local _, value = debug.getupvalue(fn, i)
-	if not value then
+	if value == nil then
 		local found_value, found_i, found_fn = FindUpvalue(fn, name)
 		if found_value then
 			return found_value, found_i, found_fn
