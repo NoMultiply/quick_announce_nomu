@@ -862,6 +862,49 @@ local function AnnounceRecipeCMIngredients(ingredients)
     end
 end
 
+local ITEM_PREFAB_ALIAS = {
+    -- 鹿角
+    deer_antler1 = "deer_antler",
+    deer_antler2 = "deer_antler",
+    deer_antler3 = "deer_antler",
+    -- 还有啥呢？好难猜呀
+}
+
+local function CountItemALIAS(container, name, prefab)
+    local num_found = 0
+    local items = container:GetItems()
+    for _, v in pairs(items) do
+        if v and ITEM_PREFAB_ALIAS[v.prefab] == prefab and v:GetDisplayName() == name then
+            if v.replica.stackable ~= nil then
+                num_found = num_found + v.replica.stackable:StackSize()
+            else
+                num_found = num_found + 1
+            end
+        end
+    end
+
+    if container.GetActiveItem then
+        local active_item = container:GetActiveItem()
+        if active_item and ITEM_PREFAB_ALIAS[active_item.prefab] == prefab and active_item:GetDisplayName() == name then
+            if active_item.replica.stackable ~= nil then
+                num_found = num_found + active_item.replica.stackable:StackSize()
+            else
+                num_found = num_found + 1
+            end
+        end
+    end
+
+    if container.GetOverflowContainer then
+        local overflow = container:GetOverflowContainer()
+        if overflow ~= nil then
+            local overflow_found = CountItemALIAS(overflow, name, prefab)
+            num_found = num_found + overflow_found
+        end
+    end
+
+    return num_found
+end
+
 local function CountItemWithName(container, name, prefab)
     local num_found = 0
     local items = container:GetItems()
@@ -928,49 +971,6 @@ local SUSPICIOUS_MARBLE = {
     sculpture_rookbody = STRINGS.NOMU_QA.SCULPTURE_ROOKBODY
 }
 
-local ITEM_PREFAB_ALIAS = {
-    -- 鹿角
-    deer_antler1 = "deer_antler",
-    deer_antler2 = "deer_antler",
-    deer_antler3 = "deer_antler",
-    -- 还有啥呢？好难猜呀
-}
-
-local function CountItem_ALIAS(container, name, prefab)
-    local num_found = 0
-    local items = container:GetItems()
-    for _, v in pairs(items) do
-        if v and ITEM_PREFAB_ALIAS[v.prefab] == prefab and v:GetDisplayName() == name then
-            if v.replica.stackable ~= nil then
-                num_found = num_found + v.replica.stackable:StackSize()
-            else
-                num_found = num_found + 1
-            end
-        end
-    end
-
-    if container.GetActiveItem then
-        local active_item = container:GetActiveItem()
-        if active_item and ITEM_PREFAB_ALIAS[active_item.prefab] == prefab and active_item:GetDisplayName() == name then
-            if active_item.replica.stackable ~= nil then
-                num_found = num_found + active_item.replica.stackable:StackSize()
-            else
-                num_found = num_found + 1
-            end
-        end
-    end
-
-    if container.GetOverflowContainer then
-        local overflow = container:GetOverflowContainer()
-        if overflow ~= nil then
-            local overflow_found = CountItem_ALIAS(overflow, name, prefab)
-            num_found = num_found + overflow_found
-        end
-    end
-
-    return num_found
-end
-
 local function AnnounceItem(slot, classname)
     local item = slot.tile.item
     local container = slot.container
@@ -1010,7 +1010,10 @@ local function AnnounceItem(slot, classname)
 
     local name = item.prefab and STRINGS.NAMES[item.prefab:upper()] or STRINGS.NOMU_QA.UNKNOWN_NAME
     local _, num_found = container:Has(item.prefab, 1)
-    local num_found_name = CountItemWithName(container, item:GetDisplayName(), item.prefab)
+    if ITEM_PREFAB_ALIAS[item.prefab] then -- 将部分物品视为同一个prefab，解决宣告数量不准确的问题
+        num_found = CountItemALIAS(container, item:GetDisplayName(), ITEM_PREFAB_ALIAS[item.prefab])
+    end
+    local num_found_name = ITEM_PREFAB_ALIAS[item.prefab] and CountItemALIAS(container, item:GetDisplayName(), ITEM_PREFAB_ALIAS[item.prefab]) or CountItemWithName(container, item:GetDisplayName(), item.prefab)
     num_found_name = num_found_name + num_equipped_name
     num_found = num_found + num_equipped
     local item_name = string.gsub(item:GetBasicDisplayName(), '\n', ' ')
@@ -1093,11 +1096,6 @@ local function AnnounceItem(slot, classname)
         if #items > 0 then
             fmts.SHOW_ME = subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = table.concat(items, STRINGS.NOMU_QA.COMMA) })
         end
-    end
-
-    -- 将部分物品视为同一个prefab，解决宣告数量不准确的问题
-    if ITEM_PREFAB_ALIAS[item.prefab] then
-        fmts.NUM = CountItem_ALIAS(container, item:GetDisplayName(), ITEM_PREFAB_ALIAS[item.prefab])
     end
 
     return Announce(subfmt(classname == 'invslot' and qa.FORMATS.INV_SLOT or qa.FORMATS.EQUIP_SLOT, fmts))
@@ -1253,7 +1251,19 @@ AddComponentPostInit("playercontroller", function(self, inst)
                 local count_name = 0
                 local count_prefab = 0
                 for _, v in ipairs(entities) do
-                    if v.entity:IsVisible() and v.prefab == entity.prefab then
+                    if v.entity:IsVisible() and ITEM_PREFAB_ALIAS[entity.prefab] and ITEM_PREFAB_ALIAS[entity.prefab] == ITEM_PREFAB_ALIAS[v.prefab] then
+                        if v.replica and v.replica.stackable ~= nil then
+                            count_prefab = count_prefab + v.replica.stackable:StackSize()
+                            if v:GetDisplayName() == entity:GetDisplayName() then
+                                count_name = count_name + v.replica.stackable:StackSize()
+                            end
+                        else
+                            count_prefab = count_prefab + 1
+                            if v:GetDisplayName() == entity:GetDisplayName() then
+                                count_name = count_name + 1
+                            end
+                        end
+                    elseif v.entity:IsVisible() and v.prefab == entity.prefab then
                         if v.replica and v.replica.stackable ~= nil then
                             count_prefab = count_prefab + v.replica.stackable:StackSize()
                             if v:GetDisplayName() == entity:GetDisplayName() then
