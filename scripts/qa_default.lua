@@ -873,7 +873,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             },
             WORMWOOD = {
                 MESSAGE = {
-                    FULL = '苦艾没有受伤。',
+                    FULL = '沃姆伍德没有受伤。',
                     HIGH = '缺一点，但还好。',
                     MID = '感到虚弱。',
                     LOW = '疼痛的非常严重。',

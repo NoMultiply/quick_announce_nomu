@@ -23,7 +23,7 @@ modimport('scripts/qa_default.lua')
 modimport('scripts/qa_utils.lua')
 
 local DEFAULT_SCHEME = json.decode(json.encode(GLOBAL.STRINGS.DEFAULT_NOMU_QA))
-local VERSION = 1.1
+local VERSION = 1.2
 local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil
 
 -- 数据 --
@@ -106,19 +106,35 @@ end
 AddSimPostInit(function()
     GLOBAL.NOMU_QA.LoadData()
 
+    local need_update = false
     -- 更新预设
-    if (GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version) == 1 then
-        print("[快捷宣告(NoMu)] 正在更新自定义宣告内容..")
-        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version = 1.1
-        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.SEASON.FORMATS.DEFAULT = "{SEASON}还剩{DAYS_LEFT}天。"
-        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = "{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。"
+    if (GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version) <= 1 then
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.SEASON.FORMATS.DEFAULT = STRINGS.DEFAULT_NOMU_QA.SEASON.FORMATS.DEFAULT
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = STRINGS.DEFAULT_NOMU_QA.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN
+    end
+
+    if (GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version) <= 1.1 then
+        need_update = true
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.data.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL = STRINGS.DEFAULT_NOMU_QA.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL
+    end
+
+    if need_update then
         for k,v in pairs (GLOBAL.NOMU_QA.DATA.SCHEMES) do
-            if v.version == 1 then
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].version = 1.1
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS.DEFAULT = "{SEASON}还剩{DAYS_LEFT}天。"
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = "{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。"
+            if v.version <= 1 then
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS.DEFAULT = STRINGS.DEFAULT_NOMU_QA.SEASON.FORMATS.DEFAULT
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = STRINGS.DEFAULT_NOMU_QA.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN
+            end
+
+            if v.version <= 1.1 then
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL = STRINGS.DEFAULT_NOMU_QA.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL
+
+                GLOBAL.NOMU_QA.DATA.SCHEMES[k].version = VERSION -- 设定配置文件版本
             end
         end
+
+        print("[快捷宣告(NoMu)] 正在更新自定义宣告内容..")
+        GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version = VERSION
+
         GLOBAL.NOMU_QA.SaveData()
         GLOBAL.NOMU_QA.ApplyScheme(GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME)
     end
