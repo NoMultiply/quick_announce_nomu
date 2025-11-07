@@ -704,7 +704,8 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
             ingname = ingredient.ing.texture:sub(1, -5)
             ingtooltip = ingredient.tooltip
         else
-            ingname = recipepopup.recipe.ingredients[1].type
+            ingname = recipepopup and recipepopup.recipe and recipepopup.recipe.ingredients and recipepopup.recipe.ingredients[1] and recipepopup.recipe.ingredients[1].type
+            if not ingname then return end
             ingtooltip = STRINGS.NAMES[string.upper(ingname)]
         end
         local amount_needed = 1

@@ -113,7 +113,7 @@ local function GetUpvalueHelper(fn, name)
     local _, value = debug.getupvalue(fn, i)
 	if value == nil then
 		local found_value, found_i, found_fn = FindUpvalue(fn, name)
-		if found_value then
+		if found_value ~= nil then
 			return found_value, found_i, found_fn
 		end
 	end
