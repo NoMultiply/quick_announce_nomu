@@ -119,20 +119,30 @@ AddSimPostInit(function()
     end
 
     if need_update then
+        print("[快捷宣告(NoMu)] 正在更新自定义宣告内容..")
         for k,v in pairs (GLOBAL.NOMU_QA.DATA.SCHEMES) do
             if v.version <= 1 then
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS.DEFAULT = STRINGS.DEFAULT_NOMU_QA.SEASON.FORMATS.DEFAULT
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = STRINGS.DEFAULT_NOMU_QA.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN
+                if GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON and GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS then
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.SEASON.FORMATS.DEFAULT = STRINGS.DEFAULT_NOMU_QA.SEASON.FORMATS.DEFAULT
+                end
+                if GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN and GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS then
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN = STRINGS.DEFAULT_NOMU_QA.WORLD_TEMPERATURE_AND_RAIN.FORMATS.NO_RAIN
+                end
             end
 
             if v.version <= 1.1 then
-                GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL = STRINGS.DEFAULT_NOMU_QA.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL
+                if GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH and
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS and
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS.WORMWOOD and
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS.WORMWOOD.MESSAGE
+                then
+                    GLOBAL.NOMU_QA.DATA.SCHEMES[k].data.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL = STRINGS.DEFAULT_NOMU_QA.HEALTH.MAPPINGS.WORMWOOD.MESSAGE.FULL
+                end
 
                 GLOBAL.NOMU_QA.DATA.SCHEMES[k].version = VERSION -- 设定配置文件版本
             end
         end
 
-        print("[快捷宣告(NoMu)] 正在更新自定义宣告内容..")
         GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME.version = VERSION
 
         GLOBAL.NOMU_QA.SaveData()
