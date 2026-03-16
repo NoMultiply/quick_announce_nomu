@@ -25,6 +25,7 @@ modimport('scripts/qa_utils.lua')
 local DEFAULT_SCHEME = json.decode(json.encode(GLOBAL.STRINGS.DEFAULT_NOMU_QA))
 local VERSION = 1.2
 local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil
+local DISPLAY_INFORMATION_ON = ModManager:GetMod("workshop-3448350904") ~= nil
 
 -- 数据 --
 GLOBAL.NOMU_QA = {
@@ -1133,6 +1134,22 @@ local function AnnounceItem(slot, classname)
         if #items > 0 then
             fmts.SHOW_ME = subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = table.concat(items, STRINGS.NOMU_QA.COMMA) })
         end
+    elseif DISPLAY_INFORMATION_ON and (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 or GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and item:HasTag('unwrappable')) then
+        local value = ThePlayer and ThePlayer.player_classified and ThePlayer.player_classified.daxsg_display:value() or ""
+        local rs = {}
+        local data = {str = { }}
+        if value ~= "" then
+            data = json.decode(value)
+            for i = 1, 30 do
+                local daxdata = data.str or {}
+                local v = daxdata[i]
+                if v ~= nil then
+                    local dax_str=(v[2] ~= nil and v[1]..": "..v[2] or v[1])
+                    table.insert(rs, dax_str)
+                end
+            end
+            fmts.SHOW_ME = subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = table.concat(rs, STRINGS.NOMU_QA.COMMA) })
+        end
     end
 
     return Announce(subfmt(classname == 'invslot' and qa.FORMATS.INV_SLOT or qa.FORMATS.EQUIP_SLOT, fmts))
@@ -1328,6 +1345,22 @@ AddComponentPostInit("playercontroller", function(self, inst)
                     local items = GLOBAL.QA_UTILS.ParseHoverText(n_line_name + 1, nil, nil, 2)
                     if #items > 0 then
                         show_me = subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = table.concat(items, STRINGS.NOMU_QA.COMMA) })
+                    end
+                elseif DISPLAY_INFORMATION_ON and (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 or GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and entity:HasTag('unwrappable')) then
+                    local value = ThePlayer and ThePlayer.player_classified and ThePlayer.player_classified.daxsg_display:value() or ""
+                    local rs = {}
+                    local data = {str = { }}
+                    if value ~= "" then
+                        data = json.decode(value)
+                        for i = 1, 30 do
+                            local daxdata = data.str or {}
+                            local v = daxdata[i]
+                            if v ~= nil then
+                                local dax_str=(v[2] ~= nil and v[1]..": "..v[2] or v[1])
+                                table.insert(rs, dax_str)
+                            end
+                        end
+                        show_me = subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = table.concat(rs, STRINGS.NOMU_QA.COMMA) })
                     end
                 end
 
