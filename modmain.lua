@@ -36,6 +36,24 @@ local function DeepCopy(orig, copies)
     return copy
 end
 
+--提取字符串中的所有占位符并排序，用于比对
+local function GetPlaceholders(str)
+    local placeholders = {}
+    if type(str) == "string" then
+        for p in str:gmatch("{(.-)}") do
+            placeholders[p] = true
+        end
+    end
+    local sorted = {}
+    for p in pairs(placeholders) do table.insert(sorted, p) end
+    table.sort(sorted)
+    return table.concat(sorted, ",")
+end
+
+local function IsPlaceholderMatch(str1, str2)
+    return GetPlaceholders(str1) == GetPlaceholders(str2)
+end
+
 -- 检查当前是否在游戏主界面 (HUD) 且没有在打字
 local function IsDefaultScreen()
     local active_screen = GLOBAL.TheFrontEnd:GetActiveScreen()
@@ -108,45 +126,74 @@ GLOBAL.NOMU_QA = {
     SCHEME = DEFAULT_SCHEME
 }
 
--- 更新方案，补全缺失的字段
-GLOBAL.NOMU_QA.UpdateScheme = function(scheme)
-    for func, func_value in pairs(GLOBAL.STRINGS.DEFAULT_NOMU_QA) do
-        if not scheme[func] then
-            scheme[func] = DeepCopy(func_value)
-        else
-            for format, format_value in pairs(func_value.FORMATS) do
-                if not scheme[func].FORMATS[format] then
-                    scheme[func].FORMATS[format] = format_value
-                end
-            end
 
-            if func_value.MAPPINGS.DEFAULT then
-                for mapping, mapping_value in pairs(func_value.MAPPINGS.DEFAULT) do
-                    for _, character_value in pairs(scheme[func].MAPPINGS) do
-                        if not character_value[mapping] then
-                            character_value[mapping] = DeepCopy(mapping_value)
-                        else
-                            for item, item_value in pairs(mapping_value) do
-                                if not character_value[mapping][item] then
-                                    character_value[mapping][item] = item_value
-                                end
-                            end
-                        end
-                    end
+-- 三方同步
+local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
+    if not source_data or type(source_data) ~= "table" then return end
+    
+    for k, v in pairs(source_data) do
+        if type(v) == "table" then
+            if type(user_data[k]) ~= "table" then user_data[k] = {} end
+            if not is_legacy and type(backup_data[k]) ~= "table" then backup_data[k] = {} end
+            SyncSchemeData(user_data[k], backup_data[k], v, is_legacy)
+        else
+            if is_legacy then
+                -- 老方案处理逻辑：
+                -- 如果用户原本没有这个字段，直接补全
+                -- 如果用户有这个字段，但占位符与源码不一致，强制覆盖（防止崩溃）
+                -- 其他情况（占位符一致），保留用户文案
+                -- 老方案或多或少还是有问题，并不能完美同步
+                if user_data[k] == nil or not IsPlaceholderMatch(user_data[k], v) then
+                    user_data[k] = v
                 end
-                if not scheme[func].MAPPINGS.DEFAULT then
-                    scheme[func].MAPPINGS.DEFAULT = DeepCopy(func_value.MAPPINGS.DEFAULT)
+            else
+                if backup_data[k] ~= v then
+                    user_data[k] = v
+                    backup_data[k] = v
                 end
             end
         end
     end
 end
 
+-- 更新方案，每次启动游戏执行同步校验
+GLOBAL.NOMU_QA.UpdateScheme = function(scheme_node)
+    if not scheme_node or not scheme_node.data then return end
+
+    local BUILTIN_LOOKUP = {
+        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = GLOBAL.STRINGS.DEFAULT_NOMU_QA,
+        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GLOBAL.STRINGS.CAT_NOMU_QA,
+        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GLOBAL.STRINGS.TSUNDERE_NOMU_QA,
+        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GLOBAL.STRINGS.CUTE_NOMU_QA,
+    }
+
+    local is_legacy = false
+    if not scheme_node.source_template and not scheme_node.backup_data then
+        is_legacy = true
+        -- 以默认方案作为比对基准
+        scheme_node.source_template = GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME
+        scheme_node.backup_data = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
+    end
+
+    local source_name = scheme_node.source_template or scheme_node.name
+    local source_data = BUILTIN_LOOKUP[source_name] or GLOBAL.STRINGS.DEFAULT_NOMU_QA
+
+    SyncSchemeData(scheme_node.data, scheme_node.backup_data, source_data, is_legacy)
+end
+
 -- 应用宣告方案
 GLOBAL.NOMU_QA.ApplyScheme = function(scheme)
-    GLOBAL.NOMU_QA.UpdateScheme(scheme.data)
+    if not scheme then return end
+
+    if not scheme.data then
+        print("[NoMu QA] 检测到方案数据丢失，已自动修复坏档！")
+        scheme.data = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
+    end
+
+    GLOBAL.NOMU_QA.UpdateScheme(scheme)
     GLOBAL.NOMU_QA.SCHEME = scheme.data
 end
+
 
 -- 本地存储文件路径
 local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
@@ -169,7 +216,7 @@ local function EnsureDataType(template_val, saved_val)
     return template_val
 end
 
--- 加载本地数据
+-- 加载本地数据并执行同步
 GLOBAL.NOMU_QA.LoadData = function()
     TheSim:GetPersistentString(DATA_FILE, function(load_success, str)
         if load_success and #str > 0 then
@@ -182,7 +229,48 @@ GLOBAL.NOMU_QA.LoadData = function()
                 end
             end
         end
-        GLOBAL.NOMU_QA.ApplyScheme(GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME)
+
+        local BUILTIN_SCHEMES = {
+            { name = STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME, source = GLOBAL.STRINGS.DEFAULT_NOMU_QA },
+            { name = STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME, source = GLOBAL.STRINGS.CAT_NOMU_QA },
+            { name = STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME, source = GLOBAL.STRINGS.TSUNDERE_NOMU_QA },
+            { name = STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME, source = GLOBAL.STRINGS.CUTE_NOMU_QA }
+        }
+
+        local schemes = GLOBAL.NOMU_QA.DATA.SCHEMES
+        if schemes then
+            --  强制刷新前4个内置方案
+            for i, template in ipairs(BUILTIN_SCHEMES) do
+                if not schemes[i] or schemes[i].name ~= template.name then
+                    local new_scheme = { name = template.name, data = DeepCopy(template.source), version = VERSION }
+                    if not schemes[i] then
+                        schemes[i] = new_scheme
+                    else
+                        table.insert(schemes, i, new_scheme)
+                    end
+                else
+                    schemes[i].data = DeepCopy(template.source)
+                    schemes[i].name = template.name
+                end
+            end
+
+            for i, scheme in ipairs(schemes) do
+                if i > 4 then 
+                    GLOBAL.NOMU_QA.UpdateScheme(scheme)
+                end
+            end
+        end
+
+        local current = GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME
+        if current then
+            for _, template in ipairs(BUILTIN_SCHEMES) do
+                if current.name == template.name then
+                    current.data = DeepCopy(template.source)
+                    break
+                end
+            end
+            GLOBAL.NOMU_QA.ApplyScheme(current)
+        end
     end)
 end
 
@@ -260,7 +348,7 @@ local function Announce(message, no_whisper, debug_info)
     end
 
     -- 处理温度符号
-    message = message:gsub("(%d)\176([CF）])", "%1°%2")
+    message = message:gsub("(%d)\176", "%1°")
 
     -- 违禁词处理
     if GLOBAL.NOMU_QA.DATA.ENABLE_FORBIDDEN and GLOBAL.NOMU_QA.DATA.FORBIDDEN_WORDS then
@@ -345,13 +433,17 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
 
     local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
     local filtered = {}
+    local bad_prefab = (GLOBAL.STRINGS.NOMU_QA.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", "")
+    local bad_bank = (GLOBAL.STRINGS.NOMU_QA.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", "")
+    local bad_build = (GLOBAL.STRINGS.NOMU_QA.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", "")
+    local bad_mod = (GLOBAL.STRINGS.NOMU_QA.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", "")
 
     for _, str in ipairs(items) do
         if str and str:match("%S") then
-            local is_banned = str:find("代码:")
-                           or str:find("动画:")
-                           or str:find("贴图:")
-                           or str:find(GLOBAL.STRINGS.NOMU_QA.SHOW_MOD_PREFIX or "模组：")
+            local is_banned = str:find(bad_prefab, 1, true)
+                           or str:find(bad_bank, 1, true)
+                           or str:find(bad_build, 1, true)
+                           or str:find(bad_mod, 1, true)
 
             if not is_banned and GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then
                 for _, bad_word in ipairs(GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS) do
@@ -377,7 +469,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     end
 
     if #filtered > 0 then
-        local joined_str = table.concat(filtered, STRINGS.NOMU_QA.COMMA)
+        local joined_str = table.concat(filtered, GLOBAL.STRINGS.NOMU_QA.COMMA or ", ")
 
         if #joined_str > 270 then
             joined_str = filtered[#filtered]
@@ -790,11 +882,39 @@ local function OnHUDMouseButton(HUD)
     for _, cfg in ipairs(BADGE_CONFIG) do
         if cfg.btn and cfg.btn.focus and cfg.comp then
             local current, max = cfg.cur_fn(cfg.comp), cfg.max_fn(cfg.comp)
+            local category = levels[get_category(cfg.thresholds or default_thresholds, current / max)]
+            
+            -- WX-78 护盾判定
+            if cfg.qa == "HEALTH" and ThePlayer.prefab == "wx78" and ThePlayer.wx78_classified then
+                local shield_cur = ThePlayer.wx78_classified.currentshield:value()
+                local shield_max = ThePlayer.wx78_classified.maxshield:value()
+
+                if shield_max > 1 then
+                    local qa = GLOBAL.NOMU_QA.SCHEME[cfg.qa]
+                    local fmts = {
+                        CURRENT = math.floor(current + 0.5),
+                        MAX = max,
+                        SHIELD_CUR = shield_cur,
+                        SHIELD_MAX = shield_max,
+                        MESSAGE = GetMapping(qa, 'MESSAGE', category)
+                    }
+
+                    local emoji_key = GetMapping(qa, 'SYMBOL', 'EMOJI')
+                    if emoji_key and TheInventory:CheckOwnership('emoji_' .. emoji_key) then
+                        fmts.SYMBOL = ':' .. emoji_key .. ':'
+                    else
+                        fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
+                    end
+
+                    return Announce(subfmt(qa.FORMATS.WITH_SHIELD or qa.FORMATS.DEFAULT, fmts))
+                end
+            end
+
             return AnnounceBadge(
                 GLOBAL.NOMU_QA.SCHEME[cfg.qa],
                 current,
                 max,
-                levels[get_category(cfg.thresholds or default_thresholds, current / max)]
+                category
             )
         end
     end
@@ -831,18 +951,26 @@ local function OnHUDMouseButton(HUD)
 
     if is_worldtemp_focus or is_season_focus then
 
-        local raw_season = TheWorld.state.season:upper()
-        local SEASON = GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season]
+       local raw_season = TheWorld.state.season:upper()
+       local SEASON = GetMapping(GLOBAL.NOMU_QA.SCHEME.SEASON, 'SEASON_NAMES', raw_season) 
+                       or GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season] 
+                       or raw_season
 
-        if SEASON == '春' or SEASON == '夏' or SEASON == '秋' or SEASON == '冬' then
-            SEASON = SEASON .. '季'
-        end
-
-        -- 世界温度 & 降雨宣告
+           -- 世界温度 & 降雨宣告
         if is_worldtemp_focus then
             local qa = GLOBAL.NOMU_QA.SCHEME.WORLD_TEMPERATURE_AND_RAIN
+            
+            -- 直接读取Combined Status上的文本
+            local display_temp = math.floor(TheWorld.state.temperature + 0.5) .. "°"
+            if status.worldtemp and status.worldtemp.num and status.worldtemp.num:GetString() then
+                display_temp = status.worldtemp.num:GetString()
+            end
+
+            local px, py, pz = ThePlayer.Transform:GetWorldPosition()
+            local is_winterland = TheWorld.components.winterlands_manager and TheWorld.components.winterlands_manager:IsWinterlandsAtPoint(px, py, pz)
+
             local fmts = {
-                TEMPERATURE = math.floor(TheWorld.state.temperature + 0.5),
+                TEMPERATURE = display_temp,
                 SEASON = SEASON,
                 WEATHER = GetMapping(qa, 'WEATHER', raw_season)
             }
@@ -850,21 +978,24 @@ local function OnHUDMouseButton(HUD)
 
             if TheWorld.state.pop ~= 1 then
                 local world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
-                fmts.WORLD = GetMapping(qa, 'WORLD', world)
+
+                fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
+                
                 if rain then
                     fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                     qa_fmt = qa.FORMATS.START_RAIN
                 end
             else
                 local world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
-                fmts.WORLD = GetMapping(qa, 'WORLD', world)
+
+                fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
+                
                 fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                 qa_fmt = qa.FORMATS.STOP_RAIN
             end
 
             return Announce(subfmt(qa_fmt, fmts))
         end
-
         -- 季节宣告
         if is_season_focus then
             local DAYS_LEFT = TheWorld.state.remainingdaysinseason
@@ -1608,16 +1739,18 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
                       and container_rep:GetItemInSlot(slot_index).replica.stackable:StackSize() or 1) or 0)
         local missing = plan.amount - current
         local ing_name = GLOBAL.STRINGS.NOMU_QA[plan.type:upper()] or GLOBAL.STRINGS.NAMES[plan.type:upper()] or plan.type
+        local amount_fmt = GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT') or "{NUM} {ITEM}"
 
         if missing > 0 then
             return Announce(subfmt(qa_const.FORMATS.NEED, {
-                INGREDIENT = missing .. "个" .. ing_name,
+                INGREDIENT = subfmt(amount_fmt, { NUM = missing, ITEM = ing_name }),
                 RECIPE = site_name
             }), nil, debug_str)
         else
-            return Announce(subfmt(qa_const.FORMATS.HAVE:gsub("所有材料", plan.amount .. "个" .. ing_name), {
+            local fmt_have = qa_const.FORMATS.HAVE_ITEM or qa_const.FORMATS.HAVE
+            return Announce(subfmt(fmt_have, {
                 RECIPE = site_name,
-                INGREDIENT = plan.amount .. "个" .. ing_name
+                INGREDIENT = subfmt(amount_fmt, { NUM = plan.amount, ITEM = ing_name })
             }), nil, debug_str)
         end
     end
@@ -1758,6 +1891,40 @@ local function AnnounceRecipeCMIngredients(ingredients)
 end
 
 -- [7] 环境实体探测逻辑
+local PREFAB_MOD_CACHE, BUILD_CACHE = {}, {}
+
+local function GetModNameForPrefab(prefab)
+    if PREFAB_MOD_CACHE[prefab] ~= nil then
+        return PREFAB_MOD_CACHE[prefab]
+    end
+
+    for _, modname in ipairs(GLOBAL.KnownModIndex:GetModNames()) do
+        local pre = GLOBAL.Prefabs["MOD_" .. modname]
+        if pre ~= nil and table.contains(pre.deps, prefab) then
+            PREFAB_MOD_CACHE[prefab] = GLOBAL.KnownModIndex:GetModFancyName(modname)
+            return PREFAB_MOD_CACHE[prefab]
+        end
+    end
+
+    PREFAB_MOD_CACHE[prefab] = false
+    return false
+end
+
+local function GetBuildCached(inst)
+    if not inst or not inst.entity or not inst.prefab then return nil, nil end
+    if BUILD_CACHE[inst.prefab] then return BUILD_CACHE[inst.prefab].bank, BUILD_CACHE[inst.prefab].build end
+
+    local str = inst.entity:GetDebugString()
+    if not str then return nil, nil end
+
+    local bank, build = str:match("bank: (.+) build: (.+) anim: ")
+    if bank and build then
+        BUILD_CACHE[inst.prefab] = { bank = bank, build = build }
+        return bank, build
+    end
+    return nil, nil
+end
+
 local function GetCleanEntityName(entity, base_prefab_name)
     return CleanPrefixName(entity:GetDisplayName(), entity.prefab and STRINGS.NAMES[entity.prefab:upper()], base_prefab_name)
 end
@@ -1769,8 +1936,8 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     local entity = ConsoleWorldEntityUnderMouse()
     local qa = GLOBAL.NOMU_QA.SCHEME.ENV
-
-    if button == MOUSEBUTTON_MIDDLE then -- 鼠标中键
+    --鼠标中键
+    if button == MOUSEBUTTON_MIDDLE then
         if entity then
             if not TheInput:IsKeyDown(KEY_LCTRL) and entity:HasTag('player') then
                 if entity == ThePlayer then
@@ -1778,12 +1945,25 @@ TheInput:AddMouseButtonHandler(function(button, down)
                 else
                     return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
                 end
-                return
             end
-            local entity_info = subfmt(qa.FORMATS.CODE, { PREFAB = entity.prefab, NAME = entity:GetDisplayName() })
+
+            local mod_str = ""
+            local mod_name = GetModNameForPrefab(entity.prefab)
+            if mod_name then
+                mod_str = subfmt(GetMapping(qa, 'WORDS', 'MOD_INFO'), { MOD_NAME = mod_name })
+            end
+
+            local entity_info = subfmt(qa.FORMATS.CODE, { 
+                PREFAB = entity.prefab, 
+                NAME = entity:GetDisplayName(),
+                MOD_INFO = mod_str,
+                ASSET_INFO = "" 
+            })
+            
             print(entity_info)
             ThePlayer.components.talker:Say(entity_info, 5)
         end
+        return
     end
 
     -- 鼠标左键
@@ -1823,12 +2003,33 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     if not entity then return end
     if not TheInput:IsKeyDown(KEY_LCTRL) and entity:HasTag('player') then
+    -- 判断玩家是否正在钓鱼
+        local is_fishing = false
+        local inventory = entity.replica.inventory
+        if inventory then
+            local equip = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            if equip then
+                if equip.replica.fishingrod and equip.replica.fishingrod:GetTarget() ~= nil then
+                    is_fishing = true
+                elseif equip.replica.oceanfishingrod then
+                    if type(equip.replica.oceanfishingrod.GetBobber) == "function" and equip.replica.oceanfishingrod:GetBobber() ~= nil then
+                        is_fishing = true
+                    elseif type(equip.replica.oceanfishingrod.GetTarget) == "function" and equip.replica.oceanfishingrod:GetTarget() ~= nil then
+                        is_fishing = true
+                    end
+                end
+            end
+        end
+        -- 宣告自己
         if entity == ThePlayer then
+            if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING then
+                return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING, { NAME = entity:GetDisplayName() }))
+            end
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.I_AM_HERE, { NAME = entity:GetDisplayName() }))
         end
-
-        local inventory = ThePlayer.replica.inventory
-        local active_item = inventory and inventory:GetActiveItem()
+        -- 宣告给物品
+        local my_inventory = ThePlayer.replica.inventory
+        local active_item = my_inventory and my_inventory:GetActiveItem()
         if active_item then
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GIVE_ITEM, {
                 NAME = entity:GetDisplayName(),
@@ -1836,21 +2037,26 @@ TheInput:AddMouseButtonHandler(function(button, down)
                 ITEM_NAME = string.gsub(active_item:GetDisplayName(), '\n', ' ')
             }))
         end
-
-        local is_me, is_ent = ThePlayer:HasTag("playerghost"), entity:HasTag("playerghost")
-        local player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.DEFAULT
-
-        if is_me and is_ent then
-            player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.BOTH_GHOST
-        elseif is_me then
-            player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_GHOST
-        elseif is_ent then
-            player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_GHOST
-        else
-            player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET or player_fmt
+        -- 宣告鬼魂状态
+        local is_me = ThePlayer:HasTag("playerghost")
+        local is_ent = entity:HasTag("playerghost")
+        if is_me or is_ent then
+            local player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.DEFAULT
+            if is_me and is_ent then
+                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.BOTH_GHOST
+            elseif is_me then
+                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_GHOST
+            elseif is_ent then
+                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_GHOST
+            end
+            return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
         end
-
-        return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
+        --宣告他人正在钓鱼
+        if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING then
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING, { NAME = entity:GetDisplayName() }))
+        end
+        -- 普通的打招呼
+        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
     end
 
     local px, py, pz = entity:GetPosition():Get()
@@ -2381,38 +2587,59 @@ modimport('scripts/qa_config/qa_panel.lua')
 
 -- [9] 游戏内系统钩子与事件注入 
 AddSimPostInit(function()
+
     GLOBAL.NOMU_QA.LoadData()
-    local BUILTIN_SCHEMES = {
-        { name = STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME, source = GLOBAL.STRINGS.DEFAULT_NOMU_QA },
-        { name = STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME, source = GLOBAL.STRINGS.CAT_NOMU_QA },
-        { name = STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME, source = GLOBAL.STRINGS.TSUNDERE_NOMU_QA },
-        { name = STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME, source = GLOBAL.STRINGS.CUTE_NOMU_QA }
-    }
 
-    local schemes = GLOBAL.NOMU_QA.DATA.SCHEMES
-    for i, template in ipairs(BUILTIN_SCHEMES) do
-        if not schemes[i] or schemes[i].name ~= template.name then
-            local new_scheme = { name = template.name, data = DeepCopy(template.source), version = VERSION }
-            if not schemes[i] then
-                schemes[i] = new_scheme
-            else
-                table.insert(schemes, i, new_scheme)
+    -- 动态拦截屏幕弹窗
+    if GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd.PushScreen then
+        local old_PushScreen = GLOBAL.TheFrontEnd.PushScreen
+        GLOBAL.TheFrontEnd.PushScreen = function(self, screen, ...)
+            if screen and screen.name == "MedalExamScreens" and not screen._nomu_qa_hooked then
+                screen._nomu_qa_hooked = true
+                -- 勋章答题
+                if screen.content and not screen.content.hovertext then
+                    screen.content:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+                end
+                if screen.title and not screen.title.hovertext then
+                    screen.title:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+                end
+                local oldOnControl = screen.OnControl
+                function screen:OnControl(control, down, ...)
+                    if down and control == GLOBAL.CONTROL_ACCEPT and GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+                        if (self.content and self.content.focus) or (self.title and self.title.focus) or (self.destspanel and self.destspanel.focus) then
+                            
+                            local question = self.content and self.content:GetString() or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME
+                            question = question:gsub("\n", ""):gsub("\t", "")
+                            
+                            local opt_str_list = {}
+                            local prefix = {"A.", "B.", "C.", "D."}
+                            
+                            if self.menu and self.menu.items then
+                                for i, v in ipairs(self.menu.items) do
+                                    local txt = v:GetText() or ""
+                                    if txt ~= "" then
+                                        if not txt:match("^[A-D][%.、]") and prefix[i] then
+                                            txt = prefix[i] .. " " .. txt
+                                        end
+                                        table.insert(opt_str_list, txt)
+                                    end
+                                end
+                            end
+                            
+                            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.MEDAL_BUFF.FORMATS.EXAM, {
+                                QUESTION = question,
+                                OPTIONS = table.concat(opt_str_list, "  ")
+                            }))
+                        end
+                    end
+                    if oldOnControl then
+                        return oldOnControl(self, control, down, ...)
+                    end
+                    return false
+                end
             end
-        else
-            schemes[i].data = DeepCopy(template.source)
-            schemes[i].name = template.name
+            return old_PushScreen(self, screen, ...)
         end
-    end
-
-    local current = GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME
-    if current then
-        for _, template in ipairs(BUILTIN_SCHEMES) do
-            if current.name == template.name then
-                current.data = DeepCopy(template.source)
-                break
-            end
-        end
-        GLOBAL.NOMU_QA.ApplyScheme(current)
     end
 end)
 
@@ -2610,12 +2837,12 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                     if w.adminBadge and w.adminBadge.shown and w.adminBadge.focus then
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ADMIN, { NAME = w.displayName }))
                     end
-                    if w.perf and w.perf.shown and w.perf.focus and w.perf.hovertext then
-                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PERF, {
-                            NAME = w.displayName,
-                            PERF = w.perf.hovertext:GetString(),
-                            PING = (w.userid == ThePlayer.userid and subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, { PING = TheNet:GetAveragePing() }) or '')
-                        }))
+                    if w.perf and w.perf.shown and w.perf.focus and w.perf.hovertext then 
+                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PERF, { 
+                            NAME = w.displayName, 
+                            PERF = w.perf.hovertext:GetString(), 
+                            PING = (w.userid == ThePlayer.userid and subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, { PING = TheNet:GetAveragePing() }) or '') 
+                        })) 
                     end
                     if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge and w.characterBadge.prefabname then
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
@@ -2817,43 +3044,7 @@ if state and m_util then
     m_util:AddBindIcon("快捷宣告", "playbill_the_veil", STRINGS.LMB .. "打开设置" .. STRINGS.RMB .. "切换风格", false, ToggleQAPanel, SwitchAnnounceScheme)
 end
 
-local PREFAB_MOD_CACHE, BUILD_CACHE = {}, {}
-
-local function GetModNameForPrefab(prefab)
-    if PREFAB_MOD_CACHE[prefab] ~= nil then
-        return PREFAB_MOD_CACHE[prefab]
-    end
-
-    for _, modname in ipairs(GLOBAL.KnownModIndex:GetModNames()) do
-        local pre = GLOBAL.Prefabs["MOD_" .. modname]
-        if pre ~= nil and table.contains(pre.deps, prefab) then
-            PREFAB_MOD_CACHE[prefab] = GLOBAL.KnownModIndex:GetModFancyName(modname)
-            return PREFAB_MOD_CACHE[prefab]
-        end
-    end
-
-    PREFAB_MOD_CACHE[prefab] = false
-    return false
-end
-
-local function GetBuildCached(inst)
-    if not inst or not inst.entity or not inst.prefab then return nil end
-    if BUILD_CACHE[inst.prefab] then return BUILD_CACHE[inst.prefab] end
-
-    local str = inst.entity:GetDebugString()
-    if not str then return nil end
-
-    local bank, build = str:match("bank: (.+) build: (.+) anim: ")
-    if bank and build then
-        BUILD_CACHE[inst.prefab] = "\n动画: anim/"..bank..".zip\n贴图: anim/"..build..".zip"
-        return BUILD_CACHE[inst.prefab]
-    end
-    return nil
-end
-
 AddClassPostConstruct("widgets/hoverer", function(hoverer)
-    if TUNING.SERVER_SIMS then return end
-
     local oldSetString = hoverer.text.SetString
     hoverer.text.SetString = function(text, str, ...)
         local show_mod = GLOBAL.NOMU_QA.DATA.SHOW_MOD_NAME
@@ -2879,11 +3070,12 @@ AddClassPostConstruct("widgets/hoverer", function(hoverer)
             end
 
             if asset_mode and asset_mode > 0 then
-                str = str .. "\n代码:" .. target.prefab
+                str = str .. (STRINGS.NOMU_QA.HOVER_PREFAB_PREFIX or "\nPrefab: ") .. target.prefab
                 if asset_mode == 2 then
-                    local build_info = GetBuildCached(target)
-                    if build_info then
-                        str = str .. build_info
+                    local bank, build = GetBuildCached(target)
+                    if bank and build then
+                        str = str .. (STRINGS.NOMU_QA.HOVER_BANK_PREFIX or "\nBank: anim/") .. bank .. (STRINGS.NOMU_QA.HOVER_ZIP_SUFFIX or ".zip")
+                        str = str .. (STRINGS.NOMU_QA.HOVER_BUILD_PREFIX or "\nBuild: anim/") .. build .. (STRINGS.NOMU_QA.HOVER_ZIP_SUFFIX or ".zip")
                     end
                 end
             end

@@ -3,17 +3,23 @@ GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME = '傲娇方案'
 GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     SEASON = {
         FORMATS = { DEFAULT = '听好了笨蛋，{SEASON}只剩下{DAYS_LEFT}天了。给、给我好好准备，别到时候哭着求我！' },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                SEASON_NAMES = { 
+                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季'
+                }
+            }
+        }
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喂！{WORLD}气温{TEMPERATURE}°，{WEATHER}来了：第{DAYS}天（{MINUTES}分{SECONDS}秒）。自己记得撑伞，我才不管你！',
-            NO_RAIN = '哼，{WORLD}气温{TEMPERATURE}°，{WEATHER}暂时还没来。稍微放松一下也可以……就一下！',
-            STOP_RAIN = '终于放晴了！{WORLD}气温{TEMPERATURE}°：第{DAYS}天（{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
+            START_RAIN = '喂！{WORLD}气温{TEMPERATURE}，{WEATHER}来了：第{DAYS}天（{MINUTES}分{SECONDS}秒）。自己记得撑伞，我才不管你！',
+            NO_RAIN = '哼，{WORLD}气温{TEMPERATURE}，{WEATHER}暂时还没来。稍微放松一下也可以……就一下！',
+            STOP_RAIN = '终于放晴了！{WORLD}气温{TEMPERATURE}：第{DAYS}天（{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇' },
+                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
                 WEATHER = { SPRING = '下雨', SUMMER = '下雨', AUTUMN = '下雨', WINTER = '暴雪', GREEN = '下雨', DRY = '下雨', MILD = '下雨', WET = '狂风暴雨', TEMPERATE = '下雨', HUMID = '下雨', LUSH = '下雨', APORKALYPSE = '下雨' },
             }
         }
@@ -193,7 +199,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             NAME = '{NAME}是{CHARACTER}。',
             AGE = '{NAME}居然活了{AGE}这么久。',
             AGE_SHORT = '{NAME}存活{AGE}。',
-            PERF = '{NAME}的网络像{PERF}似的。{PING}',
+            PERF = '{NAME} 的{PERF}。{PING}',
             GREET = '哟，{NAME}。才、才不是在等你呢！',
             PING = '延迟：{PING}',
             BADGE = '{NAME}戴着{BADGE}的头像。眼光真差。',
@@ -211,6 +217,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             ME_GHOST = "喂，{NAME}！还不快拿告密的心来救我，笨蛋！",
             THEY_GHOST = "{NAME}你这笨蛋站着别动，我这就去救你！",
             I_AM_HERE = "喂，{NAME}！我在这里，快跟上！",
+            ME_FISHING = '喂！{NAME}在钓鱼，闭嘴别把鱼吓跑了！',
+            THEY_FISHING = '{NAME}那家伙在钓鱼，别钓上来什么破鞋子！',
         },
         MAPPINGS = {}
     },
@@ -420,6 +428,10 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     SHOW_ME = '（这个有 {SHOW_ME}）',
+                    DISTANCE_FAR = '，离我大约{DIST}格，自己走过去，我才不接你！',
+                    DISTANCE_CLOSE = '，就在我旁边，你瞎了吗自己看！',
+                    DISTANCE_FAR_WATER = '，在离我约{DIST}格的水面上，掉下去淹死你！',
+                    DISTANCE_CLOSE_WATER = '，就在我旁边的水面上，当心点笨蛋！',
                 }
             }
         }
@@ -589,15 +601,25 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建完，快点去干活！",
             HAVE = "材料都齐了，{RECIPE}随时可以动工，还不快点！",
+            HAVE_ITEM = "我已经拿好{INGREDIENT}准备建{RECIPE}了，还不快夸我！", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     TRADE = {
         FORMATS = {
             NEED = "想要和{RECIPE}交易，兜里还缺{INGREDIENT}。穷鬼！",
             HAVE = "有足够的{INGREDIENT}可以和{RECIPE}交易了。快去啊，愣着干嘛！",
+            HAVE_ITEM = "我有足够的{INGREDIENT}去和{RECIPE}换东西了，还不快跟上！", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     WOBY_HUNGER = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
@@ -972,7 +994,10 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         }
     },
     HEALTH = {
-        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        FORMATS = { 
+            DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
+            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，破护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
+        },
         MAPPINGS = {
             DEFAULT = {
                 MESSAGE = {

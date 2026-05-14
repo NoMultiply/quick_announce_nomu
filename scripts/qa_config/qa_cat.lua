@@ -3,17 +3,23 @@ GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME = '猫娘方案'
 GLOBAL.STRINGS.CAT_NOMU_QA = {
     SEASON = {
         FORMATS = { DEFAULT = '主人～{SEASON}的尾巴尖尖还剩{DAYS_LEFT}个毛线球长度喵󰀍～' },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                SEASON_NAMES = { 
+                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季'
+                }
+            }
+        }
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喵呜～{WORLD}气温：{TEMPERATURE}°，{WEATHER}来了喵：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
-            NO_RAIN = '嗅嗅……{WORLD}气温：{TEMPERATURE}°，肉垫预报{WEATHER}还没来喵󰀍～',
-            STOP_RAIN = '喵！{WORLD}气温：{TEMPERATURE}°，放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
+            START_RAIN = '喵呜～{WORLD}气温：{TEMPERATURE}，{WEATHER}来了喵：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            NO_RAIN = '嗅嗅……{WORLD}气温：{TEMPERATURE}，肉垫预报{WEATHER}还没来喵󰀍～',
+            STOP_RAIN = '喵！{WORLD}气温：{TEMPERATURE}，放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇' },
+                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
                 WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
             }
         }
@@ -204,7 +210,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             NAME = '{NAME}是{CHARACTER}喵。',
             AGE = '{NAME}在这里生存了{AGE}喵。',
             AGE_SHORT = '{NAME}{AGE}喵。',
-            PERF = '{NAME}的网络像{PERF}。{PING}',
+            PERF = '{NAME} 的{PERF}喵～{PING}',
             GREET = '主人的脚步声最好认了喵󰀍～你好吖，{NAME}。',
             PING = '喵呜通道延迟：{PING}',
             BADGE = '{NAME}戴着{BADGE}的头牌喵。',
@@ -222,6 +228,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             ME_GHOST = "拜托{NAME}救救我，人家需要一颗温暖的心复活喵󰀍～",
             THEY_GHOST = "{NAME}撑住！人家的猫爪救援马上就到喵！",
             I_AM_HERE = "{NAME}，人家就在这里喵󰀍～！",
+            ME_FISHING = '嘘——{NAME}正在用肉垫屏息钓鱼鱼喵，快咬钩吧！',
+            THEY_FISHING = '喵󰀍～{NAME}正在专注钓鱼鱼呢，希望能钓到超大号小鱼干喵！',
         },
         MAPPINGS = {}
     },
@@ -431,6 +439,10 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     SHOW_ME = '（这个有 {SHOW_ME}）',
+                    DISTANCE_FAR = '，距离人家大概{DIST}个毛线球（格）的距离喵～',
+                    DISTANCE_CLOSE = '，就在人家肉垫旁边喵！',
+                    DISTANCE_FAR_WATER = '，在距离人家约{DIST}格的水面上喵，人家才不要下水！',
+                    DISTANCE_CLOSE_WATER = '，就在人家旁边的水面上喵～',
                 }
             }
         }
@@ -600,15 +612,25 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
         FORMATS = {
             NEED = "我们需要{INGREDIENT}才能把{RECIPE}建好喵󰀍～",
             HAVE = "所有毛线球都备齐啦～{RECIPE}随时可以拔地而起喵！",
+            HAVE_ITEM = "人家的小爪爪已经准备好{INGREDIENT}来建{RECIPE}了喵󰀍～", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     TRADE = {
         FORMATS = {
             NEED = "喵呜……想要和{RECIPE}换东西，人家的小兜兜里还缺{INGREDIENT}喵󰀍～",
             HAVE = "有足够的{INGREDIENT}和{RECIPE}交易喵！快去快去～",
+            HAVE_ITEM = "人家有足够的{INGREDIENT}可以和{RECIPE}换小礼物了喵！", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     WOBY_HUNGER = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
@@ -983,7 +1005,10 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
         }
     },
     HEALTH = {
-        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        FORMATS = { 
+            DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
+            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
+        },
         MAPPINGS = {
             DEFAULT = {
                 MESSAGE = {

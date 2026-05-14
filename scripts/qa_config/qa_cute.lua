@@ -1,19 +1,25 @@
 GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME = '软萌方案'
 
 GLOBAL.STRINGS.CUTE_NOMU_QA = {
-    SEASON = {
+   SEASON = {
         FORMATS = { DEFAULT = '呐～{SEASON}还剩下{DAYS_LEFT}天呢，时间过得好快吖✿～' },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                SEASON_NAMES = { 
+                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季'
+                }
+            }
+        }
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}°，{WEATHER}来啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）哒～',
-            NO_RAIN = '唔……{WORLD}现在的气温是：{TEMPERATURE}°，天空很乖，{WEATHER}还没来呢✿～',
-            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}°，终于放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
+            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，{WEATHER}来啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）哒～',
+            NO_RAIN = '唔……{WORLD}现在的气温是：{TEMPERATURE}，天空很乖，{WEATHER}还没来呢✿～',
+            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，终于放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇' },
+                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
                 WEATHER = { SPRING = '下小雨', SUMMER = '下雨啦', AUTUMN = '下雨啦', WINTER = '飘雪花', GREEN = '下雨啦', DRY = '下雨啦', MILD = '下雨啦', WET = '刮大风', TEMPERATE = '下雨啦', HUMID = '下雨啦', LUSH = '下雨啦', APORKALYPSE = '下雨啦' },
             }
         }
@@ -193,7 +199,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             NAME = '{NAME}选的是{CHARACTER}吖。',
             AGE = '{NAME}在这里度过了{AGE}的时光呢。',
             AGE_SHORT = '{NAME}{AGE}啦。',
-            PERF = '{NAME}的网络感觉像{PERF}吖。{PING}',
+            PERF = '{NAME} 的{PERF}吖。{PING}',
             GREET = '好开心见到你吖，{NAME}✿～',
             PING = '小信号延迟：{PING}',
             BADGE = '{NAME}带着{BADGE}的可爱头牌吖。',
@@ -211,6 +217,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             ME_GHOST = "拜托拜托{NAME}救救人家，人家想要一颗温暖的告密的心复活吖……",
             THEY_GHOST = "{NAME}不要怕！人家马上就来救你啦✿！",
             I_AM_HERE = "{NAME}，人家就在这里吖！快看人家✿！",
+            ME_FISHING = '嘘——{NAME}正在施展神奇的钓鱼魔法吖，小鱼快上钩✿～',
+            THEY_FISHING = '哇哦✿！{NAME}正在认认真真地钓鱼呢，祝你钓到胖胖鱼吖！',
         },
         MAPPINGS = {}
     },
@@ -420,6 +428,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     SHOW_ME = '（这个有 {SHOW_ME}）',
+                    DISTANCE_FAR = '，距离人家大概有{DIST}个小地皮那么远吖～',
+                    DISTANCE_CLOSE = '，就在人家旁边呢✿！',
+                    DISTANCE_FAR_WATER = '，在距离人家约{DIST}格的水面上吖～',
+                    DISTANCE_CLOSE_WATER = '，就在人家旁边的水面上呢✿～',
                 }
             }
         }
@@ -589,15 +601,25 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         FORMATS = {
             NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建得漂漂亮亮的吖✿～",
             HAVE = "所有的材料都乖乖躺好啦～{RECIPE}随时可以动工建起来吖！",
+            HAVE_ITEM = "人家已经把{INGREDIENT}准备好啦，可以用来建{RECIPE}了吖✿！", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     TRADE = {
         FORMATS = {
             NEED = "呜呜……想要和{RECIPE}换礼物，人家的小兜兜里还缺{INGREDIENT}吖✿～",
             HAVE = "太棒啦！有足够的{INGREDIENT}可以和{RECIPE}换礼物啦！快去快去～",
+            HAVE_ITEM = "太好啦！人家有足够的{INGREDIENT}可以和{RECIPE}换小礼物了吖✿！", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
+            }
+        }
     },
     WOBY_HUNGER = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },

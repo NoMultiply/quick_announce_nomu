@@ -116,10 +116,14 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_SHOW_MOD_NAME_ON = '模组来源（开）',
     BUTTON_TEXT_SHOW_MOD_NAME_OFF = '模组来源（关）',
     SHOW_MOD_PREFIX = '模组：', 
+    HOVER_PREFAB_PREFIX = '\n代码：',
+    HOVER_BANK_PREFIX = '\n动画：anim/',
+    HOVER_BUILD_PREFIX = '\n贴图：anim/',
+    HOVER_ZIP_SUFFIX = '.zip',
 
-    BUTTON_TEXT_SHOW_ASSET_OFF = '代码信息（关）',
-    BUTTON_TEXT_SHOW_ASSET_CODE = '代码信息（PREFAB）',
-    BUTTON_TEXT_SHOW_ASSET_ALL = '代码信息（全部）',
+    BUTTON_TEXT_SHOW_ASSET_OFF = '物品信息（关）',
+    BUTTON_TEXT_SHOW_ASSET_CODE = '物品信息（代码）',
+    BUTTON_TEXT_SHOW_ASSET_ALL = '物品信息（全部）',
 
     BUTTON_TEXT_FUZZY_ON = '模糊宣告（开）',
     BUTTON_TEXT_FUZZY_OFF = '模糊宣告（关）',
@@ -219,17 +223,26 @@ GLOBAL.STRINGS.NOMU_QA = {
 GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
     SEASON = {
         FORMATS = { DEFAULT = '{SEASON}还剩{DAYS_LEFT}天。' },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                SEASON_NAMES = { 
+                    AUTUMN = '秋季', 
+                    WINTER = '冬季', 
+                    SPRING = '春季', 
+                    SUMMER = '夏季'
+                }
+            }
+        }
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '{WORLD}气温：{TEMPERATURE}°，{WEATHER}：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
-            NO_RAIN = '{WORLD}气温：{TEMPERATURE}°，{WEATHER}尚未接近。',
-            STOP_RAIN = '{WORLD}气温：{TEMPERATURE}°，放晴：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            START_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            NO_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}尚未接近。',
+            STOP_RAIN = '{WORLD}气温：{TEMPERATURE}，放晴：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇' },
+                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
                 WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
             }
         }
@@ -420,7 +433,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             NAME = '{NAME} 正在扮演 {CHARACTER}。',
             AGE = '{NAME} 生存了 {AGE}。',
             AGE_SHORT = '{NAME} {AGE}。',
-            PERF = '{NAME} 的网络状态：{PERF}。{PING}',
+            PERF = '{NAME} 的{PERF}。{PING}',
             GREET = '你好呀，{NAME}。',
             PING = 'Ping: {PING}',
             BADGE = '{NAME} 的头像是 {BADGE}。',
@@ -433,11 +446,13 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             HEAD_EQUIP = '{NAME} 的头部装备是 {HEAD_EQUIP}。',
             HAND_EQUIP = '{NAME} 的手部装备是 {HAND_EQUIP}。',
             BODY_EQUIP = '{NAME} 的身体装备是 {BODY_EQUIP}。',
-            GIVE_ITEM = "{NAME} 别动，我有 {NUM}个{ITEM_NAME}要给你！",
+            GIVE_ITEM = "{NAME} 别动，我有 {NUM}个 {ITEM_NAME} 要给你！",
             BOTH_GHOST = "呜呜呜，{NAME}，我们都变成鬼魂了……",
             ME_GHOST = "{NAME} 救救我，我需要一颗告密的心！",
             THEY_GHOST = "{NAME} 撑住！我这就来救你！",
             I_AM_HERE = "{NAME} 在这里！",
+            ME_FISHING = '嘘——{NAME} 正在施展钓鱼魔法，小鱼小鱼快快咬钩吧！',
+            THEY_FISHING = '哇喔！{NAME} 正在全神贯注地钓鱼呢，祝你钓到超大号胖鱼！',
         },
         MAPPINGS = {}
     },
@@ -602,7 +617,7 @@ SPIDERDEN = {
             SINGLE = '我附近有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
             DEFAULT = '我附近有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
             NAMED = '我附近有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
-            CODE = '名称：{NAME}，代码：{PREFAB}',
+            CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             BURNT_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经被烧毁了{SHOW_ME}{DISTANCE}。',
             BURNT_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 被烧毁了{SHOW_ME}{DISTANCE}。',
             FIRE_EQUAL = '这里有 {TOTAL}个 {NAME}，全都正在燃烧{SHOW_ME}{DISTANCE}。',
@@ -651,6 +666,8 @@ SPIDERDEN = {
                     DISTANCE_CLOSE = '，就在我旁边',
                     DISTANCE_FAR_WATER = '，在距离我约 {DIST} 格的水面上',
                     DISTANCE_CLOSE_WATER = '，就在我旁边的水面上',
+                    MOD_INFO = '，模组：{MOD_NAME}',
+                    ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
                 }
             }
         }
@@ -753,6 +770,7 @@ MEDAL_BUFF = {
         FORMATS = {
             DEFAULT = '我当前拥有 "{BUFF_NAME}" BUFF，剩余时间：{TIME}。',
             FOREVER = '我当前拥有 "{BUFF_NAME}" BUFF，永久生效。',
+            EXAM = '有人知道"{QUESTION}"这题的答案吗-{OPTIONS}',
         },
         MAPPINGS = {}
     },
@@ -819,15 +837,29 @@ MEDAL_BUFF = {
         FORMATS = {
             NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
             HAVE = "我已经准备好所有材料来建造 {RECIPE}。",
+            HAVE_ITEM = "我已经准备好 {INGREDIENT} 来建造 {RECIPE}。", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = {
+                    AMOUNT_FMT = "{NUM}个 {ITEM}" 
+                }
+            }
+        }
     },
-TRADE = {
+    TRADE = {
         FORMATS = {
             NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
             HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
+            HAVE_ITEM = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。", 
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                WORDS = {
+                    AMOUNT_FMT = "{NUM}个 {ITEM}"
+                }
+            }
+        }
     },
 WOBY_HUNGER = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
@@ -1210,7 +1242,10 @@ NAUGHTINESS = {
         }
     },
     HEALTH = {
-        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        FORMATS = { 
+            DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
+            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
+        },
         MAPPINGS = {
             DEFAULT = {
                 MESSAGE = {
