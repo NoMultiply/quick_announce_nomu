@@ -10,9 +10,10 @@ description = [[
 - “shift + alt + 鼠标左键点击世界物品”宣告附近的物品
 - “shift + alt + 鼠标中键”对自己宣告Ping、对别人打招呼、显示物品信息
 - 添加了自定义宣告同步功能
+- 兼容了 macOS
 ]]
 
-version = "2026-05-14-A"
+version = "2026-05-18"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then

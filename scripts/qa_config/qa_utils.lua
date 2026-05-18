@@ -179,7 +179,7 @@ GLOBAL.QA_UTILS = {
             dbgstr = string.gsub(dbgstr," ","")
             --local _, _, moisture, moisturefloor, moistureceil, moisturerate, preciprate, peakprecipitationrate = string.find(dbgstr, ".*moisture:(%d+.%d+)%((%d+.%d+)/(%d+.%d+)%) %+ (%d+.%d+), preciprate:%((%d+.%d+) of (%d+.%d+)%).*")	--新版刀子雨天气信息的文本格式改了,  导致它获取不到数字，更改下列方式
             --local _, _, moisture, moisturefloor, moistureceil, preciprate, peakprecipitationrate = string.find(dbgstr, ".*moisture:(%d+.%d+)%((%d+.%d+)/(%d+.%d+)%).*preciprate:%((%d+.%d+)of(%d+.%d+)%).*")
-            local pattern = "moisture:([%-%d%.]+)%(([%-%d%.]+)/([%-%d%.]+)%).-preciprate:%(([%-%d%.]+)%s*of%s*([%-%d%.]+)%)"
+            local pattern = "moisture:([%-%d%.]+)%(([%-%d%.]+)/([%-%d%.]+)%).-preciprate:%(([%-%d%.]+)[ \t\r\n]*of[ \t\r\n]*([%-%d%.]+)%)"
             local moisture, moisturefloor, moistureceil, preciprate, peakprecipitationrate = string.match(dbgstr, pattern)
 
             moisture = moisture and tonumber(moisture)
