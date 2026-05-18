@@ -1,6 +1,18 @@
 -- [1] 初始化
 GLOBAL.setmetatable(env, { __index = function(_, k) return GLOBAL.rawget(GLOBAL, k) end })
 
+-- 兼容 macOS (其实不是这个导致的)
+--但能防止某些人改键位导致宣告不出
+local function IsAltPressed()
+    return TheInput:IsControlPressed(CONTROL_FORCE_INSPECT)
+        or TheInput:IsKeyDown(KEY_LALT)
+end
+
+local function IsShiftPressed()
+    return TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
+        or TheInput:IsKeyDown(KEY_LSHIFT)
+end
+
 -- 导入其他 Lua 文件的辅助函数
 local function Import(modulename)
     local f = GLOBAL.kleiloadlua(modulename)
@@ -58,8 +70,11 @@ end
 local function IsDefaultScreen()
     local active_screen = GLOBAL.TheFrontEnd:GetActiveScreen()
     local screen = active_screen and active_screen.name or ""
+    local is_typing = false
     local focus = GLOBAL.TheFrontEnd:GetFocusWidget()
-    local is_typing = focus ~= nil and focus.inst ~= nil and focus.inst.TextEditWidget ~= nil
+    if focus and focus.inst and focus.inst.TextEditWidget then
+        is_typing = true
+    end
 
     if is_typing then
         return false
@@ -360,7 +375,7 @@ local function Announce(message, no_whisper, debug_info)
     end
 
     -- 去除多余的空格
-    message = message:gsub("%s+", " "):gsub("^%s", ""):gsub("%s$", "")
+    message = message:gsub("[ \t\r\n]+", " "):gsub("^[ \t\r\n]+", ""):gsub("[ \t\r\n]+$", "")
 
     -- 拼接调试信息
     if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and debug_info then
@@ -439,7 +454,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local bad_mod = (GLOBAL.STRINGS.NOMU_QA.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", "")
 
     for _, str in ipairs(items) do
-        if str and str:match("%S") then
+        if str and str:match("[^ \t\r\n]") then
             local is_banned = str:find(bad_prefab, 1, true)
                            or str:find(bad_bank, 1, true)
                            or str:find(bad_build, 1, true)
@@ -714,7 +729,7 @@ local function OnHUDMouseButton(HUD)
     if (status.naughtiness and status.naughtiness.focus) or (status.naughtybadge and status.naughtybadge.focus) then
         local current, max = 0, 50
         if status.naughtiness and status.naughtiness.num then
-            local cur_str, max_str = string.match(status.naughtiness.num:GetString() or "", "(%d+)%s*/%s*(%d+)")
+            local cur_str, max_str = string.match(status.naughtiness.num:GetString() or "", "(%d+)[ \t\r\n]*/[ \t\r\n]*(%d+)")
             if cur_str and max_str then
                 current, max = tonumber(cur_str), tonumber(max_str)
             end
@@ -1425,7 +1440,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     local missing_str = GetAllMissingIngredients(recipe, builder, inventory)
     if missing_str then
         local and_proto = prototype ~= "" and subfmt(GetMapping(qa_ing, 'WORDS', 'AND_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
-        local fmt_str = (qa_ing.FORMATS.NEED_MULTIPLE or qa_ing.FORMATS.NEED):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "%s*", ""):gsub("{NUM}%s*", "")
+        local fmt_str = (qa_ing.FORMATS.NEED_MULTIPLE or qa_ing.FORMATS.NEED):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "[ \t\r\n]*", ""):gsub("{NUM}[ \t\r\n]*", "")
 
         return Announce(subfmt(fmt_str, {
             INGREDIENT = missing_str,
@@ -1436,7 +1451,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     else
         local but_proto = prototype ~= "" and subfmt(GetMapping(qa_ing, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
         local all_materials = GetMapping(qa_ing, 'WORDS', 'ALL_MATERIALS')
-        local fmt_str = (qa_ing.FORMATS.HAVE_ALL or qa_ing.FORMATS.HAVE):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "%s*{INGREDIENT}", all_materials):gsub("{NUM}%s*{INGREDIENT}", all_materials)
+        local fmt_str = (qa_ing.FORMATS.HAVE_ALL or qa_ing.FORMATS.HAVE):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "[ \t\r\n]*{INGREDIENT}", all_materials):gsub("{NUM}[ \t\r\n]*{INGREDIENT}", all_materials)
 
         return Announce(subfmt(fmt_str, {
             RECIPE = name,
@@ -1501,7 +1516,7 @@ local function get_container_name(container)
     local name = container:GetBasicDisplayName()
     local prefab = container.prefab
 
-    if type(name) == "string" and name:find("^%s*$") and prefab and prefab:find("_container") then
+    if type(name) == "string" and name:find("^[ \t\r\n]*$") and prefab and prefab:find("_container") then
         name = STRINGS.NAMES[prefab:sub(1, prefab:find("_container") - 1):upper()]
     end
 
@@ -1930,7 +1945,7 @@ local function GetCleanEntityName(entity, base_prefab_name)
 end
 
 TheInput:AddMouseButtonHandler(function(button, down)
-    if not (IsDefaultScreen() and TheInput:IsControlPressed(CONTROL_FORCE_INSPECT) and TheInput:IsKeyDown(KEY_LSHIFT) and down) then
+    if not (IsDefaultScreen() and IsAltPressed() and IsShiftPressed() and down) then
         return
     end
 
@@ -2605,7 +2620,7 @@ AddSimPostInit(function()
                 end
                 local oldOnControl = screen.OnControl
                 function screen:OnControl(control, down, ...)
-                    if down and control == GLOBAL.CONTROL_ACCEPT and GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+                    if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
                         if (self.content and self.content.focus) or (self.title and self.title.focus) or (self.destspanel and self.destspanel.focus) then
                             
                             local question = self.content and self.content:GetString() or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME
@@ -2647,7 +2662,7 @@ end)
 AddClassPostConstruct('screens/playerhud', function(PlayerHud)
     local oldOnMouseButton = PlayerHud.OnMouseButton
     function PlayerHud:OnMouseButton(button, down, ...)
-        if button == MOUSEBUTTON_LEFT and down and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if button == MOUSEBUTTON_LEFT and down and IsAltPressed() then
             if OnHUDMouseButton(self) then
                 return true
             end
@@ -2691,7 +2706,7 @@ end)
 AddClassPostConstruct('widgets/redux/craftingmenu_pinslot', function(PinSlot)
     local oldOnControl = PinSlot.OnControl
     function PinSlot:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             return AnnounceRecipePinSlot(self)
         end
         return oldOnControl(self, control, down, ...)
@@ -2702,7 +2717,7 @@ AddClassPostConstruct('widgets/redux/craftingmenu_widget', function(CMWidget)
     local grid = CMWidget.recipe_grid
     local oldOnControl = grid.OnControl
     function grid:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             return AnnounceRecipeGrid(self, CMWidget.owner)
         end
         return oldOnControl(self, control, down, ...)
@@ -2712,7 +2727,7 @@ end)
 AddClassPostConstruct('widgets/redux/craftingmenu_ingredients', function(CMIngredients)
     local oldOnControl = CMIngredients.OnControl
     function CMIngredients:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             return AnnounceRecipeCMIngredients(self)
         end
         return oldOnControl(self, control, down, ...)
@@ -2722,7 +2737,7 @@ end)
 AddClassPostConstruct('widgets/redux/craftingmenu_skinselector', function(CMSkinSelector)
     local oldOnControl = CMSkinSelector.OnControl
     function CMSkinSelector:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             return AnnounceSkin(self)
         end
         return oldOnControl(self, control, down, ...)
@@ -2734,8 +2749,8 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
         local oldOnControl = SlotClass.OnControl
         function SlotClass:OnControl(control, down, ...)
             if down and control == GLOBAL.CONTROL_ACCEPT
-                and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
-                and TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT) then
+                and IsAltPressed()
+                and IsShiftPressed() then
 
                 local container = self.container
                 if container and container.inst and (
@@ -2794,7 +2809,7 @@ AddClassPostConstruct('widgets/giftitemtoast', function(self)
     local oldOnMouseButton = self.OnMouseButton
     function self:OnMouseButton(button, down, ...)
         local ret = oldOnMouseButton(self, button, down, ...)
-        if button == MOUSEBUTTON_LEFT and down and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if button == MOUSEBUTTON_LEFT and down and IsAltPressed() then
             Announce(self.enabled and GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS.CAN_OPEN or GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS.NEED_SCIENCE)
         end
         return ret
@@ -2819,7 +2834,7 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
 
     local oldOnControl = PlayerStatusScreen.OnControl
     function PlayerStatusScreen:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             if self.servertitle and self.servertitle.focus then
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NAME, { NAME = PlayerStatusScreen.servertitle:GetString() }))
             end
@@ -2878,7 +2893,7 @@ AddClassPostConstruct('widgets/playeravatarpopup', function(PlayerAvatarPopup)
 
     local oldOnControl = PlayerAvatarPopup.OnControl
     function PlayerAvatarPopup:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) and self.player_name then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() and self.player_name then
             if self.age and self.age.focus and self.currentcharacter then
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.AGE_SHORT, {
                     NAME = self.player_name,
@@ -2919,7 +2934,7 @@ end)
 AddClassPostConstruct('widgets/redux/skilltreebuilder', function(SkillTreeBuilder)
     local oldOnControl = SkillTreeBuilder.OnControl
     function SkillTreeBuilder:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
             local name = (type(self.fromfrontend) == "table" and self.fromfrontend.data and self.fromfrontend.data.name and self.fromfrontend.data.name ~= "")
                       and self.fromfrontend.data.name
                       or (self.player_name and self.player_name ~= "" and self.player_name
@@ -2962,7 +2977,7 @@ AddClassPostConstruct('widgets/redux/cookbookpage_crockpot', function(CookbookPa
 
     local oldOnControl = CookbookPageCrockPot.OnControl
     function CookbookPageCrockPot:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) and self.nomu_qa_data and self.details_root and self.details_root.focus then
+        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() and self.nomu_qa_data and self.details_root and self.details_root.focus then
             local data = self.nomu_qa_data
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.COOK.FORMATS.FOOD, {
                 NAME = data.name,
@@ -3060,7 +3075,7 @@ AddClassPostConstruct("widgets/hoverer", function(hoverer)
               or nil
 
         if target and target.prefab then
-            str = str:gsub("%s+$", "")
+            str = str:gsub("[ \t\r\n]+$", "")
 
             if show_mod then
                 local cached_mod = GetModNameForPrefab(target.prefab)
@@ -3091,7 +3106,7 @@ AddComponentPostInit("playercontroller", function(self)
     local old_OnControl = self.OnControl
     function self:OnControl(control, down, ...)
         if GLOBAL.NOMU_QA.DATA.BLOCK_ACTION and (control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY) then
-            if IsDefaultScreen() and TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) and TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT) then
+            if IsDefaultScreen() and IsAltPressed() and IsShiftPressed() then
                 return true
             end
         end
