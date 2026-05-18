@@ -98,7 +98,7 @@ local DEFAULT_SCHEME = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
 local VERSION = 1
 
 -- 检查是否启用了 Show Me
-local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil 
+local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil
 
 GLOBAL.NOMU_QA = {
     DATA = {
@@ -211,7 +211,7 @@ end
 
 
 -- 本地存储文件路径
-local DATA_FILE = 'mod_config_data/nomu_quick_announce'
+local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
 
 -- 通用的数据类型纠正函数
 local function EnsureDataType(template_val, saved_val)
