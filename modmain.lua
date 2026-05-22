@@ -315,19 +315,31 @@ end
 local function CleanPrefixName(raw_display, base_name, current_name)
     local final_name = current_name
     if GLOBAL.NOMU_QA.DATA.SHOW_PREFIX then
-        local display_no_n = string.gsub(raw_display, '\n', '')
-        local display_spaced = string.gsub(raw_display, '\n', ' ')
+        local lines = string.split(raw_display, '\n')
+        local target_line = lines[1] or raw_display -- 取第一行保底
+
         if base_name and base_name ~= "" then
-            if display_no_n ~= base_name and string.find(display_no_n, base_name, 1, true) then
-                final_name = string.gsub(display_no_n, escape_pattern(base_name), final_name)
-            elseif display_spaced ~= base_name and string.find(display_spaced, base_name, 1, true) then
-                final_name = string.gsub(display_spaced, escape_pattern(base_name), final_name)
+            for _, line in ipairs(lines) do
+                if string.find(line, base_name, 1, true) then
+                    target_line = line
+                    break
+                end
+            end
+
+            if target_line ~= base_name and string.find(target_line, base_name, 1, true) then
+                final_name = string.gsub(target_line, escape_pattern(base_name), final_name)
             end
         else
-            if final_name and display_no_n ~= final_name and string.find(display_no_n, final_name, 1, true) then
-                final_name = display_no_n
-            elseif final_name and display_spaced ~= final_name and string.find(display_spaced, final_name, 1, true) then
-                final_name = display_spaced
+            if final_name and final_name ~= "" then
+                for _, line in ipairs(lines) do
+                    if string.find(line, final_name, 1, true) then
+                        target_line = line
+                        break
+                    end
+                end
+            end
+            if final_name and target_line ~= final_name and string.find(target_line, final_name, 1, true) then
+                final_name = target_line
             end
         end
     end
@@ -452,6 +464,8 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local bad_bank = (GLOBAL.STRINGS.NOMU_QA.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", "")
     local bad_build = (GLOBAL.STRINGS.NOMU_QA.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", "")
     local bad_mod = (GLOBAL.STRINGS.NOMU_QA.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", "")
+    local lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB))
+    local rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
 
     for _, str in ipairs(items) do
         if str and str:match("[^ \t\r\n]") then
@@ -459,6 +473,8 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                            or str:find(bad_bank, 1, true)
                            or str:find(bad_build, 1, true)
                            or str:find(bad_mod, 1, true)
+                           or (lmb_pattern and str:find(lmb_pattern))
+                           or (rmb_pattern and str:find(rmb_pattern))
 
             if not is_banned and GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then
                 for _, bad_word in ipairs(GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS) do
@@ -1489,12 +1505,16 @@ local function CountItems(container, name, target_prefab, use_alias)
         return 0
     end
 
-    for _, v in pairs(container:GetItems()) do
-        num_found = num_found + check_item(v)
+    if container.GetItems then
+        local items = container:GetItems() or {}
+        for _, v in pairs(items) do
+            num_found = num_found + check_item(v)
+        end
     end
 
     if container.GetBoatEquips then
-        for _, v in pairs(container:GetBoatEquips()) do
+        local boat_equips = container:GetBoatEquips() or {}
+        for _, v in pairs(boat_equips) do
             num_found = num_found + check_item(v)
         end
     end
@@ -1688,8 +1708,8 @@ local function AnnounceItem(slot, classname)
         end
     end
 
-    local start_line = #(string.split(item:GetDisplayName(), '\n')) + (classname == 'invslot' and 3 or 2)
-    local show_me_str = GetShowMeString(item, qa, start_line, -1)
+    local start_line = #(string.split(item:GetBasicDisplayName(), '\n')) + 1
+    local show_me_str = GetShowMeString(item, qa, start_line, nil, nil, 2)
     if show_me_str ~= "" then
         fmts.SHOW_ME = show_me_str
     end
@@ -1950,6 +1970,11 @@ TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     local entity = ConsoleWorldEntityUnderMouse()
+
+    if entity and (entity:HasTag("NOCLICK") or entity:HasTag("FX") or entity:HasTag("DECOR")) then
+        entity = nil
+    end
+
     local qa = GLOBAL.NOMU_QA.SCHEME.ENV
     --鼠标中键
     if button == MOUSEBUTTON_MIDDLE then
@@ -2290,7 +2315,18 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     local display_name = ""
     pcall(function()
-        display_name = string.gsub(GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and entity:GetDisplayName() or entity:GetBasicDisplayName(), '\n', ' ')
+        local raw_name = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and entity:GetDisplayName() or entity:GetBasicDisplayName()
+        local lines = string.split(raw_name, '\n')
+        display_name = lines[1] or raw_name -- 默认保底第一行
+
+        if prefab_name and prefab_name ~= "" then
+            for _, line in ipairs(lines) do
+                if string.find(line, prefab_name, 1, true) then
+                    display_name = line
+                    break
+                end
+            end
+        end
     end)
 
     if display_name == "" then
@@ -2304,7 +2340,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
 
-    local start_line = #(string.split(entity:GetDisplayName(), '\n')) + 1
+    local start_line = #(string.split(entity:GetBasicDisplayName(), '\n')) + 1
     local show_me = GetShowMeString(entity, qa, start_line, nil, nil, 2)
 
     local final_name = GetCleanEntityName(entity, prefab_name)
@@ -2562,6 +2598,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
                          and prefab_name ~= nil
                          and basic_name ~= default_name
                          and basic_name ~= prefab_name
+                         and not string.find(basic_name, "MISSING")
                          and not is_blueprint_type
     end
 
