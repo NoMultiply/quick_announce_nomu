@@ -1,17 +1,7 @@
 -- [1] 初始化
 GLOBAL.setmetatable(env, { __index = function(_, k) return GLOBAL.rawget(GLOBAL, k) end })
 
--- 兼容 macOS (其实不是这个导致的)
---但能防止某些人改键位导致宣告不出
-local function IsAltPressed()
-    return TheInput:IsControlPressed(CONTROL_FORCE_INSPECT)
-        or TheInput:IsKeyDown(KEY_LALT)
-end
 
-local function IsShiftPressed()
-    return TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
-        or TheInput:IsKeyDown(KEY_LSHIFT)
-end
 
 -- 导入其他 Lua 文件的辅助函数
 local function Import(modulename)
@@ -102,6 +92,8 @@ local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:
 
 GLOBAL.NOMU_QA = {
     DATA = {
+        ALT_MODE = 1,    
+        SHIFT_MODE = 1,
         DEFAULT_WHISPER = false,
         CHARACTER_SPECIFIC = true,
         FREQ_AUTO_CLOSE = true,
@@ -141,7 +133,37 @@ GLOBAL.NOMU_QA = {
     SCHEME = DEFAULT_SCHEME
 }
 
+local function IsAltPressed()
+    local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
 
+    local is_force_inspect = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
+
+    local is_alt_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
+    
+    if mode == 1 then     -- 默认
+        return is_force_inspect
+    elseif mode == 2 then -- 兼容
+        return is_alt_key
+    else                  -- 通用
+        return is_force_inspect or is_alt_key
+    end
+end
+
+local function IsShiftPressed()
+    local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.SHIFT_MODE) or 1
+    
+    local is_force_trade = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
+
+    local is_shift_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
+    
+    if mode == 1 then     -- 默认
+        return is_force_trade
+    elseif mode == 2 then -- 兼容
+        return is_shift_key
+    else                  -- 通用
+        return is_force_trade or is_shift_key
+    end
+end
 -- 三方同步
 local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     if not source_data or type(source_data) ~= "table" then return end
