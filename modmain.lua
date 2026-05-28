@@ -138,7 +138,7 @@ local function IsAltPressed()
 
     local is_force_inspect = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
 
-    local is_alt_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RALT) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_ALT)
+    local is_alt_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
     
     if mode == 1 then     -- 默认
         return is_force_inspect
@@ -154,7 +154,7 @@ local function IsShiftPressed()
     
     local is_force_trade = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
 
-    local is_shift_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RSHIFT) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_SHIFT)
+    local is_shift_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
     
     if mode == 1 then     -- 默认
         return is_force_trade
