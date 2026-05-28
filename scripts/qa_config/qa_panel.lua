@@ -403,7 +403,6 @@ end
 
 -- 字符串输入面板
 local GetInputString = Class(NoMuScreen, function(self, nomu_parent, title, value, callback, limit, width)
-    -- 稍微加宽默认宽度以容纳三个按钮布局
     NoMuScreen._ctor(self, "GetInputString", nomu_parent, width or 280, 130)
     
     self.config_label = self.root:AddChild(Text(BODYTEXTFONT, 32))
@@ -417,7 +416,6 @@ local GetInputString = Class(NoMuScreen, function(self, nomu_parent, title, valu
     self.config_input.textbox:SetString(tostring(value))
     self.config_input:SetPosition(0, 0, 0)
     
-    -- 拉开应用和关闭按钮的间距，留出中间放表情按钮 (-80 和 80)
     self.AddButton(-80, -40, 100, 40, STRINGS.NOMU_QA.BUTTON_TEXT_APPLY, function() 
         callback(self.config_input.textbox:GetLineEditString())
         self:Close() 
@@ -426,7 +424,6 @@ local GetInputString = Class(NoMuScreen, function(self, nomu_parent, title, valu
         self:Close() 
     end)
 
-    -- 调用并注入表情和常用语菜单功能
     CreateEmojiAndPhraseMenu(self, "input_string")
 end)
 
@@ -695,51 +692,6 @@ function QAWordManagementPanel:RefreshCustomPrefabList()
     self.custom_prefab_list:Refresh(list)
 end
 
-local QAConfigPanel = Class(NoMuScreen, function(self, nomu_parent)
-    local width, height = 200, 620 
-    NoMuScreen._ctor(self, "QAConfigPanel", nomu_parent, width, height + 10)
-
-    local sy, row = height / 2 - 20, 0
-    local function get_y() 
-        local y = sy - row * 40
-        row = row + 1
-        return y 
-    end
-    local s = STRINGS.NOMU_QA
-
-    self.AddToggle(0, get_y(), 200, 40, "BLOCK_ACTION", s.BUTTON_TEXT_BLOCK_ACTION_ON, s.BUTTON_TEXT_BLOCK_ACTION_OFF)
-    self.AddToggle(0, get_y(), 200, 40, "ANNOUNCE_ALL_MISSING_INGREDIENTS", s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF)
-    self.AddToggle(0, get_y(), 200, 40, "DEFAULT_WHISPER", s.BUTTON_TEXT_DEFAULT_WHISPER_ON, s.BUTTON_TEXT_DEFAULT_WHISPER_OFF)
-    self.AddToggle(0, get_y(), 200, 40, "CHARACTER_SPECIFIC", s.BUTTON_TEXT_CHARACTER_SPECIFIC_ON, s.BUTTON_TEXT_CHARACTER_SPECIFIC_OFF)
-    self.AddToggle(0, get_y(), 200, 40, "FREQ_AUTO_CLOSE", s.BUTTON_TEXT_FREQ_AUTO_CLOSE_ON, s.BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF)
-    self.AddButton(0, get_y(), 200, 40, function() return GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 and s.BUTTON_TEXT_SHOW_ME_ON or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and s.BUTTON_TEXT_SHOW_ME_GIFT or s.BUTTON_TEXT_SHOW_ME_OFF) end, function() GLOBAL.NOMU_QA.DATA.SHOW_ME = (GLOBAL.NOMU_QA.DATA.SHOW_ME + 1) % 3; GLOBAL.NOMU_QA.SaveData() end)
-    self.AddButton(0, get_y(), 200, 40, function() 
-        return GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 60 and s.BUTTON_TEXT_ANNOUNCE_RANGE_LARGE or s.BUTTON_TEXT_ANNOUNCE_RANGE_DEFAULT 
-    end, function() 
-        GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE = GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 40 and 60 or 40 
-        GLOBAL.NOMU_QA.SaveData() 
-    end)
-    self.AddToggle(0, get_y(), 200, 40, "FUZZY_ANNOUNCE", s.BUTTON_TEXT_FUZZY_ON, s.BUTTON_TEXT_FUZZY_OFF)
-    self.AddToggle(0, get_y(), 200, 40, "SHOW_PREFIX", s.BUTTON_TEXT_PREFIX_ON, s.BUTTON_TEXT_PREFIX_OFF)
-    self.AddButton(0, get_y(), 200, 40, function() 
-        local v = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
-        if type(v) == "boolean" then v = v and 1 or 0 end
-        return v == 1 and s.BUTTON_TEXT_DISTANCE_ON or (v == 2 and s.BUTTON_TEXT_DISTANCE_PRECISE or s.BUTTON_TEXT_DISTANCE_OFF)
-    end, function() 
-        local v = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
-        if type(v) == "boolean" then v = v and 1 or 0 end
-        GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE = (v + 1) % 3
-        GLOBAL.NOMU_QA.SaveData() 
-    end)
-    self.AddToggle(0, get_y(), 200, 40, "SHOW_MOD_NAME", s.BUTTON_TEXT_SHOW_MOD_NAME_ON, s.BUTTON_TEXT_SHOW_MOD_NAME_OFF)
-
-    self.AddToggle(0, get_y(), 200, 40, "ENABLE_SPECIAL_STATE", s.BUTTON_TEXT_SPECIAL_STATE_ON, s.BUTTON_TEXT_SPECIAL_STATE_OFF)
-    
-    self.AddButton(0, get_y(), 200, 40, function() return GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 1 and s.BUTTON_TEXT_SHOW_ASSET_CODE or (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 2 and s.BUTTON_TEXT_SHOW_ASSET_ALL or s.BUTTON_TEXT_SHOW_ASSET_OFF) end, function() GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO = (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO + 1) % 3; GLOBAL.NOMU_QA.SaveData() end)
-    self.AddToggle(0, get_y(), 200, 40, "DEBUG_MODE", s.BUTTON_TEXT_DEBUG_ON, s.BUTTON_TEXT_DEBUG_OFF)
-    self.AddButton(0, get_y(), 200, 40, s.BUTTON_TEXT_CLOSE, function() self:Close() end)
-end)
-
 local function ValidateScheme(scheme) return scheme.name ~= nil and scheme.data ~= nil and scheme.version ~= nil end
 
 local SchemeTemplatePicker = Class(NoMuScreen, function(self, nomu_parent, callback)
@@ -818,23 +770,25 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
         item.backing.move_on_click = true
         item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
         
-        item.delete = item:AddChild(TextButton())
-        item.delete:SetFont(CHATFONT)
-        item.delete:SetTextSize(20)
-        item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-        item.delete:SetPosition(70, 0, 0)
-        item.delete:SetTextFocusColour({1,1,1,1})
-        item.delete:SetTextColour({1,0,0,1})
-        item.delete:Hide()
+        local delete = item:AddChild(TextButton())
+        delete:SetFont(CHATFONT)
+        delete:SetTextSize(20)
+        delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
+        delete:SetPosition(70, 0, 0)
+        delete:SetTextFocusColour({1,1,1,1})
+        delete:SetTextColour({1,0,0,1})
+        delete:Hide()
+        item.delete = delete
         
-        item.rename = item:AddChild(TextButton())
-        item.rename:SetFont(CHATFONT)
-        item.rename:SetTextSize(20)
-        item.rename:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RENAME)
-        item.rename:SetPosition(-70, 0, 0)
-        item.rename:SetTextFocusColour({1,1,1,1})
-        item.rename:SetTextColour({0,1,0,1})
-        item.rename:Hide()
+        local rename = item:AddChild(TextButton())
+        rename:SetFont(CHATFONT)
+        rename:SetTextSize(20)
+        rename:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RENAME)
+        rename:SetPosition(-70, 0, 0)
+        rename:SetTextFocusColour({1,1,1,1})
+        rename:SetTextColour({0,1,0,1})
+        rename:Hide()
+        item.rename = rename
 
         function item:OnGainFocus() 
             self.delete:Show()
@@ -1156,14 +1110,15 @@ local QAPanel = Class(Widget, function(self)
         item.backing.move_on_click = true
         item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
         
-        item.delete = item:AddChild(TextButton())
-        item.delete:SetFont(CHATFONT)
-        item.delete:SetTextSize(20)
-        item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-        item.delete:SetPosition(80, 0, 0)
-        item.delete:SetTextFocusColour({1,1,1,1})
-        item.delete:SetTextColour({1,0,0,1})
-        item.delete:Hide()
+        local delete = item:AddChild(TextButton())
+        delete:SetFont(CHATFONT)
+        delete:SetTextSize(20)
+        delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
+        delete:SetPosition(80, 0, 0)
+        delete:SetTextFocusColour({1,1,1,1})
+        delete:SetTextColour({1,0,0,1})
+        delete:Hide()
+        item.delete = delete
         
         function item:OnGainFocus() self.delete:Show() end
         function item:OnLoseFocus() self.delete:Hide() end
@@ -1191,27 +1146,46 @@ local QAPanel = Class(Widget, function(self)
     end)
 
     local s = STRINGS.NOMU_QA
-    AddToggleBtn(120, sy - dy, 200, dy, "BLOCK_ACTION", s.BUTTON_TEXT_BLOCK_ACTION_ON, s.BUTTON_TEXT_BLOCK_ACTION_OFF)
-    AddToggleBtn(320, sy - dy, 200, dy, "ANNOUNCE_ALL_MISSING_INGREDIENTS", s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF)
-    AddToggleBtn(120, sy - 2*dy, 200, dy, "DEFAULT_WHISPER", s.BUTTON_TEXT_DEFAULT_WHISPER_ON, s.BUTTON_TEXT_DEFAULT_WHISPER_OFF)
-    AddToggleBtn(320, sy - 2*dy, 200, dy, "CHARACTER_SPECIFIC", s.BUTTON_TEXT_CHARACTER_SPECIFIC_ON, s.BUTTON_TEXT_CHARACTER_SPECIFIC_OFF)
-    AddToggleBtn(120, sy - 3*dy, 200, dy, "FREQ_AUTO_CLOSE", s.BUTTON_TEXT_FREQ_AUTO_CLOSE_ON, s.BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF)
+
+    AddBtn(120, sy - dy, 200, dy, function() 
+        local m = GLOBAL.NOMU_QA.DATA.ALT_MODE or 1
+        return m == 1 and s.BUTTON_TEXT_ALT_MODE_1 or (m == 2 and s.BUTTON_TEXT_ALT_MODE_2 or s.BUTTON_TEXT_ALT_MODE_3) 
+    end, function() 
+        GLOBAL.NOMU_QA.DATA.ALT_MODE = ((GLOBAL.NOMU_QA.DATA.ALT_MODE or 1) % 3) + 1
+        GLOBAL.NOMU_QA.SaveData() 
+    end)
     
-    AddBtn(320, sy - 3*dy, 200, dy, function() 
+    AddBtn(320, sy - dy, 200, dy, function() 
+        local m = GLOBAL.NOMU_QA.DATA.SHIFT_MODE or 1
+        return m == 1 and s.BUTTON_TEXT_SHIFT_MODE_1 or (m == 2 and s.BUTTON_TEXT_SHIFT_MODE_2 or s.BUTTON_TEXT_SHIFT_MODE_3) 
+    end, function() 
+        GLOBAL.NOMU_QA.DATA.SHIFT_MODE = ((GLOBAL.NOMU_QA.DATA.SHIFT_MODE or 1) % 3) + 1
+        GLOBAL.NOMU_QA.SaveData() 
+    end)
+
+    AddToggleBtn(120, sy - 2*dy, 200, dy, "BLOCK_ACTION", s.BUTTON_TEXT_BLOCK_ACTION_ON, s.BUTTON_TEXT_BLOCK_ACTION_OFF)
+    AddToggleBtn(320, sy - 2*dy, 200, dy, "ANNOUNCE_ALL_MISSING_INGREDIENTS", s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF)
+    
+    AddToggleBtn(120, sy - 3*dy, 200, dy, "DEFAULT_WHISPER", s.BUTTON_TEXT_DEFAULT_WHISPER_ON, s.BUTTON_TEXT_DEFAULT_WHISPER_OFF)
+    AddToggleBtn(320, sy - 3*dy, 200, dy, "CHARACTER_SPECIFIC", s.BUTTON_TEXT_CHARACTER_SPECIFIC_ON, s.BUTTON_TEXT_CHARACTER_SPECIFIC_OFF)
+    
+    AddToggleBtn(120, sy - 4*dy, 200, dy, "FREQ_AUTO_CLOSE", s.BUTTON_TEXT_FREQ_AUTO_CLOSE_ON, s.BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF)
+    AddBtn(320, sy - 4*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 and s.BUTTON_TEXT_SHOW_ME_ON or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and s.BUTTON_TEXT_SHOW_ME_GIFT or s.BUTTON_TEXT_SHOW_ME_OFF) 
     end, function() 
         GLOBAL.NOMU_QA.DATA.SHOW_ME = (GLOBAL.NOMU_QA.DATA.SHOW_ME + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
     
-    AddBtn(120, sy - 4*dy, 200, dy, function() 
+    AddBtn(120, sy - 5*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 60 and s.BUTTON_TEXT_ANNOUNCE_RANGE_LARGE or s.BUTTON_TEXT_ANNOUNCE_RANGE_DEFAULT 
     end, function() 
         GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE = GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 40 and 60 or 40 
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 4*dy, 200, dy, "FUZZY_ANNOUNCE", s.BUTTON_TEXT_FUZZY_ON, s.BUTTON_TEXT_FUZZY_OFF)
-    AddBtn(120, sy - 5*dy, 200, dy, function() 
+    AddToggleBtn(320, sy - 5*dy, 200, dy, "FUZZY_ANNOUNCE", s.BUTTON_TEXT_FUZZY_ON, s.BUTTON_TEXT_FUZZY_OFF)
+    
+    AddBtn(120, sy - 6*dy, 200, dy, function() 
         local v = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
         if type(v) == "boolean" then v = v and 1 or 0 end
         return v == 1 and s.BUTTON_TEXT_DISTANCE_ON or (v == 2 and s.BUTTON_TEXT_DISTANCE_PRECISE or s.BUTTON_TEXT_DISTANCE_OFF) 
@@ -1221,16 +1195,19 @@ local QAPanel = Class(Widget, function(self)
         GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE = (v + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 5*dy, 200, dy, "SHOW_PREFIX", s.BUTTON_TEXT_PREFIX_ON, s.BUTTON_TEXT_PREFIX_OFF)
-    AddToggleBtn(120, sy - 6*dy, 200, dy, "SHOW_MOD_NAME", s.BUTTON_TEXT_SHOW_MOD_NAME_ON, s.BUTTON_TEXT_SHOW_MOD_NAME_OFF)
-    AddToggleBtn(320, sy - 6*dy, 200, dy, "ENABLE_SPECIAL_STATE", s.BUTTON_TEXT_SPECIAL_STATE_ON, s.BUTTON_TEXT_SPECIAL_STATE_OFF)
-    AddBtn(120, sy - 7*dy, 200, dy, function() 
+    AddToggleBtn(320, sy - 6*dy, 200, dy, "SHOW_PREFIX", s.BUTTON_TEXT_PREFIX_ON, s.BUTTON_TEXT_PREFIX_OFF)
+    
+    AddToggleBtn(120, sy - 7*dy, 200, dy, "SHOW_MOD_NAME", s.BUTTON_TEXT_SHOW_MOD_NAME_ON, s.BUTTON_TEXT_SHOW_MOD_NAME_OFF)
+    AddToggleBtn(320, sy - 7*dy, 200, dy, "ENABLE_SPECIAL_STATE", s.BUTTON_TEXT_SPECIAL_STATE_ON, s.BUTTON_TEXT_SPECIAL_STATE_OFF)
+    
+    AddBtn(120, sy - 8*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 1 and s.BUTTON_TEXT_SHOW_ASSET_CODE or (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 2 and s.BUTTON_TEXT_SHOW_ASSET_ALL or s.BUTTON_TEXT_SHOW_ASSET_OFF) 
     end, function() 
         GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO = (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 7*dy, 200, dy, "DEBUG_MODE", s.BUTTON_TEXT_DEBUG_ON, s.BUTTON_TEXT_DEBUG_OFF)
+    AddToggleBtn(320, sy - 8*dy, 200, dy, "DEBUG_MODE", s.BUTTON_TEXT_DEBUG_ON, s.BUTTON_TEXT_DEBUG_OFF)
+    
     AddBtn(0, -sy, 200, dy, s.BUTTON_TEXT_CLOSE, function() self:Hide() end)
     self:Refresh()
 end)

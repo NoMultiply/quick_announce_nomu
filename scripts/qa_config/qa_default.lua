@@ -45,6 +45,7 @@ GLOBAL.STRINGS.NOMU_QA = {
     CLOUDPINE_BOX_L2  = '云青松',
     CLOUDPINE_BOX_L3  = '云青松',
     CLOUDPINE_BOX_L4  = '云青松',
+    MAT_WHITEWOOD  = '白木地片装饰',
     SECURITY_PULSE_CAGE_FULL  = '充能的火花柜',
     MOOSE_NESTING_GROUND  = '麋鹿鹅筑巢点',
     SINKHOLE  = '坑',
@@ -56,6 +57,15 @@ GLOBAL.STRINGS.NOMU_QA = {
 
 
     TITLE_TEXT_QA = '快捷宣告 (NOMU)',
+
+    BUTTON_TEXT_ALT_MODE_1 = 'Alt判定：默认',
+    BUTTON_TEXT_ALT_MODE_2 = 'Alt判定：兼容',
+    BUTTON_TEXT_ALT_MODE_3 = 'Alt判定：通用',
+    
+    BUTTON_TEXT_SHIFT_MODE_1 = 'Shift判定：默认',
+    BUTTON_TEXT_SHIFT_MODE_2 = 'Shift判定：兼容',
+    BUTTON_TEXT_SHIFT_MODE_3 = 'Shift判定：通用',
+
     BUTTON_TEXT_BLOCK_ACTION_ON = "防误触拦截：开启",
     BUTTON_TEXT_BLOCK_ACTION_OFF = "防误触拦截：关闭",
     TITLE_TEXT_SURE_TO_DELETE = '确认删除该项？',
