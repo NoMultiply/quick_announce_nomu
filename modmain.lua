@@ -59,7 +59,7 @@ end
 -- 检查当前是否在游戏主界面 (HUD) 且没有在打字
 local function IsDefaultScreen()
     local active_screen = GLOBAL.TheFrontEnd:GetActiveScreen()
-    if active_screen.IsEditing and active_screen:IsEditing() then
+    if active_screen and active_screen.IsEditing and active_screen:IsEditing() then
         return false
     end
 
@@ -1926,7 +1926,7 @@ local function AnnounceRecipeCMIngredients(ingredients)
 
     if root and root.children then
         for _, _ing in pairs(root.children) do
-            if _ing.focus and _ing.ing and _ing.ing.texture then
+            if _ing.focus and _ing.ing and _ing.ing.texture and type(_ing.ing.texture) == "string" then
                 specific_ingredient_type = _ing.ing.texture:sub(1, -5)
             end
         end
