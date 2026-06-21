@@ -59,17 +59,11 @@ end
 -- 检查当前是否在游戏主界面 (HUD) 且没有在打字
 local function IsDefaultScreen()
     local active_screen = GLOBAL.TheFrontEnd:GetActiveScreen()
-    local screen = active_screen and active_screen.name or ""
-    local is_typing = false
-    local focus = GLOBAL.TheFrontEnd:GetFocusWidget()
-    if focus and focus.inst and focus.inst.TextEditWidget then
-        is_typing = true
-    end
-
-    if is_typing then
+    if active_screen.IsEditing and active_screen:IsEditing() then
         return false
     end
 
+    local screen = active_screen and active_screen.name or ""
     return screen:find("HUD") ~= nil
         and GLOBAL.ThePlayer ~= nil
         and not GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()

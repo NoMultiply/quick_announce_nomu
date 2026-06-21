@@ -13,9 +13,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喵呜～{WORLD}气温：{TEMPERATURE}，{WEATHER}来了喵：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            START_RAIN = '喵呜～{WORLD}气温：{TEMPERATURE}，{WEATHER}来了喵：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
             NO_RAIN = '嗅嗅……{WORLD}气温：{TEMPERATURE}，肉垫预报{WEATHER}还没来喵󰀍～',
-            STOP_RAIN = '喵！{WORLD}气温：{TEMPERATURE}，放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
+            STOP_RAIN = '喵！{WORLD}气温：{TEMPERATURE}，放晴啦：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）～',
         },
         MAPPINGS = {
             DEFAULT = {

@@ -13,9 +13,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，{WEATHER}来啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）哒～',
+            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，第{DAYS}天{WEATHER}就来啦（还剩：{MINUTES}分{SECONDS}秒）～',
             NO_RAIN = '唔……{WORLD}现在的气温是：{TEMPERATURE}，天空很乖，{WEATHER}还没来呢✿～',
-            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，终于放晴啦：第{DAYS}天（{MINUTES}分{SECONDS}秒）～',
+            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，第{DAYS}天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）～',
         },
         MAPPINGS = {
             DEFAULT = {

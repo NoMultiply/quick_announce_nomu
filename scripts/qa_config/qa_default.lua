@@ -246,9 +246,9 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            START_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
             NO_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}尚未接近。',
-            STOP_RAIN = '{WORLD}气温：{TEMPERATURE}，放晴：第{DAYS}天（{MINUTES}分{SECONDS}秒）',
+            STOP_RAIN = '{WORLD}气温：{TEMPERATURE}，放晴：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
         },
         MAPPINGS = {
             DEFAULT = {
