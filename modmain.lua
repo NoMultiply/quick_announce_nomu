@@ -82,7 +82,7 @@ local DEFAULT_SCHEME = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
 local VERSION = 1
 
 -- 检查是否启用了 Show Me
-local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil
+local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil or ModManager:GetMod("workshop-2189004162") ~= nil
 
 GLOBAL.NOMU_QA = {
     DATA = {
@@ -475,6 +475,44 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     end
 
     local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
+    
+ -- 兼容 Insight 模组
+    if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
+        local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
+        if insight_cache and insight_cache[target] then
+            --提取基础 information
+            local insight_info = insight_cache[target].information
+            if insight_info and insight_info ~= "" then
+                local clean_info = insight_info
+
+                clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
+                    return GLOBAL.STRINGS.NAMES[string.upper(prefab)] or prefab
+                end)
+
+                clean_info = clean_info:gsub("<string=([^>]+)>", function(str_path)
+                    local current = GLOBAL.STRINGS
+                    for field in str_path:gmatch("[^%.]+") do
+                        if type(current) == "table" then
+                            current = current[field]
+                        else
+                            current = nil
+                            break
+                        end
+                    end
+                    return type(current) == "string" and current or str_path
+                end)
+
+                clean_info = clean_info:gsub("<temperature=([^>]+)>", "%1")
+                clean_info = clean_info:gsub("</?%a+[^>]*>", "")
+                
+                local insight_lines = string.split(clean_info, '\n')
+                for _, line in ipairs(insight_lines) do
+                    table.insert(items, line)
+                end
+            end
+        end
+    end
+
     local filtered = {}
     local bad_prefab = (GLOBAL.STRINGS.NOMU_QA.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", "")
     local bad_bank = (GLOBAL.STRINGS.NOMU_QA.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", "")
@@ -693,6 +731,92 @@ local function OnHUDMouseButton(HUD)
     local widget = TheInput:GetHUDEntityUnderMouse()
     local default_thresholds = { .15, .35, .55, .75 }
     local levels = { 'EMPTY', 'LOW', 'MID', 'HIGH', 'FULL' }
+ --  Insight面板宣告
+    if widget and widget.widget then
+        local w = widget.widget
+        local is_insight_menu = false
+        local temp_w = w
+        while temp_w do
+            if HUD.controls and temp_w == HUD.controls.insight_menu then
+                is_insight_menu = true
+                break
+            end
+            temp_w = temp_w.parent
+        end
+
+        if is_insight_menu then
+            local text_str = nil
+            local comp_name = nil
+            local curr = w
+
+            while curr and curr ~= HUD.controls.insight_menu do
+                if curr.componentName then comp_name = curr.componentName end
+                if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
+                
+                if curr.raw_text and type(curr.raw_text) == "string" then
+                    text_str = curr:GetString()
+                    break
+                elseif curr.text and curr.text.GetString then
+                    text_str = curr.text:GetString()
+                    break
+                end
+                curr = curr.parent
+            end
+
+            if not text_str and w.GetString then
+                text_str = w:GetString()
+            end
+
+            if text_str and text_str ~= "" then
+                local clean_info = text_str
+
+                local raw_code = clean_info:match("<icon=([^>]+)>") or clean_info:match("<prefab=([^>]+)>")
+                if not raw_code and comp_name then
+                    raw_code = string.gsub(comp_name, "spawner$", "")
+                    raw_code = string.gsub(raw_code, "manager$", "")
+                end
+
+                local INSIGHT_CODE_MAP = GLOBAL.STRINGS.NOMU_QA.INSIGHT_CODE_MAP or {}
+                
+                local prefix_name = ""
+                if raw_code and INSIGHT_CODE_MAP[string.lower(raw_code)] then
+                    prefix_name = INSIGHT_CODE_MAP[string.lower(raw_code)] .. "："
+                end
+
+                clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
+                    return GLOBAL.STRINGS.NAMES[string.upper(prefab)] or prefab
+                end)
+
+                clean_info = clean_info:gsub("<string=([^>]+)>", function(str_path)
+                    local current = GLOBAL.STRINGS
+                    for field in str_path:gmatch("[^%.]+") do
+                        if type(current) == "table" then
+                            current = current[field]
+                        else
+                            current = nil
+                            break
+                        end
+                    end
+                    return type(current) == "string" and current or str_path
+                end)
+
+                clean_info = clean_info:gsub("<temperature=([^>]+)>", "%1")
+
+                clean_info = clean_info:gsub("</?%a+[^>]*>", "")
+
+                if prefix_name ~= "" and not string.find(clean_info, INSIGHT_CODE_MAP[string.lower(raw_code)]) then
+                    clean_info = clean_info:gsub("^[ \t]+", "")
+                    clean_info = prefix_name .. clean_info
+                end
+
+                if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and raw_code then
+                    clean_info = clean_info .. " [代号: " .. raw_code .. "]"
+                end
+                
+                return Announce(clean_info)
+            end
+        end
+    end
 
     -- 勋章 Buff 宣告
     if widget and widget.widget then
