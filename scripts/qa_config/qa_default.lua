@@ -195,6 +195,7 @@ GLOBAL.STRINGS.NOMU_QA = {
         ["sharkboi"] = "大霜鲨重生时间",
         ["shadowparasite"] = "暗影寄生",
         ["shadowthrall"] = "绝望石矿苗",
+        ["mock_dragonfly"] = "时令龙蝇重生时间",
     },
 
     FUNC = {
@@ -599,8 +600,8 @@ TREE = {
                     BEEBOX_FULL = "挂满了蜂蜜",
                     BEEBOX_SOME = "积攒了点蜂蜜",
                     BEEBOX_EMPTY = "空空的",
-                    PICKABLE_READY = "长好了",
-                    PICKABLE_EMPTY = "还在生长",
+                    PICKABLE_READY = "等待收获",
+                    PICKABLE_EMPTY = "正在生长",
                     NEST_HAS_EGG = "有高鸟蛋",
                     NEST_EMPTY = "是空巢",
                     MUSHROOMFARM_ROTTEN = "变成烂木头了",

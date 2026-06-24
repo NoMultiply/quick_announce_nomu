@@ -475,7 +475,8 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     end
 
     local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
-    
+    local is_insight_data = false
+
  -- 兼容 Insight 模组
     if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
         local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
@@ -483,6 +484,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
             --提取基础 information
             local insight_info = insight_cache[target].information
             if insight_info and insight_info ~= "" then
+                is_insight_data = true
                 local clean_info = insight_info
 
                 clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
@@ -553,19 +555,31 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
         filtered = s
     end
 
-    if #filtered > 0 then
-        local joined_str = table.concat(filtered, GLOBAL.STRINGS.NOMU_QA.COMMA or ", ")
+if #filtered > 0 then
+    local MAX_LEN = 150
+    local joined_str = ""
+    local is_truncated = false
 
-        if #joined_str > 270 then
-            joined_str = filtered[#filtered]
+    for i, line in ipairs(filtered) do
+        local separator = (joined_str == "") and "" or ", "
+        local next_len = #joined_str + #separator + #line
+
+        if next_len <= MAX_LEN then
+            joined_str = joined_str .. separator .. line
+        else
+            if #joined_str + 3 <= MAX_LEN then
+                joined_str = joined_str .. "..."
+            end
+            is_truncated = true
+            break
         end
-
-        return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str })
     end
+
+    return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str })
+end
 
     return ""
 end
-
 
 -- [4] 实体状态检测工具 
 -- 常见可采摘植物列表
@@ -573,7 +587,8 @@ local BASIC_PICKABLES = {
     grass = true, sapling = true, berrybush = true, berrybush2 = true, berrybush_juicy = true,
     reeds = true, bullkelp_plant = true, marsh_bush = true, lichen = true, cave_banana_tree = true,
     monkeytail = true, bananabush = true, sapling_moon = true, cactus = true, oasis_cactus = true,
-    rock_avocado_bush = true, wormlight_plant = true, oceanvine = true
+    rock_avocado_bush = true, wormlight_plant = true, oceanvine = true, orchidbush = true, lilybush = true,
+    nightrosebush = true, rosebush = true
 }
 
 -- 需要特殊判定
