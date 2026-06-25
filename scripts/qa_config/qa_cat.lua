@@ -307,142 +307,102 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             }
         }
     },
-    TREE = {
-        FORMATS = {
-            EQUAL = '喵󰀍～人家发现这{COUNT}棵{NAME}全都是{ADJ}{SHOW_ME}喵，是完美的天然猫爬架呢！',
-            DESCRIBE = '嗅嗅……这{COUNT}棵{NAME}里有{NUM}棵{ADJ}{SHOW_ME}喵󰀍～'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    STUMP = "光秃秃的树桩",
-                    SAPLING = "可爱的小树苗",
-                    SHORT = "刚刚长出的小树",
-                    NORMAL = "长得不错的树",
-                    TALL = "长得高高大大的",
-                    BOULDER = "被砍成了矿床的",
-                    SEED = "刚种下的种子",
-                    ANCIENT_READY = "挂满果实的",
-                    ANCIENT_EMPTY = "果子被吃光了的",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚刚长出的大理石",
-                    MARBLE_TREE = "大理石雕刻的漂亮树喵"
-                }
-            }
-        }
-    },
-    CROP = {
-        FORMATS = {
-            EQUAL = '喵󰀍～人家发现附近有{COUNT}个{NAME}，它们全都{ADJ}{SHOW_ME}喵！',
-            DESCRIBE = '喵󰀍～人家发现附近有{COUNT}个{NAME}，其中有{NUM}个{ADJ}{SHOW_ME}喵！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    WITH_BARNACLES = "长着小藤壶的",
-                    NO_BARNACLES = "光秃秃的",
-                    SEED = "还是小种子",
-                    GROW = "还在努力长大",
-                    FULL = "已经成熟啦",
-                    OVER = "长得超级巨大",
-                    ROT = "已经坏掉了",
-                    SALT_FULL = "长满了咸咸的盐块",
-                    SALT_MED = "正在结出小盐矿",
-                    SALT_LOW = "只长出一点盐晶",
-                    SALT_EMPTY = "盐块都被挖走啦",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚刚长出的大理石",
-                    BEEBOX_FULL = "挂满了甜甜的蜂蜜",
-                    BEEBOX_SOME = "攒了一点点蜂蜜",
-                    BEEBOX_EMPTY = "空空的没有蜂蜜",
-                    PICKABLE_READY = "长好啦，快去采摘",
-                    PICKABLE_EMPTY = "还在努力生长",
-                    NEST_HAS_EGG = "有圆滚滚的高鸟蛋",
-                    NEST_EMPTY = "是个空鸟窝",
-                    MUSHROOMFARM_ROTTEN = "变成烂木头啦",
-                    MUSHROOMFARM_EMPTY = "里面空空的",
-                    MUSHROOMFARM_STAGE1 = "刚刚种下小蘑菇",
-                    MUSHROOMFARM_STAGE2 = "蘑菇长得不错",
-                    MUSHROOMFARM_STAGE3 = "蘑菇完全长大啦",
-                    MUSHROOMFARM_STAGE4 = "哇！蘑菇多得要掉下来啦"
-                }
-            }
-        }
-    },
-    SPIDERDEN = {
-        FORMATS = {
-            EQUAL = '喵󰀍～这{COUNT}个{NAME}全都是{ADJ}{SHOW_ME}，长着毛茸茸的蜘蛛先生喵！',
-            DESCRIBE = '喵呜，这{COUNT}个{NAME}里有{NUM}个是{ADJ}{SHOW_ME}喵！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    L1 = "一级的",
-                    L2 = "二级的",
-                    L3 = "三级的",
-                    L1_BEDAZZLED = "被装饰的一级",
-                    L2_BEDAZZLED = "被装饰的二级",
-                    L3_BEDAZZLED = "被装饰的三级",
-                }
-            }
-        }
-    },
     ENV = {
         FORMATS = {
-            SINGLE = '主人的猫猫雷达发现附近有1个{NAME}{SHOW_ME}{DISTANCE}喵󰀍～',
-            DEFAULT = '检测到{NUM}个{NAME}{SHOW_ME}{DISTANCE}～人家耳朵竖起来了喵！',
-            NAMED = '胡须测量仪显示，附近有{NUM_PREFAB}个{PREFAB_NAME}，其中有{NUM}个叫{NAME}{SHOW_ME}{DISTANCE}喵！',
-            CODE = '这玩意叫：{NAME}，猫星代码是：{PREFAB}',
-            BURNT_EQUAL = '喵……这里有{TOTAL}个{NAME}，全都被烧成黑炭了{SHOW_ME}{DISTANCE}喵……',
-            BURNT_DESCRIBE = '这里有{TOTAL}个{NAME}，有{NUM}个被烧成黑炭了{SHOW_ME}{DISTANCE}喵……',
-            FIRE_EQUAL = '喵呜！这里有{TOTAL}个{NAME}，全都在起火快跑{SHOW_ME}{DISTANCE}喵！',
-            FIRE_DESCRIBE = '呜喵！这里有{TOTAL}个{NAME}，其中有{NUM}个起火了快跑{SHOW_ME}{DISTANCE}喵！',
-            WITHERED_EQUAL = '喵……这里有{TOTAL}个{NAME}，全都被热得枯萎了{SHOW_ME}{DISTANCE}喵……',
-            WITHERED_DESCRIBE = '呜喵！这里有{TOTAL}个{NAME}，其中有{NUM}个被热得枯萎了{SHOW_ME}{DISTANCE}喵……',
-            BARREN_EQUAL = '喵呜～{TOTAL}个{NAME}全都没施肥{SHOW_ME}{DISTANCE}，需要主人去捡臭臭的肥料喵󰀍～',
-            BARREN_DESCRIBE = '喵呜～这里有{TOTAL}个{NAME}，其中有{NUM}个还没施肥{SHOW_ME}{DISTANCE}，需要主人去捡臭臭的肥料喵󰀍～',
-            SMOLDER_EQUAL = '喵嗷！{TOTAL}个{NAME}全都在冒黑烟了{SHOW_ME}{DISTANCE}，肉垫觉得很危险喵，快拿冰块！',
-            SMOLDER_DESCRIBE = '喵嗷！这里有{TOTAL}个{NAME}，其中有{NUM}个冒黑烟了{SHOW_ME}{DISTANCE}，肉垫觉得很危险喵，快拿冰块！',
-            GOAT_CHARGED_EQUAL = '喵呜！这里有{TOTAL}个{NAME}，全都带电了{SHOW_ME}{DISTANCE}，快把毛收起来！',
-            GOAT_CHARGED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}只是带电状态{SHOW_ME}{DISTANCE}，快把毛收起来！',
-            GOAT_NORMAL_EQUAL = '这里有{TOTAL}个{NAME}，全都是普通的羊羊{SHOW_ME}{DISTANCE}喵。',
-            GOAT_NORMAL_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}只是普通的羊羊{SHOW_ME}{DISTANCE}喵。',
-            FISH_SHOAL = '嗅嗅……这里有群{FISH}，共有{NUM}条{FISH}{SHOW_ME}{DISTANCE}喵！',
-            FISH_HOLE = '嗅嗅……人家发现了一处{NAME}{SHOW_ME}{DISTANCE}喵󰀍～要开始钓鱼鱼了吗？',
-            HOTSPRING_BOMBED_EQUAL = '这里有{TOTAL}个{NAME}，水温全都棒极了{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_BOMBED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个水温很棒{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_GLASSED_EQUAL = '这里有{TOTAL}个{NAME}，全变成石头了没法洗澡{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_GLASSED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个变成石头了{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_EMPTY_EQUAL = '这里有{TOTAL}个{NAME}，全都干干的没有水{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_EMPTY_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个干干的没有水{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_RIPE_EQUAL = '这里有{TOTAL}个{NAME}，全都变成红彤彤的啦{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_RIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个变成红彤彤的啦{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_UNRIPE_EQUAL = '这里有{TOTAL}个{NAME}，全都是普通的颜色{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_UNRIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个是普通的颜色{SHOW_ME}{DISTANCE}喵！',
-            BIRDCAGE_EMPTY = '这里有{TOTAL}个{NAME}，这个里面空空的{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_FULL = '这里有{TOTAL}个{NAME}，这个里面有一只小鸟{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_SICK = '这里有{TOTAL}个{NAME}，这个里面的鸟生病了{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_DEAD = '这里有{TOTAL}个{NAME}，这个里面的鸟已经饿死了……{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_FULL_EQUAL = '这里有{TOTAL}个{NAME}，全都已经激活了{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_FULL_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个已经激活了{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_EMPTY_EQUAL = '这里有{TOTAL}个{NAME}，全都没有激活{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_EMPTY_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个还没激活{SHOW_ME}{DISTANCE}喵。',
-            TOADSTOOL_EMPTY = '雷达扫描完毕喵󰀍～这里有蟾蜍洞穴，目前里面空空的{SHOW_ME}{DISTANCE}，大蛤蟆不在家喵。',
-            TOADSTOOL_NORMAL = '喵嗷！锁定目标！这里有蟾蜍洞穴，里面有一只大蛤蟆{SHOW_ME}{DISTANCE}，准备启动猫猫拳喵！',
-            TOADSTOOL_DARK = '警报！高能反应喵！这里有蟾蜍洞穴，里面是悲惨毒菌蟾蜍{SHOW_ME}{DISTANCE}，肉垫发抖惹喵！',
-            OASISLAKE_EMPTY = '喵呜……水分探测仪显示，这1个{NAME}已经干涸掉啦{SHOW_ME}{DISTANCE}，没法抓鱼鱼了喵……',
-            OASISLAKE_FULL = '喵󰀍～探测到充沛的水源！这1个{NAME}满满的都是水{SHOW_ME}{DISTANCE}，可以玩水花啦！',
+            SINGLE = '主人～这里有 1个 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            DEFAULT = '喵呜～这附近共有 {NUM}个 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            NAMED = '肉垫发现！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名叫 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
+            
+            FISH_SHOAL = '快看喵！这里有一群好吃的 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}！',
+            FISH_HOLE = '这里有1个 {NAME} 喵{SHOW_ME}{DISTANCE}。',
+
+            STATE_EQUAL = '喵呜～这里有 {TOTAL}个 {NAME}，目前全都{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_DESCRIBE = '有情况喵！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经{ADJ}了喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_THIS = '抓到一只特殊目标喵！这里共有 {TOTAL}个 {NAME}，而这个{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME}，目前它{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（这个有 {SHOW_ME}）',
-                    DISTANCE_FAR = '，距离人家大概{DIST}个毛线球（格）的距离喵～',
-                    DISTANCE_CLOSE = '，就在人家肉垫旁边喵！',
-                    DISTANCE_FAR_WATER = '，在距离人家约{DIST}格的水面上喵，人家才不要下水！',
-                    DISTANCE_CLOSE_WATER = '，就在人家旁边的水面上喵～',
+                    SHOW_ME = '（里面抓到了：{SHOW_ME}）',
+                    DISTANCE_FAR = '，距离主人喵约 {DIST} 格地皮',
+                    DISTANCE_CLOSE = '，就在人家尾巴旁边喵！',
+                    DISTANCE_FAR_WATER = '，在距离人家约 {DIST} 格的湿漉漉水面上喵',
+                    DISTANCE_CLOSE_WATER = '，就在人家脚边的小浪花里喵',
+                    MOD_INFO = '，模组：{MOD_NAME}',
+                    ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
+                },
+                ADJ = {
+                    BURNT = '被烤焦了喵',
+                    FIRE = '在扑哧扑哧燃烧中喵（好烫）',
+                    WITHERED = '干巴巴地枯萎了喵',
+                    BARREN = '肚子饿了需要施肥喵',
+                    SMOLDER = '在冒热气快要起火了喵',
+                    GOAT_CHARGED = '麻酥酥的带电状态喵',
+                    GOAT_NORMAL = '是温顺听话的普通状态喵',
+                    HOTSPRING_BOMBED = '水温泡澡正合适喵',
+                    HOTSPRING_GLASSED = '已经结成亮晶晶的亮冰了喵',
+                    HOTSPRING_EMPTY = '已经干得连一滴水水都没有了喵',
+                    FRUITDRAGON_RIPE = '红通通熟透了喵（扑上去）',
+                    FRUITDRAGON_UNRIPE = '还是硬邦邦的未成熟状态喵',
+                    BIRDCAGE_EMPTY = '空空的什么鸟都没有喵',
+                    BIRDCAGE_FULL = '里面住着扑棱棱的小鸟喵',
+                    BIRDCAGE_SICK = '里面的小鸟生病蔫掉了喵',
+                    BIRDCAGE_DEAD = '里面的小鸟回喵星了喵',
+                    ARCHIVE_SWITCH_FULL = '亮起来处于激活状态喵',
+                    ARCHIVE_SWITCH_EMPTY = '黑乎乎的还没被激活喵',
+                    TOADSTOOL_EMPTY = '空空如也，没有大蛤蟆喵',
+                    TOADSTOOL_NORMAL = '蹲着一只好大只的毒菌蟾蜍喵',
+                    TOADSTOOL_DARK = '藏着一只很凶的悲惨毒菌蟾蜍喵',
+                    OASISLAKE_EMPTY = '已经干枯成沙子坑了喵',
+                    OASISLAKE_FULL = '装满了清澈好喝的湖水喵',
+                    BEEFALO_SHAVED = '被剃光了毛（看起来凉飕飕的喵）',
+
+                    WITH_BARNACLES = "长满了小藤壶喵",
+                    NO_BARNACLES = "光溜溜一片喵",
+                    SEED = "还只是一颗小种子喵",
+                    GROW = "还在努力长高高喵",
+                    FULL = "已经香喷喷地成熟了喵",
+                    OVER = "长成了级大只的巨型作物喵",
+                    ROT = "烂掉了呜呜喵",
+                    SALT_FULL = "结满了咸咸的盐晶喵",
+                    SALT_MED = "正在结晶的半路上喵",
+                    SALT_LOW = "只结了一点点小盐晶喵",
+                    SALT_EMPTY = "已经被小猫爪刨空了喵",
+                    MARBLE_TALL = "完全长成大理石柱了喵",
+                    MARBLE_NORMAL = "处于不大不小的体型喵",
+                    MARBLE_SHORT = "才刚刚破土钻出来喵",
+                    BEEBOX_FULL = "小甜蜜都快溢出来洗爪子了喵",
+                    BEEBOX_SOME = "积攒了一点点蜂蜜糖喵",
+                    BEEBOX_EMPTY = "连一滴甜头都没有喵",
+                    PICKABLE_READY = "可以伸爪去采摘了喵",
+                    PICKABLE_EMPTY = "还在长新芽的冬眠期喵",
+                    NEST_HAS_EGG = "里面躺着一颗大高鸟蛋喵",
+                    NEST_EMPTY = "只是个草编的空巢喵",
+                    MUSHROOMFARM_ROTTEN = "变成不能磨爪子的烂木头了喵",
+                    MUSHROOMFARM_EMPTY = "里面还没播种喵",
+                    MUSHROOMFARM_STAGE1 = "才刚种下去不久喵",
+                    MUSHROOMFARM_STAGE2 = "长势探头探脑挺喜人的喵",
+                    MUSHROOMFARM_STAGE3 = "已经长成小伞了喵",
+                    MUSHROOMFARM_STAGE4 = "多得快要把木头给挤爆啦喵",
+
+                    STUMP = "变成可以当凳子坐的树桩了喵",
+                    SAPLING = "还是个柔弱的小树苗喵",
+                    SHORT = "才刚刚探出个小绿头喵",
+                    NORMAL = "长得郁郁葱葱正茂盛呢喵",
+                    TALL = "长得像超级大猫爬架一样高喵",
+                    BOULDER = "已经石化变成矿床了喵",
+                    ANCIENT_READY = "结满了沉甸甸的果实喵",
+                    ANCIENT_EMPTY = "光秃秃的什么果果都没有喵",
+                    MARBLE_TREE = "是由漂亮大理石构成的树树喵",
+
+                    L1 = "小小的一级巢喵",
+                    L2 = "变大了一点的二级巢喵",
+                    L3 = "超大的一堆毛线球三级巢喵",
+                    L1_BEDAZZLED = "被亮晶晶装饰过的一级巢喵",
+                    L2_BEDAZZLED = "被亮晶晶装饰过的二级巢喵",
+                    L3_BEDAZZLED = "被亮晶晶装饰过的三级巢喵",
                 }
             }
         }

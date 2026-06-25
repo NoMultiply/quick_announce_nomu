@@ -2334,6 +2334,9 @@ TheInput:AddMouseButtonHandler(function(button, down)
         or string.find(entity:GetDisplayName() or "", "Ripe")
     )
 
+    local is_beefalo = entity.prefab == "beefalo"
+    local target_is_shaved_beefalo = is_beefalo and not entity:HasTag("has_beard")
+
     local is_archive_switch = entity.prefab == "archive_switch"
     local target_is_full_archive_switch = is_archive_switch and entity.AnimState and (
         entity.AnimState:IsCurrentAnimation("idle_full")
@@ -2348,6 +2351,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
     local count_unripe_fruitdragon = 0
     local count_archive_switch_full = 0
     local count_archive_switch_empty = 0
+    local count_shaved_beefalo = 0
 
     local target_name = ""
     pcall(function() target_name = entity:GetDisplayName() end)
@@ -2436,6 +2440,12 @@ TheInput:AddMouseButtonHandler(function(button, down)
                 end
             end
 
+            if is_beefalo and v.prefab == "beefalo" then
+                if not v:HasTag("has_beard") then
+                    count_shaved_beefalo = count_shaved_beefalo + 1
+                end
+            end
+
             if is_archive_switch and v.prefab == "archive_switch" then
                 if v.AnimState and (v.AnimState:IsCurrentAnimation("idle_full") or v.AnimState:IsCurrentAnimation("activate")) then
                     count_archive_switch_full = count_archive_switch_full + 1
@@ -2512,7 +2522,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     -- 针对不同特殊实体的不同宣告
     if entity.prefab == "icefishing_hole" then
-        return Announce(subfmt(qa.FORMATS.FISH_HOLE or qa.FORMATS.SINGLE, {
+        return Announce(subfmt(qa.FORMATS.SINGLE, {
             NAME = GLOBAL.STRINGS.NOMU_QA.ICEFISHING_HOLE,
             SHOW_ME = show_me,
             DISTANCE = dist_str
@@ -2551,192 +2561,100 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     local use_special = GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE
 
-    -- 鸟笼特殊宣告判定
-    if use_special and entity.prefab == "birdcage" then
-        local anim = entity.AnimState
-        local state_fmt = qa.FORMATS.BIRDCAGE_FULL
+    -- 统一处理所有具有特殊状态的实体
+    local use_special = GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE
 
-        if anim then
-            if anim:IsCurrentAnimation("idle_empty") then
-                state_fmt = qa.FORMATS.BIRDCAGE_EMPTY
-            elseif CheckAnims(anim, {"idle_sick", "idle_sick2", "idle_sick3", "fall_sick"}) then
-                state_fmt = qa.FORMATS.BIRDCAGE_SICK
-            elseif CheckAnims(anim, {"death", "idle_death", "idle_skeleton"}) then
-                state_fmt = qa.FORMATS.BIRDCAGE_DEAD
+    if use_special then
+        local target_stat = nil
+        local stat_count = count_prefab -- 默认按照预制物总数作为对比基数
+        local force_display_name = final_name or display_name
+        local is_specific_only = false -- 只宣告这一个的特殊物品
+
+        if entity:HasTag("fire") and not entity:HasTag("campfire") and not entity:HasTag("tree") then
+            target_stat = "FIRE"
+            stat_count = count_fire
+            if entity.prefab == "houndfire" then force_display_name = prefab_name or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE end
+        elseif count_burnt > 0 then
+            target_stat = "BURNT"
+            stat_count = count_burnt
+        elseif target_smolder then
+            target_stat = "SMOLDER"
+            stat_count = count_smolder
+        elseif is_lightninggoat and target_is_charged_goat then
+            target_stat = "GOAT_CHARGED"
+            stat_count = count_charged_goat
+        elseif entity:HasTag("withered") then
+            target_stat = "WITHERED"
+            stat_count = count_withered
+            force_display_name = prefab_name
+        elseif target_barren then
+            target_stat = "BARREN"
+            stat_count = count_barren
+            force_display_name = prefab_name
+        elseif target_is_crop and target_crop_stat then
+            target_stat = target_crop_stat
+            stat_count = count_crop_stat
+        elseif target_is_tree and target_tree_stat then
+            target_stat = target_tree_stat
+            stat_count = count_tree_stat
+        elseif target_is_spiderden and target_spiderden_stat then
+            target_stat = target_spiderden_stat
+            stat_count = count_spiderden_stat
+        elseif target_is_hotspring and target_hotspring_stat then
+            target_stat = "HOTSPRING_" .. target_hotspring_stat
+            stat_count = count_hotspring_stat
+        elseif is_fruitdragon then
+            target_stat = target_is_ripe_fruitdragon and "FRUITDRAGON_RIPE" 
+            stat_count = target_is_ripe_fruitdragon and count_ripe_fruitdragon 
+        elseif is_beefalo and target_is_shaved_beefalo then
+            target_stat = "BEEFALO_SHAVED"
+            stat_count = count_shaved_beefalo
+        elseif is_archive_switch then
+            target_stat = target_is_full_archive_switch and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY"
+            stat_count = target_is_full_archive_switch and count_archive_switch_full or count_archive_switch_empty
+
+        elseif entity.prefab == "birdcage" then
+            target_stat = "BIRDCAGE_FULL"
+            if entity.AnimState then
+                if entity.AnimState:IsCurrentAnimation("idle_empty") then target_stat = "BIRDCAGE_EMPTY"
+                elseif CheckAnims(entity.AnimState, {"idle_sick", "idle_sick2", "idle_sick3", "fall_sick"}) then target_stat = "BIRDCAGE_SICK"
+                elseif CheckAnims(entity.AnimState, {"death", "idle_death", "idle_skeleton"}) then target_stat = "BIRDCAGE_DEAD"
+                end
             end
+            is_specific_only = true
+        elseif entity.prefab == "oasislake" then
+            target_stat = entity:HasTag("NOCLICK") and "OASISLAKE_EMPTY" or "OASISLAKE_FULL"
+            is_specific_only = true
+        elseif entity.prefab == "toadstool_cap" then
+            target_stat = "TOADSTOOL_EMPTY"
+            if entity._state and entity._state:value() > 0 then
+                target_stat = entity._dark and entity._dark:value() and "TOADSTOOL_DARK" or "TOADSTOOL_NORMAL"
+            end
+            is_specific_only = true
         end
 
-        return Announce(subfmt(state_fmt or qa.FORMATS.SINGLE, {
-            TOTAL = count_prefab,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    -- 绿洲湖泊特殊宣告
-    if use_special and entity.prefab == "oasislake" then
-        local state_fmt = entity:HasTag("NOCLICK") and qa.FORMATS.OASISLAKE_EMPTY or qa.FORMATS.OASISLAKE_FULL
-        return Announce(subfmt(state_fmt, {
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    -- 蟾蜍洞特殊宣告
-    if use_special and entity.prefab == "toadstool_cap" then
-        local state_fmt = qa.FORMATS.TOADSTOOL_EMPTY
-        if entity._state and entity._state:value() > 0 then
-            if entity._dark and entity._dark:value() then
-                state_fmt = qa.FORMATS.TOADSTOOL_DARK
+        if target_stat then
+            if is_specific_only or count_prefab == 1 then
+                local fmt = count_prefab > 1 and qa.FORMATS.STATE_THIS or qa.FORMATS.STATE_THIS_SINGLE
+                return Announce(subfmt(fmt, {
+                    TOTAL = count_prefab,
+                    NAME = force_display_name,
+                    ADJ = GetMapping(qa, 'ADJ', target_stat) or target_stat,
+                    SHOW_ME = show_me,
+                    DISTANCE = dist_str
+                }), entity:HasTag('player'), debug_str)
             else
-                state_fmt = qa.FORMATS.TOADSTOOL_NORMAL
+                local is_equal = (stat_count == count_prefab)
+                return Announce(subfmt(is_equal and qa.FORMATS.STATE_EQUAL or qa.FORMATS.STATE_DESCRIBE, {
+                    TOTAL = count_prefab,
+                    NUM = stat_count,
+                    NAME = force_display_name,
+                    ADJ = GetMapping(qa, 'ADJ', target_stat) or target_stat,
+                    SHOW_ME = show_me,
+                    DISTANCE = dist_str
+                }), entity:HasTag('player'), debug_str)
             end
         end
-
-        return Announce(subfmt(state_fmt or qa.FORMATS.SINGLE, {
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and entity:HasTag("fire") and not entity:HasTag("campfire") and not entity:HasTag("tree") then
-        local is_equal = (count_fire == count_prefab)
-        return Announce(subfmt(is_equal and qa.FORMATS.FIRE_EQUAL or qa.FORMATS.FIRE_DESCRIBE, {
-            TOTAL = count_prefab,
-            NUM = count_fire,
-            NAME = (entity.prefab == "houndfire" and prefab_name) or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and count_burnt > 0 then
-        local is_equal = (count_burnt == count_prefab)
-        return Announce(subfmt(is_equal and qa.FORMATS.BURNT_EQUAL or qa.FORMATS.BURNT_DESCRIBE, {
-            TOTAL = count_prefab,
-            NUM = count_burnt,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_smolder then
-        local is_equal = (count_smolder == count_prefab)
-        return Announce(subfmt(is_equal and qa.FORMATS.SMOLDER_EQUAL or qa.FORMATS.SMOLDER_DESCRIBE, {
-            TOTAL = count_prefab,
-            NUM = count_smolder,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and is_lightninggoat and target_is_charged_goat then
-        local is_equal = (count_charged_goat == count_prefab)
-        local fmt = is_equal and qa.FORMATS.GOAT_CHARGED_EQUAL or qa.FORMATS.GOAT_CHARGED_DESCRIBE
-        return Announce(subfmt(fmt, {
-            TOTAL = count_prefab,
-            NUM = count_charged_goat,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and entity:HasTag("withered") then
-        local is_equal = (count_withered == count_prefab)
-        return Announce(subfmt(is_equal and qa.FORMATS.WITHERED_EQUAL or qa.FORMATS.WITHERED_DESCRIBE, {
-            TOTAL = count_prefab,
-            NUM = count_withered,
-            NAME = prefab_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_barren then
-        local is_equal = (count_barren == count_prefab)
-        return Announce(subfmt(is_equal and qa.FORMATS.BARREN_EQUAL or qa.FORMATS.BARREN_DESCRIBE, {
-            TOTAL = count_prefab,
-            NUM = count_barren,
-            NAME = prefab_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_is_crop and target_crop_stat then
-        return Announce(subfmt(count_crop_stat == count_prefab and GLOBAL.NOMU_QA.SCHEME.CROP.FORMATS.EQUAL or GLOBAL.NOMU_QA.SCHEME.CROP.FORMATS.DESCRIBE, {
-            COUNT = count_prefab,
-            NUM = count_crop_stat,
-            NAME = final_name or display_name,
-            ADJ = GetMapping(GLOBAL.NOMU_QA.SCHEME.CROP, 'ADJ', target_crop_stat),
-            SHOW_ME = dist_str .. show_me
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_is_tree and target_tree_stat then
-        return Announce(subfmt(count_tree_stat == count_prefab and GLOBAL.NOMU_QA.SCHEME.TREE.FORMATS.EQUAL or GLOBAL.NOMU_QA.SCHEME.TREE.FORMATS.DESCRIBE, {
-            COUNT = count_prefab,
-            NUM = count_tree_stat,
-            NAME = final_name or display_name,
-            ADJ = GetMapping(GLOBAL.NOMU_QA.SCHEME.TREE, 'ADJ', target_tree_stat),
-            SHOW_ME = dist_str .. show_me
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_is_spiderden and target_spiderden_stat then
-        return Announce(subfmt(count_spiderden_stat == count_prefab and GLOBAL.NOMU_QA.SCHEME.SPIDERDEN.FORMATS.EQUAL or GLOBAL.NOMU_QA.SCHEME.SPIDERDEN.FORMATS.DESCRIBE, {
-            COUNT = count_prefab,
-            NUM = count_spiderden_stat,
-            NAME = final_name or display_name,
-            ADJ = GetMapping(GLOBAL.NOMU_QA.SCHEME.SPIDERDEN, 'ADJ', target_spiderden_stat),
-            SHOW_ME = dist_str .. show_me
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and target_is_hotspring and target_hotspring_stat then
-        local is_equal = (count_hotspring_stat == count_prefab)
-        local fmt_key = "HOTSPRING_" .. target_hotspring_stat .. (is_equal and "_EQUAL" or "_DESCRIBE")
-        return Announce(subfmt(qa.FORMATS[fmt_key], {
-            TOTAL = count_prefab,
-            NUM = count_hotspring_stat,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and is_fruitdragon and target_is_ripe_fruitdragon then
-        local is_equal = (count_ripe_fruitdragon == count_prefab)
-        local fmt_key = "FRUITDRAGON_RIPE" .. (is_equal and "_EQUAL" or "_DESCRIBE")
-
-        return Announce(subfmt(qa.FORMATS[fmt_key], {
-            TOTAL = count_prefab,
-            NUM = count_ripe_fruitdragon,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
-    end
-
-    if use_special and is_archive_switch then
-        local is_equal = (target_is_full_archive_switch and count_archive_switch_full == count_prefab)
-                      or (not target_is_full_archive_switch and count_archive_switch_empty == count_prefab)
-        local fmt_key = (target_is_full_archive_switch and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY") .. (is_equal and "_EQUAL" or "_DESCRIBE")
-        local num = target_is_full_archive_switch and count_archive_switch_full or count_archive_switch_empty
-
-        return Announce(subfmt(qa.FORMATS[fmt_key], {
-            TOTAL = count_prefab,
-            NUM = num,
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
     end
 
     local final_count = is_blueprint_type and count_name or (final_name and count_prefab or count_name)

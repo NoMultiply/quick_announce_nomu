@@ -296,142 +296,102 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             }
         }
     },
-    TREE = {
-        FORMATS = {
-            EQUAL = '喂！这{COUNT}棵{NAME}全都是{ADJ}{SHOW_ME}，长眼睛自己看！',
-            DESCRIBE = '听好了，这{COUNT}棵{NAME}里，有{NUM}棵是{ADJ}{SHOW_ME}！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    STUMP = "只剩破树桩了",
-                    SAPLING = "没用的小树苗",
-                    SHORT = "才刚长出来",
-                    NORMAL = "长得普普通通",
-                    TALL = "长得老高的",
-                    BOULDER = "被敲成破矿床了",
-                    SEED = "刚种下的种子",
-                    ANCIENT_READY = "果实都长满了",
-                    ANCIENT_EMPTY = "果子全没了",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚长出的大理石",
-                    MARBLE_TREE = "大理石做的破树"
-                }
-            }
-        }
-    },
-    CROP = {
-        FORMATS = {
-            EQUAL = '这{COUNT}个{NAME}，全都{ADJ}{SHOW_ME}，别让我重复第二遍！',
-            DESCRIBE = '这{COUNT}个{NAME}里，有{NUM}个{ADJ}{SHOW_ME}，自己记好了！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    WITH_BARNACLES = "长着恶心藤壶的",
-                    NO_BARNACLES = "光秃秃的",
-                    SEED = "还是破种子",
-                    GROW = "还在慢吞吞生长的",
-                    FULL = "已经熟了还不快摘",
-                    OVER = "长得巨大无比的",
-                    ROT = "都已经腐烂了笨蛋",
-                    SALT_FULL = "长满盐矿的",
-                    SALT_MED = "正在结小盐矿的",
-                    SALT_LOW = "只有一点盐晶的",
-                    SALT_EMPTY = "被挖空了的",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚长出的大理石",
-                    BEEBOX_FULL = "满是蜂蜜的",
-                    BEEBOX_SOME = "有点蜂蜜的",
-                    BEEBOX_EMPTY = "空空如也的",
-                    PICKABLE_READY = "长好了快去摘",
-                    PICKABLE_EMPTY = "还没长好别碰",
-                    NEST_HAS_EGG = "有高鸟蛋的",
-                    NEST_EMPTY = "空鸟窝",
-                    MUSHROOMFARM_ROTTEN = "变成烂木头了",
-                    MUSHROOMFARM_EMPTY = "里面空的",
-                    MUSHROOMFARM_STAGE1 = "刚种下的小蘑菇",
-                    MUSHROOMFARM_STAGE2 = "长得凑合的",
-                    MUSHROOMFARM_STAGE3 = "完全长大的",
-                    MUSHROOMFARM_STAGE4 = "长得快爆出来的"
-                }
-            }
-        }
-    },
-    SPIDERDEN = {
-        FORMATS = {
-            EQUAL = '这{COUNT}个{NAME}全都是{ADJ}{SHOW_ME}，当心被咬死笨蛋！',
-            DESCRIBE = '这{COUNT}个{NAME}里有{NUM}个是{ADJ}{SHOW_ME}，小心点！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    L1 = "一级的",
-                    L2 = "二级的",
-                    L3 = "三级的",
-                    L1_BEDAZZLED = "被装饰的一级",
-                    L2_BEDAZZLED = "被装饰的二级",
-                    L3_BEDAZZLED = "被装饰的三级",
-                }
-            }
-        }
-    },
     ENV = {
         FORMATS = {
-            SINGLE = '喂，我旁边有1个{NAME}{SHOW_ME}{DISTANCE}，别告诉我你没看见！',
-            DEFAULT = '听好了，附近有{NUM}个{NAME}{SHOW_ME}{DISTANCE}，自己长点心！',
-            NAMED = '那个……附近有{NUM_PREFAB}个{PREFAB_NAME}，其中有{NUM}个叫{NAME}{SHOW_ME}{DISTANCE}，我只是顺便告诉你的！',
-            CODE = '这东西叫：{NAME}，代码是：{PREFAB}。记不住就算了！',
-            BURNT_EQUAL = '那里有{TOTAL}个{NAME}全烧成灰了，这就是你这笨蛋不小心的下场{SHOW_ME}{DISTANCE}！',
-            BURNT_DESCRIBE = '那里有{TOTAL}个{NAME}，有{NUM}个烧成灰了{SHOW_ME}{DISTANCE}，气死我了！',
-            FIRE_EQUAL = '喂！不好啦！{TOTAL}个{NAME}全着火了{SHOW_ME}{DISTANCE}，快拿灭火器救火啊笨蛋！',
-            FIRE_DESCRIBE = '喂！{TOTAL}个{NAME}里有{NUM}个起火了{SHOW_ME}{DISTANCE}，你瞎了吗快点灭火！',
-            WITHERED_EQUAL = '真是的……{TOTAL}个{NAME}全都被热枯萎了{SHOW_ME}{DISTANCE}，你到底有没有在照顾！',
-            WITHERED_DESCRIBE = '有{TOTAL}个{NAME}，其中有{NUM}个被热枯萎了{SHOW_ME}{DISTANCE}，快点想想办法！',
-            BARREN_EQUAL = '喂，{TOTAL}个{NAME}全都没施肥{SHOW_ME}{DISTANCE}，快去捡点大便来！',
-            BARREN_DESCRIBE = '这{TOTAL}个{NAME}里有{NUM}个还没施肥{SHOW_ME}{DISTANCE}，还要我教你吗！',
-            SMOLDER_EQUAL = '糟了！{TOTAL}个{NAME}全都在冒黑烟了{SHOW_ME}{DISTANCE}，马上就要着火了快救命！',
-            SMOLDER_DESCRIBE = '喂！{TOTAL}个{NAME}里有{NUM}个冒黑烟了{SHOW_ME}{DISTANCE}，快拿冰块来砸它！',
-            GOAT_CHARGED_EQUAL = '别靠近！{TOTAL}个{NAME}全都带电了{SHOW_ME}{DISTANCE}，你想被电死吗笨蛋！',
-            GOAT_CHARGED_DESCRIBE = '这里有{TOTAL}个{NAME}，有{NUM}只是带电的{SHOW_ME}{DISTANCE}，离远点！',
-            GOAT_NORMAL_EQUAL = '这里有{TOTAL}个{NAME}，全都是普通的羊{SHOW_ME}{DISTANCE}。',
-            GOAT_NORMAL_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}只是普通的羊{SHOW_ME}{DISTANCE}。',
-            FISH_SHOAL = '喂，这里有群{FISH}，一共{NUM}条{SHOW_ME}{DISTANCE}！快点来抓！',
-            FISH_HOLE = '看，这里有处{NAME}{SHOW_ME}{DISTANCE}。我才不是特意帮你找钓鱼点的！',
-            HOTSPRING_BOMBED_EQUAL = '这里有{TOTAL}个{NAME}，水温刚好{SHOW_ME}{DISTANCE}。我、我才不是邀请你一起泡呢！',
-            HOTSPRING_BOMBED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}个水温刚好{SHOW_ME}{DISTANCE}，别想多了！',
-            HOTSPRING_GLASSED_EQUAL = '这{TOTAL}个{NAME}全变成硬石头了{SHOW_ME}{DISTANCE}，怎么泡啊笨蛋！',
-            HOTSPRING_GLASSED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}个变成石头了{SHOW_ME}{DISTANCE}！',
-            HOTSPRING_EMPTY_EQUAL = '这{TOTAL}个{NAME}全干了{SHOW_ME}{DISTANCE}，没水了你满意了吧！',
-            HOTSPRING_EMPTY_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}个干涸了{SHOW_ME}{DISTANCE}！',
-            FRUITDRAGON_RIPE_EQUAL = '这里有{TOTAL}个{NAME}，全变红了{SHOW_ME}{DISTANCE}，快点去摘笨蛋！',
-            FRUITDRAGON_RIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}个红透了{SHOW_ME}{DISTANCE}！',
-            FRUITDRAGON_UNRIPE_EQUAL = '这{TOTAL}个{NAME}全是普通颜色{SHOW_ME}{DISTANCE}，急什么急没熟呢！',
-            FRUITDRAGON_UNRIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中{NUM}个还没熟{SHOW_ME}{DISTANCE}！',
-            BIRDCAGE_EMPTY = '这{TOTAL}个{NAME}是空的{SHOW_ME}{DISTANCE}，连只鸟都没有！',
-            BIRDCAGE_FULL = '这{TOTAL}个{NAME}里有只鸟{SHOW_ME}{DISTANCE}。',
-            BIRDCAGE_SICK = '喂，这{TOTAL}个{NAME}里的鸟生病了{SHOW_ME}{DISTANCE}，快管管！',
-            BIRDCAGE_DEAD = '这{TOTAL}个{NAME}里的鸟都饿死了{SHOW_ME}{DISTANCE}，你这没良心的！',
-            ARCHIVE_SWITCH_FULL_EQUAL = '这{TOTAL}个{NAME}全都激活了{SHOW_ME}{DISTANCE}，算你干得不错。',
-            ARCHIVE_SWITCH_FULL_DESCRIBE = '这{TOTAL}个{NAME}里有{NUM}个激活了{SHOW_ME}{DISTANCE}。',
-            ARCHIVE_SWITCH_EMPTY_EQUAL = '这{TOTAL}个{NAME}全没激活{SHOW_ME}{DISTANCE}，还不快去！',
-            ARCHIVE_SWITCH_EMPTY_DESCRIBE = '这{TOTAL}个{NAME}里有{NUM}个没激活{SHOW_ME}{DISTANCE}，别偷懒！',
-            TOADSTOOL_EMPTY = '扫描过了，这里有蟾蜍洞穴，目前空的{SHOW_ME}{DISTANCE}，蛤蟆不在。',
-            TOADSTOOL_NORMAL = '喂！准备战斗！蟾蜍洞穴里有大蛤蟆{SHOW_ME}{DISTANCE}，别拖后腿！',
-            TOADSTOOL_DARK = '警报！这里有悲惨毒菌蟾蜍{SHOW_ME}{DISTANCE}，别死了啊笨蛋！',
-            OASISLAKE_EMPTY = '你看，这1个{NAME}都干了{SHOW_ME}{DISTANCE}，钓个鬼的鱼！',
-            OASISLAKE_FULL = '哼，这1个{NAME}里面满是水{SHOW_ME}{DISTANCE}，勉强陪你钓一会好了！',
+            SINGLE = '喂！这里有 1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
+            DEFAULT = '听好了，这里总共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}的家伙{SHOW_ME}{DISTANCE}。',
+            CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
+            
+            FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
+            FISH_HOLE = '这儿有1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
+
+            STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}了{SHOW_ME}{DISTANCE}，真是不想说你！',
+            STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
+            STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}呢，看什么看！',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（这个有 {SHOW_ME}）',
-                    DISTANCE_FAR = '，离我大约{DIST}格，自己走过去，我才不接你！',
-                    DISTANCE_CLOSE = '，就在我旁边，你瞎了吗自己看！',
-                    DISTANCE_FAR_WATER = '，在离我约{DIST}格的水面上，掉下去淹死你！',
-                    DISTANCE_CLOSE_WATER = '，就在我旁边的水面上，当心点笨蛋！',
+                    SHOW_ME = '（里面有：{SHOW_ME}）',
+                    DISTANCE_FAR = '，离我大约有 {DIST} 格地皮那么远啦',
+                    DISTANCE_CLOSE = '，就在本小姐身旁！',
+                    DISTANCE_FAR_WATER = '，在距离我大约 {DIST} 格的恶心水面上',
+                    DISTANCE_CLOSE_WATER = '，就在我身旁的水面上，乱晃什么呢',
+                    MOD_INFO = '，模组：{MOD_NAME}',
+                    ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
+                },
+                ADJ = {
+                    BURNT = '被烧成一堆黑炭了啦',
+                    FIRE = '在熊熊燃烧（快去灭火啊笨蛋）',
+                    WITHERED = '彻底枯萎得不成样子了',
+                    BARREN = '急需施肥（你还在看什么呢）',
+                    SMOLDER = '在冒烟马上要烧起来了（救命啊）',
+                    GOAT_CHARGED = '处于危险的带电状态',
+                    GOAT_NORMAL = '是普普通通的温顺状态',
+                    HOTSPRING_BOMBED = '水温勉勉强强正合适吧',
+                    HOTSPRING_GLASSED = '已经结晶硬邦邦的了',
+                    HOTSPRING_EMPTY = '已经干涸得一滴都不剩了',
+                    FRUITDRAGON_RIPE = '红温熟透了（还不快采）',
+                    FRUITDRAGON_UNRIPE = '还是没成熟的普通状态啦',
+                    BIRDCAGE_EMPTY = '空荡荡的什么都没有',
+                    BIRDCAGE_FULL = '里面关着毫无生气的鸟',
+                    BIRDCAGE_SICK = '里面的小鸟生病了（真麻烦）',
+                    BIRDCAGE_DEAD = '里面的鸟已经饿死了（都怪你）',
+                    ARCHIVE_SWITCH_FULL = '处于被激活的状态',
+                    ARCHIVE_SWITCH_EMPTY = '还未被激活呢',
+                    TOADSTOOL_EMPTY = '空荡荡的没有讨厌的癞蛤蟆',
+                    TOADSTOOL_NORMAL = '躲着一只恶心的毒菌蟾蜍',
+                    TOADSTOOL_DARK = '藏着一只悲惨毒菌蟾蜍（离远点）',
+                    OASISLAKE_EMPTY = '已经干得见底了',
+                    OASISLAKE_FULL = '装满了勉强能看的清澈湖s水',
+                    BEEFALO_SHAVED = '被扒光了毛（丑死了啦）',
+
+                    WITH_BARNACLES = "长满了黏糊糊的藤壶",
+                    NO_BARNACLES = "光秃秃的什么都没有",
+                    SEED = "还只是个种子啦",
+                    GROW = "还在慢吞吞地发育生长期",
+                    FULL = "已经完全熟透了（再不采就烂了）",
+                    OVER = "长成了巨大得吓人的巨型作物",
+                    ROT = "彻底腐烂发臭了（都怪你太慢了）",
+                    SALT_FULL = "长满了亮晶晶的盐晶",
+                    SALT_MED = "正在结晶中，催什么催",
+                    SALT_LOW = "只结出了一丁点盐晶",
+                    SALT_EMPTY = "早就被开采空了",
+                    MARBLE_TALL = "已经完全长到极限了",
+                    MARBLE_NORMAL = "处于中等体型状态",
+                    MARBLE_SHORT = "才刚刚破土而出呢",
+                    BEEBOX_FULL = "里面的蜜都快溢出来浪费了",
+                    BEEBOX_SOME = "勉强攒了一点点蜂蜜吧",
+                    BEEBOX_EMPTY = "连一滴甜头都没有",
+                    PICKABLE_READY = "可以去采摘了，快动起来",
+                    PICKABLE_EMPTY = "光秃秃的还在重新生长中",
+                    NEST_HAS_EGG = "里面藏着高鸟蛋（别被咬了）",
+                    NEST_EMPTY = "只是个一无所有的空巢",
+                    MUSHROOMFARM_ROTTEN = "变成没用的烂烂木头了",
+                    MUSHROOMFARM_EMPTY = "里面还没种下任何东西",
+                    MUSHROOMFARM_STAGE1 = "才刚刚种下去不久啦",
+                    MUSHROOMFARM_STAGE2 = "长势虽然挺喜人但也别骄傲",
+                    MUSHROOMFARM_STAGE3 = "已经勉强长大了",
+                    MUSHROOMFARM_STAGE4 = "长得快要把木头给挤爆啦",
+
+                    STUMP = "被砍得只剩木头树桩了",
+                    SAPLING = "还是个弱小的小树苗",
+                    SHORT = "才刚刚冒出个头来",
+                    NORMAL = "长得正茂盛呢",
+                    TALL = "长得高高大大的，挡住视线了",
+                    BOULDER = "已经硬化变成矿床了",
+                    ANCIENT_READY = "上面挂满了诱人的果实",
+                    ANCIENT_EMPTY = "光秃秃的连个果子都没有",
+                    MARBLE_TREE = "是由大理石做成的死板树",
+
+                    L1 = "最弱小的一级",
+                    L2 = "稍微麻烦点的二级",
+                    L3 = "随时会蹦出女王的三级（当心点）",
+                    L1_BEDAZZLED = "被无聊装饰过的一级",
+                    L2_BEDAZZLED = "被无聊装饰过的二级",
+                    L3_BEDAZZLED = "被无聊装饰过的三级",
                 }
             }
         }
