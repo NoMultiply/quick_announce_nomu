@@ -2,7 +2,7 @@ GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME = '软萌方案'
 
 GLOBAL.STRINGS.CUTE_NOMU_QA = {
    SEASON = {
-        FORMATS = { DEFAULT = '呐～{SEASON}还剩下{DAYS_LEFT}天呢，时间过得好快吖～' },
+        FORMATS = { DEFAULT = '呐～{SEASON}还剩下 {DAYS_LEFT} 天呢，时间过得好快吖～' },
         MAPPINGS = {
             DEFAULT = {
                 SEASON_NAMES = { 
@@ -13,9 +13,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，第{DAYS}天{WEATHER}就来啦（还剩：{MINUTES}分{SECONDS}秒）～',
+            START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，第 {DAYS} 天{WEATHER}就来啦（还剩：{MINUTES}分{SECONDS}秒）记得带小伞伞吖～',
             NO_RAIN = '唔……{WORLD}现在的气温是：{TEMPERATURE}，天空很乖，{WEATHER}还没来呢～',
-            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，第{DAYS}天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）～',
+            STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，第 {DAYS} 天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）可以出去玩啦～',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -42,8 +42,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     MOON_PHASE = {
         FORMATS = {
-            DEFAULT = '哇哦！{RECENT}{PHASE1}{INTERVAL}距离下次{PHASE2}还有{LEFT}天呢～',
-            MOON = '快看快看！{RECENT}{PHASE1}啦～',
+            DEFAULT = '哇哦！{RECENT}{PHASE1}{INTERVAL}距离下次{PHASE2}还有 {LEFT} 天呢～',
+            MOON = '快看快看！{RECENT}{PHASE1}啦，月亮姐姐好漂亮吖～',
             FAILED = '呜呜……云层太厚了，人家看不清月亮姐姐的样子呢！'
         },
         MAPPINGS = {
@@ -56,9 +56,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     CLOCK = {
         FORMATS = {
-            DEFAULT = '{PHASE}还剩下{PHASE_REMAIN}吖，今天还有{DAY_REMAIN}可以玩耍呢。',
-            NIGHTMARE = '{PHASE}还剩下{PHASE_REMAIN}吖，今天还有{DAY_REMAIN}，{NIGHTMARE}还有{REMAIN}就结束啦！',
-            NIGHTMARE_LOCK = '{PHASE}还剩下{PHASE_REMAIN}吖，今天还有{DAY_REMAIN}，现在是可怕的{NIGHTMARE}呢！'
+            DEFAULT = '{PHASE}还剩下 {PHASE_REMAIN} 吖，今天还有 {DAY_REMAIN} 可以玩耍呢。',
+            NIGHTMARE = '{PHASE}还剩下 {PHASE_REMAIN} 吖，今天还有 {DAY_REMAIN}，{NIGHTMARE}还有 {REMAIN} 就结束啦！',
+            NIGHTMARE_LOCK = '{PHASE}还剩下 {PHASE_REMAIN} 吖，今天还有 {DAY_REMAIN}，现在是可怕的{NIGHTMARE}呢！'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -75,17 +75,17 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     COOK = {
         FORMATS = {
-            CAN = '人家可以给大家做美味的{NAME}吖～',
-            NEED = '肚子饿饿，人家好想吃一口{NAME}呢～',
-            MIN_INGREDIENT = '制作甜甜的{NAME}需要{NUM}个{INGREDIENT}吖！',
-            MAX_INGREDIENT = '煮{NAME}的时候，最多只能放{NUM}个{INGREDIENT}哦～',
-            ZERO_INGREDIENT = '呀！{NAME}里面绝对绝对不可以放{INGREDIENT}啦！',
-            HUNGER = '{NAME}料理{TYPE}小肚肚{VALUE}点饱饱度吖～',
-            SANITY = '{NAME}料理{TYPE}小脑阔{VALUE}点开心值吖～',
-            HEALTH = '{NAME}料理{TYPE}身体{VALUE}点健康值吖～',
-            FOOD = '当当！{NAME}：饱饱度{HUNGER}，开心值{SANITY}，健康值{HEALTH}吖～',
-            FOOD_LOCK = '唔……人家还没有学会怎么做{NAME}呢。',
-            FOOD_NO_EATEN = '需要喂人家吃一口{NAME}，人家才能知道味道吖～',
+            CAN = '人家可以给大家做美味的 {NAME} 吖～',
+            NEED = '肚子饿饿，人家好想吃一口 {NAME} 呢～',
+            MIN_INGREDIENT = '制作甜甜的 {NAME} 至少需要 {NUM} 个 {INGREDIENT} 吖！',
+            MAX_INGREDIENT = '煮 {NAME} 的时候，最多只能放 {NUM} 个 {INGREDIENT} 哦～',
+            ZERO_INGREDIENT = '呀！{NAME} 里面绝对绝对不可以放 {INGREDIENT} 啦！',
+            HUNGER = '{NAME} 料理{TYPE}小肚肚 {VALUE} 点饱饱度吖～',
+            SANITY = '{NAME} 料理{TYPE}小脑阔 {VALUE} 点开心值吖～',
+            HEALTH = '{NAME} 料理{TYPE}身体 {VALUE} 点健康值吖～',
+            FOOD = '当当！{NAME}：饱饱度 {HUNGER}，开心值 {SANITY}，健康值 {HEALTH} 吖～',
+            FOOD_LOCK = '唔……人家还没有学会怎么做 {NAME} 呢。',
+            FOOD_NO_EATEN = '需要喂人家吃一口 {NAME}，人家才能知道味道吖～',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -167,8 +167,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     ENERGY = {
         FORMATS = {
             DEFAULT = '(电量：{CURRENT}/{MAX}，已占用：{USED}格) 呼呼～小电池现在{MESSAGE}吖！',
-            CHIP = '{NUM}个亮晶晶的{ITEM}',
-            ALL_MODULES = '嘿嘿，人家装配了这些魔法电路哦：{MODULES}吖！',
+            CHIP = '{NUM}个亮晶晶的 {ITEM}',
+            ALL_MODULES = '嘿嘿，人家装配了这些魔法电路哦：{MODULES} 吖！',
             NO_MODULES = '唔……人家身上还没有装任何神奇电路呢吖。'
         },
         MAPPINGS = {
@@ -194,63 +194,58 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     PLAYER = {
         FORMATS = {
-            DEFAULT = '{NAME}正在人家身边陪着人家呢～',
-            ADMIN = '哇哦，{NAME}是超级厉害的管理员吖！',
-            NAME = '{NAME}选的是{CHARACTER}吖。',
-            AGE = '{NAME}在这里度过了{AGE}的时光呢。',
-            AGE_SHORT = '{NAME}{AGE}啦。',
+            DEFAULT = '{NAME} 正在人家身边陪着人家呢～',
+            ADMIN = '哇哦，{NAME} 是超级厉害的管理员吖！',
+            NAME = '{NAME} 选的是 {CHARACTER} 吖。',
+            AGE = '{NAME} 在这里度过了 {AGE} 的时光呢。',
+            AGE_SHORT = '{NAME} 活了 {AGE} 啦。',
             PERF = '{NAME} 的{PERF}吖。{PING}',
             GREET = '好开心见到你吖，{NAME}～',
             PING = '小信号延迟：{PING}',
-            BADGE = '{NAME}带着{BADGE}的可爱头牌吖。',
-            BACKGROUND = '{NAME}的背景画面是{BACKGROUND}。',
-            BODY = '{NAME}穿着漂亮的{BODY}衣服呢。',
-            HAND = '{NAME}的小手上戴着{HAND}。',
-            LEGS = '{NAME}的腿上穿着{LEGS}吖。',
-            FEET = '{NAME}脚上穿着{FEET}呢。',
-            BASE = '{NAME}顶着可爱的{BASE}脑袋吖。',
-            HEAD_EQUIP = '{NAME}头上戴着{HEAD_EQUIP}哦。',
-            HAND_EQUIP = '{NAME}手里拿着{HAND_EQUIP}吖。',
-            BODY_EQUIP = '{NAME}身上穿着{BODY_EQUIP}呢。',
-            GIVE_ITEM = "{NAME}乖乖站好哦～人家要给你{NUM}个{ITEM_NAME}吖！",
+            BADGE = '{NAME} 带着 {BADGE} 的可爱头牌吖。',
+            BACKGROUND = '{NAME} 的背景画面是 {BACKGROUND}。',
+            BODY = '{NAME} 穿着漂亮的 {BODY} 衣服呢。',
+            HAND = '{NAME} 的小手上戴着 {HAND}。',
+            LEGS = '{NAME} 的腿上穿着 {LEGS} 吖。',
+            FEET = '{NAME} 脚上穿着 {FEET} 呢。',
+            BASE = '{NAME} 顶着可爱的 {BASE} 脑袋吖。',
+            HEAD_EQUIP = '{NAME} 头上戴着 {HEAD_EQUIP} 哦。',
+            HAND_EQUIP = '{NAME} 手里拿着 {HAND_EQUIP} 吖。',
+            BODY_EQUIP = '{NAME} 身上穿着 {BODY_EQUIP} 呢。',
+            GIVE_ITEM = "{NAME} 乖乖站好哦～人家要给你 {NUM}个 {ITEM_NAME} 吖！",
             BOTH_GHOST = "呜呜呜，{NAME}，我们都变成飘来飘去的小幽灵了……",
-            ME_GHOST = "拜托拜托{NAME}救救人家，人家想要一颗温暖的告密的心复活吖……",
-            THEY_GHOST = "{NAME}不要怕！人家马上就来救你啦！",
+            ME_GHOST = "拜托拜托 {NAME} 救救人家，人家想要一颗温暖的告密的心复活吖……",
+            THEY_GHOST = "{NAME} 不要怕！人家马上就来救你啦！",
             I_AM_HERE = "{NAME}，人家就在这里吖！快看人家！",
-            ME_FISHING = '嘘——{NAME}正在施展神奇的钓鱼魔法吖，小鱼快上钩～',
-            THEY_FISHING = '哇哦！{NAME}正在认认真真地钓鱼呢，祝你钓到胖胖鱼吖！',
+            ME_FISHING = '嘘——{NAME} 正在施展神奇的钓鱼魔法吖，小鱼快上钩～',
+            THEY_FISHING = '哇哦！{NAME} 正在认认真真地钓鱼呢，祝你钓到胖胖鱼吖！',
+            PORTAL_ON = '人家的小手已经摸到 {NAME} 啦！',
+            PORTAL_OFF = '{NAME} 就在人家这里哦，大家快来准备传送吖！'
         },
         MAPPINGS = {}
     },
     SERVER = {
         FORMATS = {
-            NAME = '我们温馨的家叫做：{NAME}吖～',
-            AGE = '这个世界已经度过了：{AGE}个日夜啦。',
-            NUM_PLAYER = '现在家里有：{NUM}个小伙伴在玩耍呢。'
+            NAME = '我们温馨的家叫做：{NAME} 吖～',
+            AGE = '这个世界已经度过了：{AGE} 个日夜啦。',
+            NUM_PLAYER = '现在家里有：{NUM} 个小伙伴在玩耍呢。'
         },
         MAPPINGS = {}
     },
     SKILL_TREE = {
         FORMATS = {
-            ACTIVATED = '{NAME}已经学会了神奇的『{SKILL}』啦！好厉害！',
-            CAN_ACTIVATE = '{NAME}可以去学习『{SKILL}』了吖，快去快去～',
-            NOT_ACTIVATED = '{NAME}还没有学会『{SKILL}』呢，要继续加油哦！',
-            XP = '{NAME}的小脑袋里还有{XP}点洞察吖～',
-        },
-        MAPPINGS = {}
-    },
-    PORTAL = {
-        FORMATS = {
-            ON = '人家的小手已经摸到{NAME}啦！',
-            OFF = '{NAME}就在人家这里哦，大家快来准备传送吖！'
+            ACTIVATED = '{NAME} 已经学会了神奇的『{SKILL}』啦！好厉害！',
+            CAN_ACTIVATE = '{NAME} 可以去学习『{SKILL}』了吖，快去快去～',
+            NOT_ACTIVATED = '{NAME} 还没有学会『{SKILL}』呢，要继续加油哦！',
+            XP = '{NAME} 的小脑袋里还有 {XP} 点洞察吖～',
         },
         MAPPINGS = {}
     },
     SPACE = {
         FORMATS = {
-            PLAYER = "人家的小包包里还有{COUNT}个空位吖，还能装小零食！",
-            INV = "人家的{CONTAINER_NAME}里面还有{COUNT}个空空的地方呢～",
-            CONTAINER = "这个可爱的{CONTAINER_NAME}还能塞下{COUNT}个小玩意哦！"
+            PLAYER = "人家的小包包里还有 {COUNT} 个空位吖，还能装小零食！",
+            INV = "人家的 {CONTAINER_NAME} 里面还有 {COUNT} 个空空的地方呢～",
+            CONTAINER = "这个可爱的 {CONTAINER_NAME} 还能塞下 {COUNT} 个小玩意哦！"
         },
         MAPPINGS = {}
     },
@@ -283,7 +278,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     DOMESTICATION_NORMAL = "想让牛牛听话还得继续努力呢～（驯化：{PCT}%）",
                     DOMESTICATION_LOW = "牛牛太野了啦，都不让人家摸摸呜呜……（驯化：{PCT}%）",
                     
-                    TIMER_RIDING = "抓紧牛角哦！人家还能再骑{TIME}吖！",
+                    TIMER_RIDING = "抓紧牛角哦！人家还能再骑 {TIME} 吖！",
                     TIMER_LOW = "呀！牛牛要发脾气了，马上就要掉下来了！（剩余：{TIME}）"
                 },
                 TENDENCY_NAME = {
@@ -300,11 +295,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         FORMATS = {
             SINGLE = '呐～这里有 1个 小{NAME}{SHOW_ME}{DISTANCE}呢。',
             DEFAULT = '哇～这附近一共有 {NUM}个 {NAME}呀{SHOW_ME}{DISTANCE}。',
-            NAMED = '被我发现了呢～这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 小家伙的名叫 {NAME}{SHOW_ME}{DISTANCE}～',
+            NAMED = '被我发现了呢～这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 小家伙名叫 {NAME}{SHOW_ME}{DISTANCE}～',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             
             FISH_SHOAL = '快来看呀！这里有一大群小 {FISH}（共有 {NUM} 条）{SHOW_ME}{DISTANCE}，好热闹吖！',
-            FISH_HOLE = '这儿有1个 小{NAME}{SHOW_ME}{DISTANCE}。',
 
             STATE_EQUAL = '好神奇呀～这里有 {TOTAL}个 {NAME}，目前全都{ADJ}了呢{SHOW_ME}{DISTANCE}～',
             STATE_DESCRIBE = '哇～这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经{ADJ}了呀{SHOW_ME}{DISTANCE}～',
@@ -399,7 +393,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     SKIN = {
         FORMATS = {
-            DEFAULT = '人家有{NUM}个{ITEM}的漂亮衣服（一共{TOTAL}件呢），这件叫做『{SKIN}』吖！',
+            DEFAULT = '人家有 {NUM}件 {ITEM} 的漂亮衣服（一共 {TOTAL} 件呢），这件叫做『{SKIN}』吖！',
             NO_SKIN = '坏坏科雷！什么时候才给人家出『{ITEM}』的漂亮衣服吖！',
             HAS_NO_SKIN = '呜呜呜……人家连一件『{ITEM}』的漂亮衣服都没有，好委屈吖！'
         },
@@ -407,10 +401,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     RECIPE = {
         FORMATS = {
-            BUFFERED = '人家把刚做好的{ITEM}抱在怀里啦，准备放下它吖～',
-            WILL_MAKE = '材料都准备得妥妥的啦～人家随时可以做一个{ITEM}出来吖！',
-            WE_NEED = '唔，小本本上记着呢～我们需要造一个{ITEM}吖！',
-            CAN_SOMEONE = '有谁能帮人家做一个{ITEM}吖？人家需要{PROTOTYPE}才能想出怎么做呢！',
+            BUFFERED = '人家把刚做好的 {ITEM} 抱在怀里啦，准备放下它吖～',
+            WILL_MAKE = '材料都准备得妥妥的啦～人家随时可以变一个 {ITEM} 出来吖！',
+            WE_NEED = '唔，小本本上记着呢～我们需要造一个 {ITEM} 吖！',
+            CAN_SOMEONE = '有谁能帮人家做一个 {ITEM} 吖？人家需要 {PROTOTYPE} 才能想出怎么做呢！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -493,16 +487,17 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     MEDAL_BUFF = {
         FORMATS = {
-            DEFAULT = '哇～人家现在有"{BUFF_NAME}"BUFF的魔法保护哦，还能持续{TIME}吖！',
+            DEFAULT = '哇～人家现在有"{BUFF_NAME}"BUFF的魔法保护哦，还能持续 {TIME} 吖！',
             FOREVER = '哇～人家现在有"{BUFF_NAME}"BUFF的永久魔法保护啦！',
+            EXAM = '求助求助～有谁知道"{QUESTION}"的正确答案吖？选项有：{OPTIONS}～帮帮人家嘛！',
         },
         MAPPINGS = {}
     },
     ITEM = {
         FORMATS = {
-            INV_SLOT = '{PRONOUN}的小包包里偷偷藏了{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-            EQUIP_SLOT = '{PRONOUN}穿戴了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+            INV_SLOT = '{PRONOUN}的小包包里偷偷藏了 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+            EQUIP_SLOT = '{PRONOUN}穿戴了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
             EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有穿戴任何东西呢吖～'
         },
         MAPPINGS = {
@@ -516,18 +511,18 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     HOT = '，滚烫烫的'
                 },
                 RECHARGE = {
-                    CHARGING = '，还差{TIME}就能充满魔力啦',
+                    CHARGING = '，还差 {TIME} 就能充满魔力啦',
                     FULL = '，魔力已经全满啦'
                 },
                 PERCENT_TYPE = { DURABILITY = '的耐久度', FRESHNESS = '新鲜甜美味' },
                 TIME = { MINUTES = '分', SECONDS = '秒' },
                 WORDS = {
                     THIS_ONE = '其中这个',
-                    ITEM_NAME = ' (有{NUM}个名字叫{NAME}的)',
-                    ITEM_NUM = ' (一共屯了{NUM}个吖)',
-                    IN_CONTAINER = ' 藏在这个可爱的{NAME}里',
-                    WITH_PERCENT = '，{THIS_ONE}还剩下{PERCENT}{TYPE}呢',
-                    SUSPICIOUS_MARBLE = '，呀这是{NAME}',
+                    ITEM_NAME = ' (有 {NUM}个 名字叫 {NAME} 的)',
+                    ITEM_NUM = ' (一共屯了 {NUM}个 吖)',
+                    IN_CONTAINER = ' 藏在这个可爱的 {NAME} 里',
+                    WITH_PERCENT = '，{THIS_ONE}还剩下 {PERCENT} {TYPE} 呢',
+                    SUSPICIOUS_MARBLE = '，呀这是 {NAME}',
                     SHOW_ME = '（这个有 {SHOW_ME}）',
 
                     SLOT_HEAD = '小脑袋上',
@@ -541,44 +536,29 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             }
         }
     },
-    INGREDIENT = {
+    CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            NEED_MULTIPLE = "我们需要{INGREDIENT}才能把{RECIPE}变出来吖{AND_PROTOTYPE}！",
-            HAVE_ALL = "拍拍小手把{INGREDIENT}凑齐啦～马上就能变出{RECIPE}吖{BUT_PROTOTYPE}！",
+            CRAFT_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 变出来吖{AND_PROTOTYPE}！",
+            CRAFT_HAVE = "人家已经把 {INGREDIENT} 准备好啦，可以用来做 {RECIPE} 了吖{BUT_PROTOTYPE}！",
+            CRAFT_HAVE_ALL = "拍拍小手把 {INGREDIENT} 凑齐啦～马上就能变出 {RECIPE} 吖{BUT_PROTOTYPE}！",
+
+            CONS_NEED = "我们还需要 {INGREDIENT} 才能把 {RECIPE} 建得漂漂亮亮的吖～",
+            CONS_HAVE = "所有的材料都乖乖躺好啦～{RECIPE} 随时可以动工建起来吖！",
+            CONS_HAVE_ITEM = "人家已经把 {INGREDIENT} 准备好啦，可以用来建 {RECIPE} 了吖！", 
+
+            TRADE_NEED = "呜呜……想要和 {RECIPE} 换礼物，人家的小兜兜里还缺 {INGREDIENT} 吖～",
+            TRADE_HAVE = "太棒啦！有足够的 {INGREDIENT} 可以和 {RECIPE} 换礼物啦！快去快去～",
+            TRADE_HAVE_ITEM = "太好啦！人家有足够的 {INGREDIENT} 可以和 {RECIPE} 换小礼物了吖！", 
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    ITEM_AMOUNT_FORMAT = "{NUM}个{ITEM}",
+                    AMOUNT_FMT = "{NUM}个 {ITEM}",
                     COMMA = "，",
                     ALL_MATERIALS = "所有需要的材料",
-                    AND_PROTOTYPE = '，而且还需要{PROTOTYPE}帮忙才能做呢',
-                    BUT_PROTOTYPE = '，不过现在就差{PROTOTYPE}帮忙啦'
+                    AND_PROTOTYPE = '，而且还需要 {PROTOTYPE} 帮忙才能做呢',
+                    BUT_PROTOTYPE = '，不过现在就差 {PROTOTYPE} 帮忙啦'
                 }
-            }
-        }
-    },
-    CONSTRUCTION = {
-        FORMATS = {
-            NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建得漂漂亮亮的吖～",
-            HAVE = "所有的材料都乖乖躺好啦～{RECIPE}随时可以动工建起来吖！",
-            HAVE_ITEM = "人家已经把{INGREDIENT}准备好啦，可以用来建{RECIPE}了吖！", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
-            }
-        }
-    },
-    TRADE = {
-        FORMATS = {
-            NEED = "呜呜……想要和{RECIPE}换礼物，人家的小兜兜里还缺{INGREDIENT}吖～",
-            HAVE = "太棒啦！有足够的{INGREDIENT}可以和{RECIPE}换礼物啦！快去快去～",
-            HAVE_ITEM = "太好啦！人家有足够的{INGREDIENT}可以和{RECIPE}换小礼物了吖！", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
             }
         }
     },
@@ -675,11 +655,11 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(开心地拍拍圆滚滚的小肚子)呼呼～',
-                    HIGH = '(小手在肚皮上比划着画圈圈)饱足感满分吖～',
-                    MID = '(委屈地捂住肚子)咕噜噜～想吃东西了！',
-                    LOW = '(睁大眼睛紧紧抓住你的衣角)可怜巴巴……',
-                    EMPTY = '(趴在地上用小手画出食物的形状)饿晕了呜呜……',
+                    FULL = '(开心地拍拍圆滚滚的小肚子) 呼呼～',
+                    HIGH = '(小手在肚皮上比划着画圈圈) 饱足感满分吖～',
+                    MID = '(委屈地捂住肚子) 咕噜噜～想吃东西了！',
+                    LOW = '(睁大眼睛紧紧抓住你的衣角) 可怜巴巴……',
+                    EMPTY = '(趴在地上用小手画出食物的形状) 饿晕了呜呜……',
                 }
             },
             WAXWELL = {
@@ -778,7 +758,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     NAUGHTINESS = {
         FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
-            LUCK = '哇～人家现在的幸运值有：{CURRENT}这么高喔！' 
+            LUCK = '哇～人家现在的幸运值有：{CURRENT} 这么高喔！' 
         },
         MAPPINGS = {
             DEFAULT = {
@@ -873,11 +853,11 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(开心地转圈圈画出一个大大的爱心)吖～',
-                    HIGH = '(竖起大拇指表示超级棒)ฅ^•ﻌ•^ฅ',
-                    MID = '(揉揉太阳穴)唔……头有点晕晕的吖……',
-                    LOW = '(害怕地四处乱看)呀！有疯狂的家伙！',
-                    EMPTY = '(抱住头蹲在地上发抖)呜呜呜……好怕好怕……',
+                    FULL = '(开心地转圈圈画出一个大大的爱心) 吖～',
+                    HIGH = '(竖起大拇指表示超级棒) ฅ^•ﻌ•^ฅ',
+                    MID = '(揉揉太阳穴) 唔……头有点晕晕的吖……',
+                    LOW = '(害怕地四处乱看) 呀！有疯狂的家伙！',
+                    EMPTY = '(抱住头蹲在地上发抖) 呜呜呜……好怕好怕……',
                 }
             },
             WAXWELL = {
@@ -955,7 +935,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         }
     },
     HEALTH = {
-        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        FORMATS = { 
+            DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
+            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，可爱护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
+        },
         MAPPINGS = {
             DEFAULT = {
                 MESSAGE = {
@@ -1032,11 +1015,11 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(两只小手比出一个大大的爱心)吖～超健康！',
-                    HIGH = '(伸出小手展示)吖呜～只是擦破了一点点皮皮！',
-                    MID = '(玩着白色的绷带)吖呀～快帮人家包扎一下嘛！',
-                    LOW = '(使劲摇晃着小手发出SOS信号)吖……好痛痛……',
-                    EMPTY = '(丢出一个小纸团然后倒下)遗书……扑通摔倒吖……',
+                    FULL = '(两只小手比出一个大大的爱心) 吖～超健康！',
+                    HIGH = '(伸出小手展示) 吖呜～只是擦破了一点点皮皮！',
+                    MID = '(玩着白色的绷带) 吖呀～快帮人家包扎一下嘛！',
+                    LOW = '(使劲摇晃着小手发出SOS信号) 吖……好痛痛……',
+                    EMPTY = '(丢出一个小纸团然后倒下) 遗书……扑通摔倒吖……',
                 }
             },
             WAXWELL = {

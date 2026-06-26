@@ -31,9 +31,6 @@ GLOBAL.STRINGS.NOMU_QA = {
     ARCHIVE_SECURITY_PULSE = '充能光球',
     UNDERWATER_SALVAGEABLE = '沉底物品',
     OCEANFISHABLEFLOTSAM_WATER = '水上漂浮物',
-    WORMWOOD_MUTANTPROXY_FRUITDRAGON = '沙拉蝾螈',
-    WORMWOOD_MUTANTPROXY_CARRAT = '胡萝卜鼠',
-    WORMWOOD_MUTANTPROXY_LIGHTFLIER = '球状光果',
     SHADOW_CONTAINER = '暗影空间',
     WOBY_RACK_CONTAINER = '沃比的晾肉架',
     SLINGSHOTMODSCONTAINER = '弹弓野外作业包',
@@ -122,7 +119,7 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF = '常用语（宣告后保留）',
     BUTTON_TEXT_SHOW_ME_OFF = 'Show Me（关）',
     BUTTON_TEXT_SHOW_ME_ON = 'Show Me（开）',
-    BUTTON_TEXT_SHOW_ME_GIFT = 'SHOW ME（仅礼物）',
+    BUTTON_TEXT_SHOW_ME_GIFT = 'Show Me(仅礼物/血量)',
 
 
     BUTTON_TEXT_SHOW_MOD_NAME_ON = '模组来源（开）',
@@ -219,12 +216,9 @@ GLOBAL.STRINGS.NOMU_QA = {
         ENV = '周围环境',
         SKIN = '皮肤',
         RECIPE = '配方',
-        CONSTRUCTION = '建造',
+        CONSTRUCTION_AND_TRADE = '建造与交易',
         SPACE= '空位',
         ITEM = '物品',
-        PORTAL= '传送塔',
-        INGREDIENT = '材料',
-        TRADE = '交易',
         STOMACH = '饥饿值',
         SANITY = '精神值',
         HEALTH = '生命值',
@@ -471,6 +465,8 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             I_AM_HERE = "{NAME} 在这里！",
             ME_FISHING = '嘘——{NAME} 正在施展钓鱼魔法，小鱼小鱼快快咬钩吧！',
             THEY_FISHING = '哇喔！{NAME} 正在全神贯注地钓鱼呢，祝你钓到超大号胖鱼！',
+            PORTAL_ON = '我已经在摸 {NAME} 了！',
+            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。'
         },
         MAPPINGS = {}
     },
@@ -488,13 +484,6 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             CAN_ACTIVATE = '{NAME} 可点亮技能：{SKILL}。',
             NOT_ACTIVATED = '{NAME} 还没有点亮技能：{SKILL}。',
             XP = '{NAME} 还有 {XP} 点洞察。',
-        },
-        MAPPINGS = {}
-    },
-    PORTAL = {
-        FORMATS = {
-            ON = '我已经摸到 {NAME} 了！',
-            OFF = '{NAME} 在我这儿，快准备触摸。'
         },
         MAPPINGS = {}
     },
@@ -566,7 +555,7 @@ ENV = {
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（包含：{SHOW_ME}）',
+                    SHOW_ME = '（这个有: {SHOW_ME}）',
                     DISTANCE_FAR = '，距离我约 {DIST} 格地皮',
                     DISTANCE_CLOSE = '，就在我旁边',
                     DISTANCE_FAR_WATER = '，在距离我约 {DIST} 格的水面上',
@@ -791,46 +780,28 @@ MEDAL_BUFF = {
             }
         }
     },
-    INGREDIENT = {
+    CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            NEED_MULTIPLE = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
-            HAVE_ALL = "我已经准备好 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",        },
+            CRAFT_NEED = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
+            CRAFT_HAVE = "我已经准备好了足够的 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE_ALL = "我已经准备好了所有的材料来制作 {RECIPE}{BUT_PROTOTYPE}。",
+
+            CONS_NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
+            CONS_HAVE = "我已经准备好了所有的材料来建造 {RECIPE}。",
+            CONS_HAVE_ITEM = "我已经准备好了足够的 {INGREDIENT} 来建造 {RECIPE}。", 
+
+            TRADE_NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
+            TRADE_HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
+            TRADE_HAVE_ITEM = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。", 
+        },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    ITEM_AMOUNT_FORMAT = "{NUM}个 {ITEM}",
+                    AMOUNT_FMT = "{NUM}个 {ITEM}",
                     COMMA = "，",
                     ALL_MATERIALS = "所有材料",
                     AND_PROTOTYPE = '，我还需要 {PROTOTYPE} 才能制造它',
                     BUT_PROTOTYPE = '，但我还需要 {PROTOTYPE} 才能制造它'
-                }
-            }
-        }
-    },
-   CONSTRUCTION = {
-        FORMATS = {
-            NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
-            HAVE = "我已经准备好所有材料来建造 {RECIPE}。",
-            HAVE_ITEM = "我已经准备好 {INGREDIENT} 来建造 {RECIPE}。", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = {
-                    AMOUNT_FMT = "{NUM}个 {ITEM}" 
-                }
-            }
-        }
-    },
-    TRADE = {
-        FORMATS = {
-            NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
-            HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
-            HAVE_ITEM = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = {
-                    AMOUNT_FMT = "{NUM}个 {ITEM}"
                 }
             }
         }

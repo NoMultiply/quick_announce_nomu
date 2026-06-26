@@ -6,7 +6,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         MAPPINGS = {
             DEFAULT = {
                 SEASON_NAMES = { 
-                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季'
+                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季' 
                 }
             }
         }
@@ -65,10 +65,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                 TIME = { MINUTES = '分', SECONDS = '秒' },
                 PHASE = { DAY = '白天', DUSK = '黄昏', NIGHT = '夜晚' },
                 NIGHTMARE = {
-                    CALM = "平息阶段",
-                    WARN = "警告阶段",
-                    WILD = "暴动阶段",
-                    DAWN = "过渡阶段",
+                    CALM = "平息阶段", WARN = "警告阶段", WILD = "暴动阶段", DAWN = "过渡阶段",
                 },
             }
         }
@@ -88,9 +85,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             FOOD_NO_EATEN = '你不喂我试吃一口{NAME}，我怎么知道什么味道！',
         },
         MAPPINGS = {
-            DEFAULT = {
-                TYPE = { POS = '能恢复', NEG = '会扣除' }
-            }
+            DEFAULT = { TYPE = { POS = '能恢复', NEG = '会扣除' } }
         }
     },
     BOAT = {
@@ -219,6 +214,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             I_AM_HERE = "喂，{NAME}！我在这里，快跟上！",
             ME_FISHING = '喂！{NAME}在钓鱼，闭嘴别把鱼吓跑了！',
             THEY_FISHING = '{NAME}那家伙在钓鱼，别钓上来什么破鞋子！',
+            PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
+            PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！'
         },
         MAPPINGS = {}
     },
@@ -236,13 +233,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             CAN_ACTIVATE = '{NAME}可以去点『{SKILL}』了，别磨蹭！',
             NOT_ACTIVATED = '{NAME}还没点『{SKILL}』，真是个笨蛋。',
             XP = '{NAME}还有{XP}点洞察没用。',
-        },
-        MAPPINGS = {}
-    },
-    PORTAL = {
-        FORMATS = {
-            ON = '我已经摸到{NAME}了，快点过来！',
-            OFF = '{NAME}在我这，快点准备摸它笨蛋！'
         },
         MAPPINGS = {}
     },
@@ -287,11 +277,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     TIMER_LOW = "喂！它要甩人了，快点准备下来笨蛋！（剩余：{TIME}）"
                 },
                 TENDENCY_NAME = {
-                    DEFAULT = "普通",
-                    RIDER = "骑行",
-                    ORNERY = "战斗",
-                    PUDGY = "圆润",
-                    UNKNOWN = "未知"
+                    DEFAULT = "普通", RIDER = "骑行", ORNERY = "战斗", PUDGY = "圆润", UNKNOWN = "未知"
                 }
             }
         }
@@ -304,7 +290,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             
             FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
-            FISH_HOLE = '这儿有1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
 
             STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}了{SHOW_ME}{DISTANCE}，真是不想说你！',
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
@@ -314,7 +299,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（里面有：{SHOW_ME}）',
+                    SHOW_ME = '（这个有：{SHOW_ME}）',
                     DISTANCE_FAR = '，离我大约有 {DIST} 格地皮那么远啦',
                     DISTANCE_CLOSE = '，就在本小姐身旁！',
                     DISTANCE_FAR_WATER = '，在距离我大约 {DIST} 格的恶心水面上',
@@ -345,8 +330,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     TOADSTOOL_NORMAL = '躲着一只恶心的毒菌蟾蜍',
                     TOADSTOOL_DARK = '藏着一只悲惨毒菌蟾蜍（离远点）',
                     OASISLAKE_EMPTY = '已经干得见底了',
-                    OASISLAKE_FULL = '装满了勉强能看的清澈湖s水',
-                    BEEFALO_SHAVED = '被扒光了毛（丑死了啦）',
+                    OASISLAKE_FULL = '装满了勉强能看的清澈湖水',
+                    BEEFALO_SHAVED = '被剃光了毛（丑死了啦）',
 
                     WITH_BARNACLES = "长满了黏糊糊的藤壶",
                     NO_BARNACLES = "光秃秃的什么都没有",
@@ -359,7 +344,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     SALT_MED = "正在结晶中，催什么催",
                     SALT_LOW = "只结出了一丁点盐晶",
                     SALT_EMPTY = "早就被开采空了",
-                    MARBLE_TALL = "已经完全长到极限了",
+                    MARBLE_TALL = "完全长大了",
                     MARBLE_NORMAL = "处于中等体型状态",
                     MARBLE_SHORT = "才刚刚破土而出呢",
                     BEEBOX_FULL = "里面的蜜都快溢出来浪费了",
@@ -371,7 +356,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     NEST_EMPTY = "只是个一无所有的空巢",
                     MUSHROOMFARM_ROTTEN = "变成没用的烂烂木头了",
                     MUSHROOMFARM_EMPTY = "里面还没种下任何东西",
-                    MUSHROOMFARM_STAGE1 = "才刚刚种下去不久啦",
+                    MUSHROOMFARM_STAGE1 = "才刚种下去不久啦",
                     MUSHROOMFARM_STAGE2 = "长势虽然挺喜人但也别骄傲",
                     MUSHROOMFARM_STAGE3 = "已经勉强长大了",
                     MUSHROOMFARM_STAGE4 = "长得快要把木头给挤爆啦",
@@ -469,7 +454,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     NEEDSYOTCATCOON = "在浣猫之年！",
                     NEEDSBEEFSHRINE = "在牛神龛献上供品",
                     NEEDSRABBITSHRINE = "在兔人神龛献上供品",
-                    NEEDSCATCOONSHRINE = "在浣猫神龛献上供品",
+                    NEEDSCATCOONSHRINE = "在浣猫神龛献上供品喵！",
                     NEEDSKNIGHTSHRINE = "在发条骑士神龛献上供品",
                     NEEDSPERDSHRINE = "在火鸡神龛献上供品",
                     NEEDSWORMSHRINE = "在洞穴蠕虫神龛献上供品",
@@ -494,6 +479,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             DEFAULT = '听好了，我现在有"{BUFF_NAME}"BUFF加持，还能持续{TIME}！',
             FOREVER = '哼，我现在有"{BUFF_NAME}"BUFF的永久加持，厉害吧！',
+            EXAM = '喂，有人知道"{QUESTION}"的答案吗？快点告诉我：{OPTIONS}！',
         },
         MAPPINGS = {}
     },
@@ -540,44 +526,29 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             }
         }
     },
-    INGREDIENT = {
+    CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            NEED_MULTIPLE = "喂！要造{RECIPE}还差{INGREDIENT}{AND_PROTOTYPE}，你自己去找啊笨蛋！",
-            HAVE_ALL = "材料刚好凑齐了……顺便帮你造个{RECIPE}吧{BUT_PROTOTYPE}，感恩戴德吧！",
+            CRAFT_NEED = "喂！要造{RECIPE}还差{INGREDIENT}{AND_PROTOTYPE}，你自己去找啊笨蛋！",
+            CRAFT_HAVE = "我已经准备好{INGREDIENT}来造{RECIPE}了{BUT_PROTOTYPE}，快点夸我！",
+            CRAFT_HAVE_ALL = "材料刚好凑齐了……顺便帮你造个{RECIPE}吧{BUT_PROTOTYPE}，感恩戴德吧！",
+
+            CONS_NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建完，快点去干活！",
+            CONS_HAVE = "材料都齐了，{RECIPE}随时可以动工，还不快点！",
+            CONS_HAVE_ITEM = "我已经拿好{INGREDIENT}准备建{RECIPE}了，还不快夸我！", 
+
+            TRADE_NEED = "想要和{RECIPE}交易，兜里还缺{INGREDIENT}。穷鬼！",
+            TRADE_HAVE = "有足够的{INGREDIENT}可以和{RECIPE}交易了。快去啊，愣着干嘛！",
+            TRADE_HAVE_ITEM = "我有足够的{INGREDIENT}去和{RECIPE}换东西了，还不快跟上！", 
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    ITEM_AMOUNT_FORMAT = "{NUM}个{ITEM}",
+                    AMOUNT_FMT = "{NUM}个{ITEM}",
                     COMMA = "，",
                     ALL_MATERIALS = "所有需要的破材料",
                     AND_PROTOTYPE = '，而且还需要{PROTOTYPE}帮忙',
                     BUT_PROTOTYPE = '，不过现在就差{PROTOTYPE}帮忙了'
                 }
-            }
-        }
-    },
-    CONSTRUCTION = {
-        FORMATS = {
-            NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建完，快点去干活！",
-            HAVE = "材料都齐了，{RECIPE}随时可以动工，还不快点！",
-            HAVE_ITEM = "我已经拿好{INGREDIENT}准备建{RECIPE}了，还不快夸我！", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
-            }
-        }
-    },
-    TRADE = {
-        FORMATS = {
-            NEED = "想要和{RECIPE}交易，兜里还缺{INGREDIENT}。穷鬼！",
-            HAVE = "有足够的{INGREDIENT}可以和{RECIPE}交易了。快去啊，愣着干嘛！",
-            HAVE_ITEM = "我有足够的{INGREDIENT}去和{RECIPE}换东西了，还不快跟上！", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
             }
         }
     },
@@ -973,7 +944,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                 MESSAGE = {
                     FULL = '我健康得很，别拿那种看病人的眼神看我！',
                     HIGH = '只是受了点轻伤，我可以继续走！',
-                    MID = '我……我需要治疗了，还不快点拿药来！',
+                    MID = '我……我想我需要治疗了，还不快点拿药来！',
                     LOW = '流了好多血……好痛……笨蛋快救我……',
                     EMPTY = '我走不动了……你这笨蛋还不快想办法……',
                 }
@@ -983,8 +954,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     FULL = '完美的我怎么可能有伤痕！',
                     HIGH = '一点点擦伤，烧一下就好了！别管我！',
                     MID = '伤口好痛……我需要医生！你听到没有！',
-                    LOW = '我好虚弱……快要熄灭了……救救我……',
-                    EMPTY = '生命之火要熄灭了……呜呜……笨蛋快救我……',
+                    LOW = '我感觉很虚弱……我可能要……熄灭了。',
+                    EMPTY = '我的生命之火几乎要熄灭了……呜呜……笨蛋快救我……',
                 }
             },
             WOLFGANG = {
@@ -1141,7 +1112,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     FULL = '高于75%……全身都湿透了！你这笨蛋怎么不给我打伞！',
                     HIGH = '55%……湿透了！背包也浸水了，快点想办法弄干！',
                     MID = '35%……我很湿！烦死了，快点生火啊！',
-                    LOW = '15%……湿了一小块而已，别大惊小怪的！',
+                    LOW = '15%……我只湿了一小块，还不足为惧！',
                     EMPTY = '完全干燥！哼，保持这样最好！',
                 },
                 SYMBOL = {
@@ -1289,7 +1260,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     FULL = '我完全湿透了！糟糕透顶！',
                     HIGH = '我是最潮湿的恶魔！才不高兴呢！',
                     MID = '会有只湿漉漉的恶魔！快给我生火！',
-                    LOW = '世界赐予我淋浴！讨厌！',
+                    LOW = '世界正赐予我一场淋浴！讨厌！',
                     EMPTY = '保持干燥最好！离水远点！',
                 }
             }

@@ -158,10 +158,12 @@ local function IsShiftPressed()
         return is_force_trade or is_shift_key
     end
 end
+
 -- 三方同步
 local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     if not source_data or type(source_data) ~= "table" then return end
     
+    -- 从 source_data 往 user_data 同步
     for k, v in pairs(source_data) do
         if type(v) == "table" then
             if type(user_data[k]) ~= "table" then user_data[k] = {} end
@@ -169,24 +171,50 @@ local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
             SyncSchemeData(user_data[k], backup_data[k], v, is_legacy)
         else
             if is_legacy then
-                -- 老方案处理逻辑：
-                -- 如果用户原本没有这个字段，直接补全
-                -- 如果用户有这个字段，但占位符与源码不一致，强制覆盖（防止崩溃）
-                -- 其他情况（占位符一致），保留用户文案
-                -- 老方案或多或少还是有问题，并不能完美同步
+                -- 老档逻辑：补全或占位符不对时强制覆盖
                 if user_data[k] == nil or not IsPlaceholderMatch(user_data[k], v) then
                     user_data[k] = v
                 end
             else
                 if backup_data[k] ~= v then
-                    user_data[k] = v
-                    backup_data[k] = v
+                    -- 更新了默认模板(source_data 变化了)
+                    local is_user_customized = (user_data[k] ~= backup_data[k])
+                    
+                    if is_user_customized then
+                        -- 玩家自定义过：只有当占位符变更导致不匹配时，才强制覆盖
+                        if not IsPlaceholderMatch(user_data[k], v) then
+                            user_data[k] = v
+                        end
+                    else
+                        -- 玩家没改过：安全升级为新版默认文案
+                        user_data[k] = v
+                    end
+                    backup_data[k] = v -- 刷新备份
+                else
+                    -- 模板没变，但防止玩家自行修改时占位符出错，做个保底检测
+                    if user_data[k] == nil or not IsPlaceholderMatch(user_data[k], v) then
+                        user_data[k] = v
+                    end
                 end
             end
         end
     end
-end
 
+    --  反向清：移除 user_data 中已经被源模板废弃的旧分类
+    local keys_to_remove = {}
+    for k, _ in pairs(user_data) do
+        if source_data[k] == nil then
+            table.insert(keys_to_remove, k)
+        end
+    end
+    
+    for _, k in ipairs(keys_to_remove) do
+        user_data[k] = nil
+        if not is_legacy and type(backup_data) == "table" then
+            backup_data[k] = nil
+        end
+    end
+end
 -- 更新方案，每次启动游戏执行同步校验
 GLOBAL.NOMU_QA.UpdateScheme = function(scheme_node)
     if not scheme_node or not scheme_node.data then return end
@@ -465,23 +493,28 @@ end
 
 -- 处理 Show Me 信息的公共方法
 local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
-    if not SHOW_ME_ON then
+    if not SHOW_ME_ON or not target then
         return ""
     end
 
+    -- 判定是否为礼物或具有血量的生物
+    local is_gift = target:HasTag('unwrappable')
+    local has_health = target:HasTag('_health') or (target.replica and target.replica.health ~= nil) or target:HasTag('health')
+
+    -- SHOW_ME == 1 为全开，SHOW_ME == 2 为仅礼物/血量，0 为全关
     if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 or
-           (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and target:HasTag('unwrappable'))) then
+           (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health))) then
         return ""
     end
 
     local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
     local is_insight_data = false
 
- -- 兼容 Insight 模组
+    -- 兼容 Insight 模组
     if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
         local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
         if insight_cache and insight_cache[target] then
-            --提取基础 information
+            -- 提取基础 information
             local insight_info = insight_cache[target].information
             if insight_info and insight_info ~= "" then
                 is_insight_data = true
@@ -523,6 +556,8 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB))
     local rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
 
+    local found_health_line = false 
+
     for _, str in ipairs(items) do
         if str and str:match("[^ \t\r\n]") then
             local is_banned = str:find(bad_prefab, 1, true)
@@ -541,6 +576,21 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                 end
             end
 
+            if not is_banned and GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 then
+                if has_health and not is_gift then
+                    if found_health_line then
+                        is_banned = true
+                    else
+                        if string.find(str, "%d+[%d%,%.]*%s*/%s*%d+[%d%,%.]*") then
+                            found_health_line = true
+                            str = "󰀍 " .. str
+                        else
+                            is_banned = true
+                        end
+                    end
+                end
+            end
+
             if not is_banned then
                 table.insert(filtered, str)
             end
@@ -555,28 +605,28 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
         filtered = s
     end
 
-if #filtered > 0 then
-    local MAX_LEN = 150
-    local joined_str = ""
-    local is_truncated = false
+    if #filtered > 0 then
+        local MAX_LEN = 150
+        local joined_str = ""
+        local is_truncated = false
 
-    for i, line in ipairs(filtered) do
-        local separator = (joined_str == "") and "" or ", "
-        local next_len = #joined_str + #separator + #line
+        for i, line in ipairs(filtered) do
+            local separator = (joined_str == "") and "" or ", "
+            local next_len = #joined_str + #separator + #line
 
-        if next_len <= MAX_LEN then
-            joined_str = joined_str .. separator .. line
-        else
-            if #joined_str + 3 <= MAX_LEN then
-                joined_str = joined_str .. "..."
+            if next_len <= MAX_LEN then
+                joined_str = joined_str .. separator .. line
+            else
+                if #joined_str + 3 <= MAX_LEN then
+                    joined_str = joined_str .. "..."
+                end
+                is_truncated = true
+                break
             end
-            is_truncated = true
-            break
         end
-    end
 
-    return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str })
-end
+        return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str })
+    end
 
     return ""
 end
@@ -1532,13 +1582,16 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     local knows = builder:KnowsRecipe(recipe.name) or CanPrototypeRecipe(recipe.level, builder:GetTechTrees())
     local can_build = builder:CanBuild(recipe.name)
 
-    local strings_name = STRINGS.NOMU_QA[recipe.product:upper()]
-                      or STRINGS.NAMES[recipe.product:upper()]
-                      or STRINGS.NOMU_QA[recipe.name:upper()]
-                      or STRINGS.NAMES[recipe.name:upper()]
+    local upper_override = recipe.nameoverride and string.upper(recipe.nameoverride) or nil
+    local upper_name = recipe.name and string.upper(recipe.name) or nil
+    local upper_product = recipe.product and string.upper(recipe.product) or nil
+
+    local strings_name = (upper_override and (STRINGS.NOMU_QA[upper_override] or STRINGS.NAMES[upper_override]))
+                      or (upper_name and (STRINGS.NOMU_QA[upper_name] or STRINGS.NAMES[upper_name]))
+                      or (upper_product and (STRINGS.NOMU_QA[upper_product] or STRINGS.NAMES[upper_product]))
 
     local name = strings_name and strings_name:lower() or STRINGS.NOMU_QA.UNKNOWN_NAME
-    name = ApplyCustomName(recipe.product or recipe.name, name)
+    name = ApplyCustomName(recipe.nameoverride or recipe.name or recipe.product, name)
 
     local prototype, raw_tech = GetPrototype(knows, recipe, owner)
 
@@ -1548,7 +1601,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     end
 
     local qa_recipe = GLOBAL.NOMU_QA.SCHEME.RECIPE
-    local qa_ing = GLOBAL.NOMU_QA.SCHEME.INGREDIENT
+    local qa_const = GLOBAL.NOMU_QA.SCHEME.CONSTRUCTION_AND_TRADE -- 统一使用建造和交易词库
 
     if buffered then
         return Announce(subfmt(qa_recipe.FORMATS.BUFFERED, {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
@@ -1556,7 +1609,8 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         return Announce(subfmt(qa_recipe.FORMATS.WILL_MAKE, {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
     end
 
-    if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS and specific_ingredient_type then
+    -- 处理点击特定材料的情况
+    if specific_ingredient_type then
         local amount_needed, num_found = 1, 0
 
         for _, v in pairs(recipe.ingredients) do
@@ -1576,31 +1630,25 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
             end
         end
 
-        local num = amount_needed - num_found
+        local num_missing = amount_needed - num_found
         local ingredient_name = STRINGS.NOMU_QA[specific_ingredient_type:upper()]
                              or STRINGS.NAMES[specific_ingredient_type:upper()]
                              or specific_ingredient_type
 
         local fmts = {
-            AND_PROTOTYPE = '',
-            BUT_PROTOTYPE = '',
-            RECIPE = name
+            RECIPE = name,
+            AND_PROTOTYPE = prototype ~= "" and subfmt(GetMapping(qa_const, 'WORDS', 'AND_PROTOTYPE'), { PROTOTYPE = prototype }) or "",
+            BUT_PROTOTYPE = prototype ~= "" and subfmt(GetMapping(qa_const, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
         }
 
-        if num > 0 then
-            fmts.NUM = num
-            fmts.INGREDIENT = subfmt(GetMapping(qa_ing, 'WORDS', 'ITEM_AMOUNT_FORMAT'), { NUM = num, ITEM = ingredient_name })
-            if prototype ~= "" then
-                fmts.AND_PROTOTYPE = subfmt(GetMapping(qa_ing, 'WORDS', 'AND_PROTOTYPE'), { PROTOTYPE = prototype })
-            end
-            return Announce(subfmt(qa_ing.FORMATS.NEED or qa_ing.FORMATS.NEED_MULTIPLE, fmts), nil, debug_str)
+        if num_missing <= 0 then
+            fmts.INGREDIENT = subfmt(GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT'), { NUM = amount_needed, ITEM = ingredient_name })
+            return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str)
         else
-            fmts.NUM = math.floor(num_found / amount_needed) * (recipe.numtogive or 1)
-            fmts.INGREDIENT = ingredient_name
-            if prototype ~= "" then
-                fmts.BUT_PROTOTYPE = subfmt(GetMapping(qa_ing, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype })
+            if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
+                fmts.INGREDIENT = subfmt(GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT'), { NUM = num_missing, ITEM = ingredient_name })
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_NEED, fmts), nil, debug_str)
             end
-            return Announce(subfmt(qa_ing.FORMATS.HAVE or qa_ing.FORMATS.HAVE_ALL, fmts), nil, debug_str)
         end
     end
 
@@ -1609,27 +1657,19 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     end
 
     local missing_str = GetAllMissingIngredients(recipe, builder, inventory)
-    if missing_str then
-        local and_proto = prototype ~= "" and subfmt(GetMapping(qa_ing, 'WORDS', 'AND_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
-        local fmt_str = (qa_ing.FORMATS.NEED_MULTIPLE or qa_ing.FORMATS.NEED):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "[ \t\r\n]*", ""):gsub("{NUM}[ \t\r\n]*", "")
+    local and_proto = prototype ~= "" and subfmt(GetMapping(qa_const, 'WORDS', 'AND_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
+    local but_proto = prototype ~= "" and subfmt(GetMapping(qa_const, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
 
-        return Announce(subfmt(fmt_str, {
+    if missing_str then
+        return Announce(subfmt(qa_const.FORMATS.CRAFT_NEED, {
             INGREDIENT = missing_str,
             RECIPE = name,
-            AND_PROTOTYPE = and_proto,
-            NUM = ""
+            AND_PROTOTYPE = and_proto
         }), nil, debug_str)
     else
-        local but_proto = prototype ~= "" and subfmt(GetMapping(qa_ing, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
-        local all_materials = GetMapping(qa_ing, 'WORDS', 'ALL_MATERIALS')
-        local fmt_str = (qa_ing.FORMATS.HAVE_ALL or qa_ing.FORMATS.HAVE):gsub("{NUM}" .. GLOBAL.STRINGS.NOMU_QA.MEASURE_WORD .. "[ \t\r\n]*{INGREDIENT}", all_materials):gsub("{NUM}[ \t\r\n]*{INGREDIENT}", all_materials)
-
-        return Announce(subfmt(fmt_str, {
+        return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_ALL, {
             RECIPE = name,
-            BUT_PROTOTYPE = but_proto,
-            INGREDIENT = all_materials,
-            ALL_MATERIALS = all_materials,
-            NUM = ""
+            BUT_PROTOTYPE = but_proto
         }), nil, debug_str)
     end
 end
@@ -1910,10 +1950,9 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
 
     site_name = ApplyCustomName(site.prefab, site_name)
 
-    local qa_const = (site:HasTag("offerconstructionsite")
-                   or (container_widget and container_widget.inst and container_widget.inst:HasTag("offerconstructionsite")))
-                   and GLOBAL.NOMU_QA.SCHEME.TRADE
-                   or GLOBAL.NOMU_QA.SCHEME.CONSTRUCTION
+    local is_trade = site:HasTag("offerconstructionsite") or (container_widget and container_widget.inst and container_widget.inst:HasTag("offerconstructionsite"))
+    local qa_const = GLOBAL.NOMU_QA.SCHEME.CONSTRUCTION_AND_TRADE
+    local prefix = is_trade and "TRADE_" or "CONS_"
 
     local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format(
         "[施工点代码: %s, 容器代码: %s]",
@@ -1921,7 +1960,7 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
         tostring(container_widget and container_widget.inst and container_widget.inst.prefab or "无")
     ) or nil
 
-    if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS and slot_index and plans[slot_index] then
+    if slot_index and plans[slot_index] then
         local plan = plans[slot_index]
         local current = (site_rep:GetSlotCount(slot_index) or 0)
                       + (container_rep and container_rep:GetItemInSlot(slot_index)
@@ -1931,17 +1970,19 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
         local ing_name = GLOBAL.STRINGS.NOMU_QA[plan.type:upper()] or GLOBAL.STRINGS.NAMES[plan.type:upper()] or plan.type
         local amount_fmt = GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT') or "{NUM} {ITEM}"
 
-        if missing > 0 then
-            return Announce(subfmt(qa_const.FORMATS.NEED, {
-                INGREDIENT = subfmt(amount_fmt, { NUM = missing, ITEM = ing_name }),
-                RECIPE = site_name
-            }), nil, debug_str)
-        else
-            local fmt_have = qa_const.FORMATS.HAVE_ITEM or qa_const.FORMATS.HAVE
+        if missing <= 0 then
+            local fmt_have = qa_const.FORMATS[prefix .. "HAVE_ITEM"] or qa_const.FORMATS[prefix .. "HAVE"]
             return Announce(subfmt(fmt_have, {
                 RECIPE = site_name,
                 INGREDIENT = subfmt(amount_fmt, { NUM = plan.amount, ITEM = ing_name })
             }), nil, debug_str)
+        else
+            if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
+                return Announce(subfmt(qa_const.FORMATS[prefix .. "NEED"], {
+                    INGREDIENT = subfmt(amount_fmt, { NUM = missing, ITEM = ing_name }),
+                    RECIPE = site_name
+                }), nil, debug_str)
+            end
         end
     end
 
@@ -1960,12 +2001,12 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
     end
 
     if #missing > 0 then
-        return Announce(subfmt(qa_const.FORMATS.NEED, {
+        return Announce(subfmt(qa_const.FORMATS[prefix .. "NEED"], {
             INGREDIENT = table.concat(missing, ", "),
             RECIPE = site_name
         }), nil, debug_str)
     else
-        return Announce(subfmt(qa_const.FORMATS.HAVE, {
+        return Announce(subfmt(qa_const.FORMATS[prefix .. "HAVE"], {
             RECIPE = site_name,
             INGREDIENT = table.concat(total_req, ", ")
         }), nil, debug_str)
@@ -1977,7 +2018,16 @@ local function AnnounceSkin(recipepopup)
 
     local skin_name = recipepopup.skins_spinner and recipepopup.skins_spinner.GetItem()
                    or (recipepopup.GetItem and recipepopup:GetItem())
-    local item_name = STRINGS.NAMES[string.upper(recipepopup.recipe.product)] or recipepopup.recipe.name
+
+    local recipe = recipepopup.recipe
+    local upper_override = recipe.nameoverride and string.upper(recipe.nameoverride) or nil
+    local upper_name = recipe.name and string.upper(recipe.name) or nil
+    local upper_product = recipe.product and string.upper(recipe.product) or nil
+
+    local item_name = (upper_override and STRINGS.NAMES[upper_override])
+                   or (upper_name and STRINGS.NAMES[upper_name])
+                   or (upper_product and STRINGS.NAMES[upper_product])
+                   or recipe.name
 
     if skin_name == nil then
         if #recipepopup.skins_options == 1 then
@@ -2007,11 +2057,16 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
     if not recipe_state or not recipe_state.recipe then return end
 
     local specific_ingredient_type = nil
+    local recipe = recipe_state.recipe
 
     recipepopup = recipepopup or slot.recipe_popup
     if recipepopup then
         local ing = recipepopup.ing or {}
-        if #ing == 0 and recipepopup.ingredients and recipepopup.ingredients.children then
+        
+        -- 兼容 Redux 制作栏和旧版UI数组
+        if #ing == 0 and recipepopup.ingredients and recipepopup.ingredients.ingredient_widgets then
+            ing = recipepopup.ingredients.ingredient_widgets
+        elseif #ing == 0 and recipepopup.ingredients and recipepopup.ingredients.children then
             local root = next(recipepopup.ingredients.children) and recipepopup.ingredients.children[next(recipepopup.ingredients.children)]
             if root then
                 for _, v in pairs(root.children) do
@@ -2020,22 +2075,37 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
             end
         end
 
-        local ingredient = ingnum and ing[ingnum] or nil
-        if not ingredient then
-            for _, _ing in ipairs(ing) do
-                if _ing.focus then ingredient = _ing end
+        local focused_index = ingnum
+        if not focused_index then
+            for i, _ing in ipairs(ing) do
+                if _ing.focus then 
+                    focused_index = i 
+                    break 
+                end
             end
         end
 
-        if ingredient and ingredient.ing and ingredient.ing.texture then
-            specific_ingredient_type = ingredient.ing.texture:sub(1, -5)
-        elseif ingredient and not ingredient.ing and recipepopup.recipe and recipepopup.recipe.ingredients and recipepopup.recipe.ingredients[1] then
-            specific_ingredient_type = recipepopup.recipe.ingredients[1].type
+        -- 根据焦点序号，精准反查配方表中的材料真实代码
+        if focused_index then
+            local all_reqs = {}
+            if recipe.tech_ingredients then
+                for _, v in ipairs(recipe.tech_ingredients) do
+                    if v.type:sub(-9) == "_material" then table.insert(all_reqs, v.type) end
+                end
+            end
+            if recipe.ingredients then
+                for _, v in ipairs(recipe.ingredients) do table.insert(all_reqs, v.type) end
+            end
+            if recipe.character_ingredients then
+                for _, v in ipairs(recipe.character_ingredients) do table.insert(all_reqs, v.type) end
+            end
+            
+            specific_ingredient_type = all_reqs[focused_index]
         end
     end
 
     return AnnounceMergedRecipe(
-        recipe_state.recipe,
+        recipe,
         slot.owner.replica.builder,
         slot.owner.replica.inventory,
         slot.owner,
@@ -2061,14 +2131,47 @@ local function AnnounceRecipeCMIngredients(ingredients)
     if not recipe then return end
 
     local specific_ingredient_type = nil
-    local root = ingredients.children and next(ingredients.children) and ingredients.children[next(ingredients.children)]
+    local focused_index = nil
 
-    if root and root.children then
-        for _, _ing in pairs(root.children) do
-            if _ing.focus and _ing.ing and _ing.ing.texture and type(_ing.ing.texture) == "string" then
-                specific_ingredient_type = _ing.ing.texture:sub(1, -5)
+    -- 优先获取 Redux 制作栏准确的 widget 列表序号
+    if ingredients.ingredient_widgets then
+        for i, widget in ipairs(ingredients.ingredient_widgets) do
+            if widget.focus then
+                focused_index = i
+                break
             end
         end
+    else
+        -- 兜底逻辑
+        local root = ingredients.children and next(ingredients.children) and ingredients.children[next(ingredients.children)]
+        if root and root.children then
+            local i = 1
+            for _, _ing in pairs(root.children) do
+                if _ing.focus then
+                    focused_index = i
+                    break
+                end
+                i = i + 1
+            end
+        end
+    end
+
+    -- 根据焦点序号，精准反查配方表中的材料真实代码
+    if focused_index then
+        local all_reqs = {}
+        if recipe.tech_ingredients then
+            for _, v in ipairs(recipe.tech_ingredients) do
+                if v.type:sub(-9) == "_material" then table.insert(all_reqs, v.type) end
+            end
+        end
+        if recipe.ingredients then
+            for _, v in ipairs(recipe.ingredients) do table.insert(all_reqs, v.type) end
+        end
+        if recipe.character_ingredients then
+            for _, v in ipairs(recipe.character_ingredients) do table.insert(all_reqs, v.type) end
+        end
+        
+        specific_ingredient_type = all_reqs[focused_index]
     end
 
     return AnnounceMergedRecipe(
@@ -2530,7 +2633,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     if entity.prefab == "townportal" then
-        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PORTAL.FORMATS[entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop") and "ON" or "OFF"], {
+        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop") and "PORTAL_ON" or "PORTAL_OFF"], {
             NAME = display_name
         }), entity:HasTag('player'), debug_str)
     end
