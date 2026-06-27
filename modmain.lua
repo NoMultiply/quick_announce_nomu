@@ -1947,13 +1947,24 @@ local function AnnounceItem(slot, classname)
     if classname == 'invslot' then
         result_str = subfmt(qa.FORMATS.INV_SLOT, fmts)
     else
+        local is_heavy = item:HasTag("heavy") 
+        
         local slot_pos_name = GetEquipSlotName(qa, slot.equipslot)
         if slot_pos_name then
             fmts.SLOT_POS = slot_pos_name
             fmts.v = slot_pos_name
-            result_str = subfmt(qa.FORMATS.EQUIP_SLOT_POS, fmts)
+            
+            if is_heavy and qa.FORMATS.EQUIP_SLOT_HEAVY_POS then
+                result_str = subfmt(qa.FORMATS.EQUIP_SLOT_HEAVY_POS, fmts)
+            else
+                result_str = subfmt(qa.FORMATS.EQUIP_SLOT_POS, fmts)
+            end
         else
-            result_str = subfmt(qa.FORMATS.EQUIP_SLOT, fmts)
+            if is_heavy and qa.FORMATS.EQUIP_SLOT_HEAVY then
+                result_str = subfmt(qa.FORMATS.EQUIP_SLOT_HEAVY, fmts)
+            else
+                result_str = subfmt(qa.FORMATS.EQUIP_SLOT, fmts)
+            end
         end
     end
 
@@ -2335,7 +2346,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
     if not entity then return end
     if not TheInput:IsKeyDown(KEY_LCTRL) and entity:HasTag('player') then
-    -- 判断玩家是否正在钓鱼
+        -- 判断玩家是否正在钓鱼
         local is_fishing = false
         local inventory = entity.replica.inventory
         if inventory then
@@ -2352,14 +2363,65 @@ TheInput:AddMouseButtonHandler(function(button, down)
                 end
             end
         end
+
         -- 宣告自己
         if entity == ThePlayer then
+            --  钓鱼宣告
             if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING then
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING, { NAME = entity:GetDisplayName() }))
             end
+            
+            -- 2. 骑行宣告
+            local rider = entity.replica.rider
+            if rider and rider:IsRiding() then
+                local mount = rider:GetMount()
+                local mount_name = "坐骑"
+                if mount then
+                    local prefab = mount.prefab or ""
+                    local upper_prefab = string.upper(prefab)
+                    local basic_name = ""
+                    pcall(function() basic_name = mount:GetBasicDisplayName() end)
+                    if not basic_name or basic_name == "" then
+                        basic_name = mount.name or ""
+                    end
+                    local default_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[upper_prefab] or ""
+                    if basic_name ~= "" and basic_name ~= default_name and not string.find(string.upper(basic_name), "MISSING") then
+                        mount_name = basic_name
+                    else
+                        local base_name = default_name ~= "" and default_name or basic_name
+                        mount_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[upper_prefab]) or base_name or "坐骑"
+                    end
+                    mount_name = ApplyCustomName(prefab, mount_name)
+                end
+                if GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_RIDING then
+                    return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
+                end
+            end
+
+            --  搬运宣告
+            if inventory then
+                local equip_body = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+                if equip_body and equip_body:HasTag("heavy") then
+                    local prefab = equip_body.prefab or ""
+                    local upper_prefab = string.upper(prefab)
+                    local base_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[upper_prefab] or equip_body.name
+                    local heavy_item_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[upper_prefab]) or base_name
+                    
+                    if not heavy_item_name or heavy_item_name == "" then
+                        pcall(function() heavy_item_name = equip_body:GetDisplayName() end)
+                    end
+                    heavy_item_name = heavy_item_name or "未知重物"
+                    heavy_item_name = ApplyCustomName(prefab, heavy_item_name)
+                    
+                    if GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_CARRYING then
+                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_CARRYING, { NAME = entity:GetDisplayName(), ITEM = heavy_item_name }))
+                    end
+                end
+            end
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.I_AM_HERE, { NAME = entity:GetDisplayName() }))
         end
-        -- 宣告给物品
+        
+        -- 宣告给物品 (从自己的物品栏拖给别人)
         local my_inventory = ThePlayer.replica.inventory
         local active_item = my_inventory and my_inventory:GetActiveItem()
         if active_item then
@@ -2369,6 +2431,7 @@ TheInput:AddMouseButtonHandler(function(button, down)
                 ITEM_NAME = string.gsub(active_item:GetDisplayName(), '\n', ' ')
             }))
         end
+
         -- 宣告鬼魂状态
         local is_me = ThePlayer:HasTag("playerghost")
         local is_ent = entity:HasTag("playerghost")
@@ -2383,10 +2446,12 @@ TheInput:AddMouseButtonHandler(function(button, down)
             end
             return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
         end
-        --宣告他人正在钓鱼
+
+        -- 宣告他人正在钓鱼
         if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING then
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING, { NAME = entity:GetDisplayName() }))
         end
+
         -- 普通的打招呼
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
     end
