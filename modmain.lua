@@ -789,6 +789,23 @@ local function GetHotspringStat(ent)
     return nil
 end
 
+local function GetHeatrockStat(ent)
+    if not ent or ent.prefab ~= "heatrock" then return nil end
+    local range = nil
+
+    -- 优先检测实体的当前动画状态
+    if ent.AnimState then
+        for i = 1, 5 do
+            if ent.AnimState:IsCurrentAnimation(tostring(i)) then
+                range = i
+                break
+            end
+        end
+    end
+
+    local states = { 'COLD', 'COOL', 'NORMAL', 'WARM', 'HOT' }
+    return range and states[range] or nil
+end
 
 -- [5] 核心宣告逻辑与事件处理
 local function OnHUDMouseButton(HUD)
@@ -1605,8 +1622,6 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 
     if buffered then
         return Announce(subfmt(qa_recipe.FORMATS.BUFFERED, {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
-    elseif can_build and knows then
-        return Announce(subfmt(qa_recipe.FORMATS.WILL_MAKE, {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
     end
 
     -- 处理点击特定材料的情况
@@ -1652,6 +1667,10 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         end
     end
 
+    if can_build and knows then
+        return Announce(subfmt(qa_recipe.FORMATS.WILL_MAKE, {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
+    end
+
     if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS and not specific_ingredient_type then
         return Announce(subfmt(qa_recipe.FORMATS[knows and "WE_NEED" or "CAN_SOMEONE"], {ITEM = name, PROTOTYPE = prototype}), nil, debug_str)
     end
@@ -1675,6 +1694,12 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 end
 
 local ITEM_PREFAB_ALIAS = {
+    driftwood_small1 = "driftwood_small1",
+    driftwood_tall = "driftwood_small1",
+    driftwood_small2 = "driftwood_small1",
+    boatfragment03 = "boatfragment03",
+    boatfragment04 = "boatfragment03",
+    boatfragment05 = "boatfragment03",
     deer_antler1 = "deer_antler",
     deer_antler2 = "deer_antler",
     deer_antler3 = "deer_antler"
@@ -1846,18 +1871,33 @@ local function AnnounceItem(slot, classname)
     }
 
     local is_qa_item = item.prefab and STRINGS.NOMU_QA[item.prefab:upper()] ~= nil
+    local hardcoded_name = item.prefab and STRINGS.NOMU_QA[item.prefab:upper()]
+    local orig_game_name = item.prefab and STRINGS.NAMES[item.prefab:upper()] or ""
     local default_name = item.prefab and (STRINGS.NOMU_QA[item.prefab:upper()] or STRINGS.NAMES[item.prefab:upper()]) or ""
+    
     local is_custom_named = false
+    local is_qa_hardcoded_diff = false
 
     if not is_qa_item then
         is_custom_named = item_name ~= ""
-                         and item_name ~= "MISSING NAME"
+                         and not string.find(string.upper(item_name), "MISSING")
                          and item_name ~= default_name
                          and item_name ~= name
                          and not is_target_prefab
+    else
+        local display_orig = orig_game_name ~= "" and orig_game_name or item_name
+        if display_orig ~= "" 
+           and not string.find(string.upper(display_orig), "MISSING") 
+           and display_orig ~= hardcoded_name then
+            is_qa_hardcoded_diff = true
+        end
     end
 
-    if is_custom_named then
+    if is_qa_hardcoded_diff then
+        local display_orig = orig_game_name ~= "" and orig_game_name or item_name
+        fmts.ITEM = display_orig 
+        fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = hardcoded_name }) -- 后缀改为宣告硬编码名字
+    elseif is_custom_named then
         fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = item_name })
     else
         fmts.ITEM_NAME = ''
@@ -1876,18 +1916,12 @@ local function AnnounceItem(slot, classname)
         })
     end
 
-    if item.prefab == 'heatrock' and item.replica and item.replica.inventoryitem and item.replica.inventoryitem.GetImage then
-        local range = {
-            [4264163310]=1, [3706253814]=1, [2098310090]=1,
-            [1108760303]=2, [550850807]=2, [3237874379]=2,
-            [2248324592]=3, [1690415096]=3, [82471372]=3,
-            [3387888881]=4, [2829979385]=4, [1222035661]=4,
-            [232485874]=5, [3969543674]=5, [2361599950]=5
-        }
-        local img = item.replica.inventoryitem:GetImage()
-        if range[img] then
-            local heat_states = { 'COLD', 'COOL', 'NORMAL', 'WARM', 'HOT' }
-            fmts.POST_STATE = GetMapping(qa, 'HEAT_ROCK', heat_states[range[img]])
+    if GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE then
+        if item.prefab == 'heatrock' then
+            local heat_stat = GetHeatrockStat(item)
+            if heat_stat then
+                fmts.POST_STATE = GetMapping(qa, 'HEAT_ROCK', heat_stat)
+            end
         end
     end
 
@@ -2716,6 +2750,13 @@ TheInput:AddMouseButtonHandler(function(button, down)
             target_stat = target_is_full_archive_switch and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY"
             stat_count = target_is_full_archive_switch and count_archive_switch_full or count_archive_switch_empty
 
+        elseif entity.prefab == "heatrock" then
+            local heat_stat = GetHeatrockStat(entity)
+            if heat_stat then
+                target_stat = "HEATROCK_" .. heat_stat
+            end
+            is_specific_only = true
+
         elseif entity.prefab == "birdcage" then
             target_stat = "BIRDCAGE_FULL"
             if entity.AnimState then
@@ -2767,18 +2808,38 @@ TheInput:AddMouseButtonHandler(function(button, down)
     local default_name = entity.prefab and GLOBAL.STRINGS.NAMES[entity.prefab:upper()] or ""
 
     local is_qa_item = entity.prefab and STRINGS.NOMU_QA[entity.prefab:upper()] ~= nil
+    local hardcoded_name = entity.prefab and STRINGS.NOMU_QA[entity.prefab:upper()]
 
     local is_custom_named = false
+    local is_qa_hardcoded_diff = false
+
     if not is_qa_item then
         is_custom_named = basic_name ~= ""
                          and prefab_name ~= nil
                          and basic_name ~= default_name
                          and basic_name ~= prefab_name
-                         and not string.find(basic_name, "MISSING")
+                         and not string.find(string.upper(basic_name), "MISSING")
                          and not is_blueprint_type
+    else
+        local orig_name = default_name ~= "" and default_name or basic_name
+        if orig_name ~= "" 
+           and not string.find(string.upper(orig_name), "MISSING") 
+           and orig_name ~= hardcoded_name then
+            is_qa_hardcoded_diff = true
+        end
     end
 
-    if is_custom_named and qa.FORMATS.NAMED then
+    if is_qa_hardcoded_diff and qa.FORMATS.NAMED then
+        local orig_name = default_name ~= "" and default_name or basic_name
+        return Announce(subfmt(qa.FORMATS.NAMED, {
+            NUM_PREFAB = count_prefab,
+            PREFAB_NAME = orig_name, -- 游戏内的原本名称
+            NUM = count_name,
+            NAME = prefab_name, -- 此时 prefab_name 就是 qa_default 里的硬编码名称
+            SHOW_ME = show_me,
+            DISTANCE = dist_str
+        }), entity:HasTag('player'), debug_str)
+    elseif is_custom_named and qa.FORMATS.NAMED then
         return Announce(subfmt(qa.FORMATS.NAMED, {
             NUM_PREFAB = count_prefab,
             PREFAB_NAME = prefab_name or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME,

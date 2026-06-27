@@ -542,6 +542,7 @@ ENV = {
             SINGLE = '这里有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
             DEFAULT = '这里有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
             NAMED = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
+
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             
             FISH_SHOAL = '这里有群 {FISH}，共有 {NUM}条 {FISH}{SHOW_ME}{DISTANCE}！',
@@ -555,7 +556,7 @@ ENV = {
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（这个有: {SHOW_ME}）',
+                    SHOW_ME = '（这个有 {SHOW_ME}）',
                     DISTANCE_FAR = '，距离我约 {DIST} 格地皮',
                     DISTANCE_CLOSE = '，就在我旁边',
                     DISTANCE_FAR_WATER = '，在距离我约 {DIST} 格的水面上',
@@ -631,6 +632,12 @@ ENV = {
                     L1_BEDAZZLED = "是一级装饰的",
                     L2_BEDAZZLED = "是二级装饰的",
                     L3_BEDAZZLED = "是三级装饰的",
+
+                    HEATROCK_COLD = '是冰冷的',
+                    HEATROCK_COOL = '有点冷的',
+                    HEATROCK_NORMAL = '是常温的',
+                    HEATROCK_WARM = '有点热的',
+                    HEATROCK_HOT = '是滚烫的',
                 }
             }
         }
@@ -766,7 +773,6 @@ MEDAL_BUFF = {
                     ITEM_NUM = ' (共拥有 {NUM}个)',
                     IN_CONTAINER = ' 在这个 {NAME} 里',
                     WITH_PERCENT = '，{THIS_ONE}拥有 {PERCENT} {TYPE}',
-                    SUSPICIOUS_MARBLE = '，这个是 {NAME}',
                     SHOW_ME = '（这个有 {SHOW_ME}）',
 
                     SLOT_HEAD = '头部栏',
@@ -783,12 +789,12 @@ MEDAL_BUFF = {
     CONSTRUCTION_AND_TRADE = {
         FORMATS = {
             CRAFT_NEED = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
-            CRAFT_HAVE = "我已经准备好了足够的 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",
-            CRAFT_HAVE_ALL = "我已经准备好了所有的材料来制作 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE = "我准备好了足够的 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE_ALL = "我准备好了所有的材料来制作 {RECIPE}{BUT_PROTOTYPE}。",
 
             CONS_NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
-            CONS_HAVE = "我已经准备好了所有的材料来建造 {RECIPE}。",
-            CONS_HAVE_ITEM = "我已经准备好了足够的 {INGREDIENT} 来建造 {RECIPE}。", 
+            CONS_HAVE = "我准备好了所有的材料来建造 {RECIPE}。",
+            CONS_HAVE_ITEM = "我准备好了足够的 {INGREDIENT} 来建造 {RECIPE}。", 
 
             TRADE_NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
             TRADE_HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
@@ -798,8 +804,6 @@ MEDAL_BUFF = {
             DEFAULT = {
                 WORDS = {
                     AMOUNT_FMT = "{NUM}个 {ITEM}",
-                    COMMA = "，",
-                    ALL_MATERIALS = "所有材料",
                     AND_PROTOTYPE = '，我还需要 {PROTOTYPE} 才能制造它',
                     BUT_PROTOTYPE = '，但我还需要 {PROTOTYPE} 才能制造它'
                 }
