@@ -2,7 +2,7 @@ GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME = '猫娘方案'
 
 GLOBAL.STRINGS.CAT_NOMU_QA = {
     SEASON = {
-        FORMATS = { DEFAULT = '主人～{SEASON}的尾巴尖尖还剩{DAYS_LEFT}个毛线球长度喵󰀍～' },
+        FORMATS = { DEFAULT = '主人～{SEASON}还剩下 {DAYS_LEFT} 天喵，时间过得像追尾巴一样快呢󰀍～' },
         MAPPINGS = {
             DEFAULT = {
                 SEASON_NAMES = { 
@@ -13,14 +13,14 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喵呜～{WORLD}气温：{TEMPERATURE}，{WEATHER}来了喵：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
+            START_RAIN = '喵呜～{WORLD}气温是 {TEMPERATURE}，{WEATHER}将在第 {DAYS} 天到来喵（还剩：{MINUTES}分{SECONDS}秒）～',
             NO_RAIN = '嗅嗅……{WORLD}气温：{TEMPERATURE}，肉垫预报{WEATHER}还没来喵󰀍～',
-            STOP_RAIN = '喵！{WORLD}气温：{TEMPERATURE}，放晴啦：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）～',
+            STOP_RAIN = '喵！{WORLD}气温是 {TEMPERATURE}，第 {DAYS} 天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）可以出去晒毛毛了喵～',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
+                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '刮大风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
             }
         }
     },
@@ -42,7 +42,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     MOON_PHASE = {
         FORMATS = {
-            DEFAULT = '喵󰀍～{RECENT}{PHASE1}{INTERVAL}距离下个{PHASE2}还有{LEFT}天呢。',
+            DEFAULT = '喵󰀍～{RECENT}{PHASE1}{INTERVAL}距离下个{PHASE2}还有 {LEFT} 天呢。',
             MOON = '主人快看喵！{RECENT}{PHASE1}啦󰀍～',
             FAILED = '喵呜……云层太厚啦，胡须雷达测不出月相喵！'
         },
@@ -56,9 +56,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     CLOCK = {
         FORMATS = {
-            DEFAULT = '{PHASE}还剩{PHASE_REMAIN}喵～今天还有{DAY_REMAIN}打盹时间󰀍。',
-            NIGHTMARE = '{PHASE}还剩{PHASE_REMAIN}喵～今天还有{DAY_REMAIN}，{NIGHTMARE}还有{REMAIN}结束啦！',
-            NIGHTMARE_LOCK = '{PHASE}还剩{PHASE_REMAIN}喵～今天还有{DAY_REMAIN}，{NIGHTMARE}喵！'
+            DEFAULT = '{PHASE}还剩 {PHASE_REMAIN} 喵～今天还有 {DAY_REMAIN} 打盹时间󰀍。',
+            NIGHTMARE = '{PHASE}还剩 {PHASE_REMAIN} 喵～今天还有 {DAY_REMAIN}，{NIGHTMARE}还有 {REMAIN} 结束啦！',
+            NIGHTMARE_LOCK = '{PHASE}还剩 {PHASE_REMAIN} 喵～今天还有 {DAY_REMAIN}，{NIGHTMARE}喵！'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -75,17 +75,17 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     COOK = {
         FORMATS = {
-            CAN = '只要挥挥尾巴～人家就能变出{NAME}喵󰀍～',
-            NEED = '肚子饿饿喵～人家需要做个{NAME}󰀍～',
-            MIN_INGREDIENT = '制作美味的{NAME}需要{NUM}个{INGREDIENT}喵！',
-            MAX_INGREDIENT = '煮{NAME}最多只能加{NUM}个{INGREDIENT}哦～',
-            ZERO_INGREDIENT = '喵呜！{NAME}里面绝对不可以放{INGREDIENT}啦！',
-            HUNGER = '{NAME}料理{TYPE}饱食度{VALUE}点喵󰀍～',
-            SANITY = '{NAME}料理{TYPE}精神值{VALUE}点喵󰀍～',
-            HEALTH = '{NAME}料理{TYPE}生命值{VALUE}点喵󰀍～',
-            FOOD = '当当！{NAME}：饱食度{HUNGER}，精神值{SANITY}，生命值{HEALTH}喵󰀍～',
-            FOOD_LOCK = '喵？人家的肉垫还没解锁{NAME}呢。',
-            FOOD_NO_EATEN = '需要主人喂人家试吃一口{NAME}才能知道味道喵󰀍～',
+            CAN = '只要挥挥尾巴～人家就能变出 {NAME} 喵󰀍～',
+            NEED = '肚子饿饿喵～人家需要做个 {NAME} 󰀍～',
+            MIN_INGREDIENT = '制作美味的 {NAME} 至少需要 {NUM} 个 {INGREDIENT} 喵！',
+            MAX_INGREDIENT = '煮 {NAME} 最多只能加 {NUM} 个 {INGREDIENT} 哦～',
+            ZERO_INGREDIENT = '喵呜！{NAME} 里面绝对不可以放 {INGREDIENT} 啦！',
+            HUNGER = '{NAME} 料理{TYPE}饱食度 {VALUE} 点喵󰀍～',
+            SANITY = '{NAME} 料理{TYPE}精神值 {VALUE} 点喵󰀍～',
+            HEALTH = '{NAME} 料理{TYPE}生命值 {VALUE} 点喵󰀍～',
+            FOOD = '当当！{NAME}：饱食度 {HUNGER}，精神值 {SANITY}，生命值 {HEALTH} 喵󰀍～',
+            FOOD_LOCK = '喵？人家的肉垫还没解锁 {NAME} 呢。',
+            FOOD_NO_EATEN = '需要主人喂人家试吃一口 {NAME} 才能知道味道喵󰀍～',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -178,8 +178,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     ENERGY = {
         FORMATS = {
             DEFAULT = '(电量：{CURRENT}/{MAX}，已占用：{USED}格) 喵呜～能量储备{MESSAGE}喵！',
-            CHIP = '{NUM}个{ITEM}喵',
-            ALL_MODULES = '肉垫感应到～人家尾巴上装配了：{MODULES}喵！',
+            CHIP = '{NUM}个 {ITEM} 喵',
+            ALL_MODULES = '肉垫感应到～人家尾巴上装配了：{MODULES} 喵！',
             NO_MODULES = '喵呜……人家的插槽空空的，还没装任何电路喵。'
         },
         MAPPINGS = {
@@ -205,63 +205,58 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     PLAYER = {
         FORMATS = {
-            DEFAULT = '{NAME}正在人家这里喵󰀍～',
-            ADMIN = '{NAME}是管理员铲屎官耶！',
-            NAME = '{NAME}是{CHARACTER}喵。',
-            AGE = '{NAME}在这里生存了{AGE}喵。',
-            AGE_SHORT = '{NAME}{AGE}喵。',
+            DEFAULT = '{NAME} 正在人家这里喵󰀍～',
+            ADMIN = '{NAME} 是管理员铲屎官耶！',
+            NAME = '{NAME} 是 {CHARACTER} 喵。',
+            AGE = '{NAME} 在这里生存了 {AGE} 喵。',
+            AGE_SHORT = '{NAME} {AGE} 喵。',
             PERF = '{NAME} 的{PERF}喵～{PING}',
             GREET = '主人的脚步声最好认了喵󰀍～你好吖，{NAME}。',
             PING = '喵呜通道延迟：{PING}',
-            BADGE = '{NAME}戴着{BADGE}的头牌喵。',
-            BACKGROUND = '{NAME}的背景是{BACKGROUND}。',
-            BODY = '{NAME}的绒毛穿着{BODY}。',
-            HAND = '{NAME}的爪爪套着{HAND}。',
-            LEGS = '{NAME}的腿腿穿着{LEGS}。',
-            FEET = '{NAME}的小脚垫着{FEET}。',
-            BASE = '{NAME}的脑袋顶着{BASE}。',
-            HEAD_EQUIP = '{NAME}头上戴着{HEAD_EQUIP}喵。',
-            HAND_EQUIP = '{NAME}爪子捏着{HAND_EQUIP}喵。',
-            BODY_EQUIP = '{NAME}身上穿着{BODY_EQUIP}喵。',
-            GIVE_ITEM = "{NAME}乖乖别动～人家用尾巴卷来了{NUM}个{ITEM_NAME}给你喵󰀍～",
+            BADGE = '{NAME} 戴着 {BADGE} 的头牌喵。',
+            BACKGROUND = '{NAME} 的背景是 {BACKGROUND}。',
+            BODY = '{NAME} 的绒毛穿着 {BODY}。',
+            HAND = '{NAME} 的爪爪套着 {HAND}。',
+            LEGS = '{NAME} 的腿腿穿着 {LEGS}。',
+            FEET = '{NAME} 的小脚垫着 {FEET}。',
+            BASE = '{NAME} 的脑袋顶着 {BASE}。',
+            HEAD_EQUIP = '{NAME} 头上戴着 {HEAD_EQUIP} 喵。',
+            HAND_EQUIP = '{NAME} 爪子捏着 {HAND_EQUIP} 喵。',
+            BODY_EQUIP = '{NAME} 身上穿着 {BODY_EQUIP} 喵。',
+            GIVE_ITEM = "{NAME} 乖乖别动～人家用尾巴卷来了 {NUM}个 {ITEM_NAME} 给你喵󰀍～",
             BOTH_GHOST = "呜呜呜，{NAME}，我们变成幽灵小伙伴了喵󰀍～",
-            ME_GHOST = "拜托{NAME}救救我，人家需要一颗温暖的心复活喵󰀍～",
-            THEY_GHOST = "{NAME}撑住！人家的猫爪救援马上就到喵！",
+            ME_GHOST = "拜托 {NAME} 救救我，人家需要一颗温暖的心复活喵󰀍～",
+            THEY_GHOST = "{NAME} 撑住！人家的猫爪救援马上就到喵！",
             I_AM_HERE = "{NAME}，人家就在这里喵󰀍～！",
-            ME_FISHING = '嘘——{NAME}正在用肉垫屏息钓鱼鱼喵，快咬钩吧！',
-            THEY_FISHING = '喵󰀍～{NAME}正在专注钓鱼鱼呢，希望能钓到超大号小鱼干喵！',
+            ME_FISHING = '嘘——{NAME} 正在用肉垫屏息钓鱼鱼喵，快咬钩吧！',
+            THEY_FISHING = '喵󰀍～{NAME} 正在专注钓鱼鱼呢，希望能钓到超大号小鱼干喵！',
+            PORTAL_ON = '肉垫已经在摸 {NAME} 了喵！',
+            PORTAL_OFF = '{NAME} 在人家这里喵，大家快准备触摸传送喵！'
         },
         MAPPINGS = {}
     },
     SERVER = {
         FORMATS = {
-            NAME = '我们的猫窝叫：{NAME}喵～',
-            AGE = '猫窝已经运转：{AGE}次打盹周期喵。',
-            NUM_PLAYER = '现在有：{NUM}只猫猫喵。'
+            NAME = '我们的猫窝叫：{NAME} 喵～',
+            AGE = '猫窝已经运转：{AGE} 次打盹周期喵。',
+            NUM_PLAYER = '现在有：{NUM} 只猫猫喵。'
         },
         MAPPINGS = {}
     },
     SKILL_TREE = {
         FORMATS = {
-            ACTIVATED = '{NAME}已经点亮『{SKILL}』啦喵󰀍～尾巴自动生成光效中！',
-            CAN_ACTIVATE = '{NAME}快用爪爪戳亮『{SKILL}』喵呜󰀍～',
-            NOT_ACTIVATED = '{NAME}的绒毛蓬松度不足，还没解锁『{SKILL}』喵󰀍～',
-            XP = '{NAME}的洞察还有{XP}点喵󰀍～',
-        },
-        MAPPINGS = {}
-    },
-    PORTAL = {
-        FORMATS = {
-            ON = '肉垫已经在摸{NAME}了喵！',
-            OFF = '{NAME}在人家这里，快准备触摸传送喵！'
+            ACTIVATED = '{NAME} 已经点亮『{SKILL}』啦喵󰀍～尾巴自动生成光效中！',
+            CAN_ACTIVATE = '{NAME} 快用爪爪戳亮『{SKILL}』喵呜󰀍～',
+            NOT_ACTIVATED = '{NAME} 的绒毛蓬松度不足，还没解锁『{SKILL}』喵󰀍～',
+            XP = '{NAME} 的洞察还有 {XP} 点喵󰀍～',
         },
         MAPPINGS = {}
     },
     SPACE = {
         FORMATS = {
-            PLAYER = "人家的尾巴测量到～包包还能卷起{COUNT}个毛线球的空间喵！",
-            INV = "用胡须探了探包里的{CONTAINER_NAME}～还能塞下{COUNT}个会发光的小玩意喵󰀍～",
-            CONTAINER = "这个{CONTAINER_NAME}足够装下{COUNT}只打滚的猫猫幼崽喵！"
+            PLAYER = "人家的尾巴测量到～包包还能卷起 {COUNT} 个毛线球的空间喵！",
+            INV = "用胡须探了探包里的 {CONTAINER_NAME}～还能塞下 {COUNT} 个会发光的小玩意喵󰀍～",
+            CONTAINER = "这个 {CONTAINER_NAME} 足够装下 {COUNT} 只打滚的猫猫幼崽喵！"
         },
         MAPPINGS = {}
     },
@@ -294,7 +289,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     DOMESTICATION_NORMAL = "驯牛还得继续努力喵～（驯化：{PCT}%）",
                     DOMESTICATION_LOW = "牛牛太野啦！都不让人家摸摸喵。（驯化：{PCT}%）",
                     
-                    TIMER_RIDING = "抓紧牛角喵！还能再骑{TIME}哦！",
+                    TIMER_RIDING = "抓紧牛角喵！还能再骑 {TIME} 哦！",
                     TIMER_LOW = "喵嗷！牛牛要生气了，快抱紧！（剩余：{TIME}）"
                 },
                 TENDENCY_NAME = {
@@ -307,149 +302,109 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             }
         }
     },
-    TREE = {
-        FORMATS = {
-            EQUAL = '喵󰀍～人家发现这{COUNT}棵{NAME}全都是{ADJ}{SHOW_ME}喵，是完美的天然猫爬架呢！',
-            DESCRIBE = '嗅嗅……这{COUNT}棵{NAME}里有{NUM}棵{ADJ}{SHOW_ME}喵󰀍～'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    STUMP = "光秃秃的树桩",
-                    SAPLING = "可爱的小树苗",
-                    SHORT = "刚刚长出的小树",
-                    NORMAL = "长得不错的树",
-                    TALL = "长得高高大大的",
-                    BOULDER = "被砍成了矿床的",
-                    SEED = "刚种下的种子",
-                    ANCIENT_READY = "挂满果实的",
-                    ANCIENT_EMPTY = "果子被吃光了的",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚刚长出的大理石",
-                    MARBLE_TREE = "大理石雕刻的漂亮树喵"
-                }
-            }
-        }
-    },
-    CROP = {
-        FORMATS = {
-            EQUAL = '喵󰀍～人家发现附近有{COUNT}个{NAME}，它们全都{ADJ}{SHOW_ME}喵！',
-            DESCRIBE = '喵󰀍～人家发现附近有{COUNT}个{NAME}，其中有{NUM}个{ADJ}{SHOW_ME}喵！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    WITH_BARNACLES = "长着小藤壶的",
-                    NO_BARNACLES = "光秃秃的",
-                    SEED = "还是小种子",
-                    GROW = "还在努力长大",
-                    FULL = "已经成熟啦",
-                    OVER = "长得超级巨大",
-                    ROT = "已经坏掉了",
-                    SALT_FULL = "长满了咸咸的盐块",
-                    SALT_MED = "正在结出小盐矿",
-                    SALT_LOW = "只长出一点盐晶",
-                    SALT_EMPTY = "盐块都被挖走啦",
-                    MARBLE_TALL = "完全长大的大理石",
-                    MARBLE_NORMAL = "中等大小的大理石",
-                    MARBLE_SHORT = "刚刚长出的大理石",
-                    BEEBOX_FULL = "挂满了甜甜的蜂蜜",
-                    BEEBOX_SOME = "攒了一点点蜂蜜",
-                    BEEBOX_EMPTY = "空空的没有蜂蜜",
-                    PICKABLE_READY = "长好啦，快去采摘",
-                    PICKABLE_EMPTY = "还在努力生长",
-                    NEST_HAS_EGG = "有圆滚滚的高鸟蛋",
-                    NEST_EMPTY = "是个空鸟窝",
-                    MUSHROOMFARM_ROTTEN = "变成烂木头啦",
-                    MUSHROOMFARM_EMPTY = "里面空空的",
-                    MUSHROOMFARM_STAGE1 = "刚刚种下小蘑菇",
-                    MUSHROOMFARM_STAGE2 = "蘑菇长得不错",
-                    MUSHROOMFARM_STAGE3 = "蘑菇完全长大啦",
-                    MUSHROOMFARM_STAGE4 = "哇！蘑菇多得要掉下来啦"
-                }
-            }
-        }
-    },
-    SPIDERDEN = {
-        FORMATS = {
-            EQUAL = '喵󰀍～这{COUNT}个{NAME}全都是{ADJ}{SHOW_ME}，长着毛茸茸的蜘蛛先生喵！',
-            DESCRIBE = '喵呜，这{COUNT}个{NAME}里有{NUM}个是{ADJ}{SHOW_ME}喵！'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    L1 = "一级的",
-                    L2 = "二级的",
-                    L3 = "三级的",
-                    L1_BEDAZZLED = "被装饰的一级",
-                    L2_BEDAZZLED = "被装饰的二级",
-                    L3_BEDAZZLED = "被装饰的三级",
-                }
-            }
-        }
-    },
     ENV = {
         FORMATS = {
-            SINGLE = '主人的猫猫雷达发现附近有1个{NAME}{SHOW_ME}{DISTANCE}喵󰀍～',
-            DEFAULT = '检测到{NUM}个{NAME}{SHOW_ME}{DISTANCE}～人家耳朵竖起来了喵！',
-            NAMED = '胡须测量仪显示，附近有{NUM_PREFAB}个{PREFAB_NAME}，其中有{NUM}个叫{NAME}{SHOW_ME}{DISTANCE}喵！',
-            CODE = '这玩意叫：{NAME}，猫星代码是：{PREFAB}',
-            BURNT_EQUAL = '喵……这里有{TOTAL}个{NAME}，全都被烧成黑炭了{SHOW_ME}{DISTANCE}喵……',
-            BURNT_DESCRIBE = '这里有{TOTAL}个{NAME}，有{NUM}个被烧成黑炭了{SHOW_ME}{DISTANCE}喵……',
-            FIRE_EQUAL = '喵呜！这里有{TOTAL}个{NAME}，全都在起火快跑{SHOW_ME}{DISTANCE}喵！',
-            FIRE_DESCRIBE = '呜喵！这里有{TOTAL}个{NAME}，其中有{NUM}个起火了快跑{SHOW_ME}{DISTANCE}喵！',
-            WITHERED_EQUAL = '喵……这里有{TOTAL}个{NAME}，全都被热得枯萎了{SHOW_ME}{DISTANCE}喵……',
-            WITHERED_DESCRIBE = '呜喵！这里有{TOTAL}个{NAME}，其中有{NUM}个被热得枯萎了{SHOW_ME}{DISTANCE}喵……',
-            BARREN_EQUAL = '喵呜～{TOTAL}个{NAME}全都没施肥{SHOW_ME}{DISTANCE}，需要主人去捡臭臭的肥料喵󰀍～',
-            BARREN_DESCRIBE = '喵呜～这里有{TOTAL}个{NAME}，其中有{NUM}个还没施肥{SHOW_ME}{DISTANCE}，需要主人去捡臭臭的肥料喵󰀍～',
-            SMOLDER_EQUAL = '喵嗷！{TOTAL}个{NAME}全都在冒黑烟了{SHOW_ME}{DISTANCE}，肉垫觉得很危险喵，快拿冰块！',
-            SMOLDER_DESCRIBE = '喵嗷！这里有{TOTAL}个{NAME}，其中有{NUM}个冒黑烟了{SHOW_ME}{DISTANCE}，肉垫觉得很危险喵，快拿冰块！',
-            GOAT_CHARGED_EQUAL = '喵呜！这里有{TOTAL}个{NAME}，全都带电了{SHOW_ME}{DISTANCE}，快把毛收起来！',
-            GOAT_CHARGED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}只是带电状态{SHOW_ME}{DISTANCE}，快把毛收起来！',
-            GOAT_NORMAL_EQUAL = '这里有{TOTAL}个{NAME}，全都是普通的羊羊{SHOW_ME}{DISTANCE}喵。',
-            GOAT_NORMAL_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}只是普通的羊羊{SHOW_ME}{DISTANCE}喵。',
-            FISH_SHOAL = '嗅嗅……这里有群{FISH}，共有{NUM}条{FISH}{SHOW_ME}{DISTANCE}喵！',
-            FISH_HOLE = '嗅嗅……人家发现了一处{NAME}{SHOW_ME}{DISTANCE}喵󰀍～要开始钓鱼鱼了吗？',
-            HOTSPRING_BOMBED_EQUAL = '这里有{TOTAL}个{NAME}，水温全都棒极了{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_BOMBED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个水温很棒{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_GLASSED_EQUAL = '这里有{TOTAL}个{NAME}，全变成石头了没法洗澡{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_GLASSED_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个变成石头了{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_EMPTY_EQUAL = '这里有{TOTAL}个{NAME}，全都干干的没有水{SHOW_ME}{DISTANCE}喵！',
-            HOTSPRING_EMPTY_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个干干的没有水{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_RIPE_EQUAL = '这里有{TOTAL}个{NAME}，全都变成红彤彤的啦{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_RIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个变成红彤彤的啦{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_UNRIPE_EQUAL = '这里有{TOTAL}个{NAME}，全都是普通的颜色{SHOW_ME}{DISTANCE}喵！',
-            FRUITDRAGON_UNRIPE_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个是普通的颜色{SHOW_ME}{DISTANCE}喵！',
-            BIRDCAGE_EMPTY = '这里有{TOTAL}个{NAME}，这个里面空空的{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_FULL = '这里有{TOTAL}个{NAME}，这个里面有一只小鸟{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_SICK = '这里有{TOTAL}个{NAME}，这个里面的鸟生病了{SHOW_ME}{DISTANCE}喵。',
-            BIRDCAGE_DEAD = '这里有{TOTAL}个{NAME}，这个里面的鸟已经饿死了……{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_FULL_EQUAL = '这里有{TOTAL}个{NAME}，全都已经激活了{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_FULL_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个已经激活了{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_EMPTY_EQUAL = '这里有{TOTAL}个{NAME}，全都没有激活{SHOW_ME}{DISTANCE}喵。',
-            ARCHIVE_SWITCH_EMPTY_DESCRIBE = '这里有{TOTAL}个{NAME}，其中有{NUM}个还没激活{SHOW_ME}{DISTANCE}喵。',
-            TOADSTOOL_EMPTY = '雷达扫描完毕喵󰀍～这里有蟾蜍洞穴，目前里面空空的{SHOW_ME}{DISTANCE}，大蛤蟆不在家喵。',
-            TOADSTOOL_NORMAL = '喵嗷！锁定目标！这里有蟾蜍洞穴，里面有一只大蛤蟆{SHOW_ME}{DISTANCE}，准备启动猫猫拳喵！',
-            TOADSTOOL_DARK = '警报！高能反应喵！这里有蟾蜍洞穴，里面是悲惨毒菌蟾蜍{SHOW_ME}{DISTANCE}，肉垫发抖惹喵！',
-            OASISLAKE_EMPTY = '喵呜……水分探测仪显示，这1个{NAME}已经干涸掉啦{SHOW_ME}{DISTANCE}，没法抓鱼鱼了喵……',
-            OASISLAKE_FULL = '喵󰀍～探测到充沛的水源！这1个{NAME}满满的都是水{SHOW_ME}{DISTANCE}，可以玩水花啦！',
+            SINGLE = '主人～这里有 1个 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            DEFAULT = '喵呜～这附近共有 {NUM}个 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            NAMED = '肉垫发现！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名叫 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
+            CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
+            
+            FISH_SHOAL = '快看喵！这里有一群好吃的 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}！',
+            FISH_HOLE = '这里有 1个 {NAME} 喵{SHOW_ME}{DISTANCE}。',
+
+            STATE_EQUAL = '喵呜～这里有 {TOTAL}个 {NAME}，目前全都{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_DESCRIBE = '有情况喵！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经{ADJ}了喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_THIS = '抓到一只特殊目标喵！这里共有 {TOTAL}个 {NAME}，而这个{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME}，目前它{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    SHOW_ME = '（这个有 {SHOW_ME}）',
-                    DISTANCE_FAR = '，距离人家大概{DIST}个毛线球（格）的距离喵～',
-                    DISTANCE_CLOSE = '，就在人家肉垫旁边喵！',
-                    DISTANCE_FAR_WATER = '，在距离人家约{DIST}格的水面上喵，人家才不要下水！',
-                    DISTANCE_CLOSE_WATER = '，就在人家旁边的水面上喵～',
+                    SHOW_ME = '（里面抓到了：{SHOW_ME}）',
+                    DISTANCE_FAR = '，距离主人喵约 {DIST} 格地皮',
+                    DISTANCE_CLOSE = '，就在人家尾巴旁边喵！',
+                    DISTANCE_FAR_WATER = '，在距离人家约 {DIST} 格的湿漉漉水面上喵',
+                    DISTANCE_CLOSE_WATER = '，就在人家脚边的小浪花里喵',
+                    MOD_INFO = '，模组：{MOD_NAME}',
+                    ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
+                },
+                ADJ = {
+                    BURNT = '被烤焦了喵',
+                    FIRE = '在扑哧扑哧燃烧中喵（好烫）',
+                    WITHERED = '干巴巴地枯萎了喵',
+                    BARREN = '肚子饿了需要施肥喵',
+                    SMOLDER = '在冒热气快要起火了喵',
+                    GOAT_CHARGED = '麻酥酥的带电状态喵',
+                    GOAT_NORMAL = '是温顺听话的普通状态喵',
+                    HOTSPRING_BOMBED = '水温泡澡正合适喵',
+                    HOTSPRING_GLASSED = '已经结成亮晶晶的亮冰了喵',
+                    HOTSPRING_EMPTY = '已经干得连一滴水水都没有了喵',
+                    FRUITDRAGON_RIPE = '红通通熟透了喵（扑上去）',
+                    FRUITDRAGON_UNRIPE = '还是硬邦邦的未成熟状态喵',
+                    BIRDCAGE_EMPTY = '空空的什么鸟都没有喵',
+                    BIRDCAGE_FULL = '里面住着扑棱棱的小鸟喵',
+                    BIRDCAGE_SICK = '里面的小鸟生病蔫掉了喵',
+                    BIRDCAGE_DEAD = '里面的小鸟回喵星了喵',
+                    ARCHIVE_SWITCH_FULL = '亮起来处于激活状态喵',
+                    ARCHIVE_SWITCH_EMPTY = '黑乎乎的还没被激活喵',
+                    TOADSTOOL_EMPTY = '空空如也，没有大蛤蟆喵',
+                    TOADSTOOL_NORMAL = '蹲着一只好大只的毒菌蟾蜍喵',
+                    TOADSTOOL_DARK = '藏着一只很凶的悲惨毒菌蟾蜍喵',
+                    OASISLAKE_EMPTY = '已经干枯成沙子坑了喵',
+                    OASISLAKE_FULL = '装满了清澈好喝的湖水喵',
+                    BEEFALO_SHAVED = '被剃光了毛（看起来凉飕飕的喵）',
+
+                    WITH_BARNACLES = "长满了小藤壶喵",
+                    NO_BARNACLES = "光溜溜一片喵",
+                    SEED = "还只是一颗小种子喵",
+                    GROW = "还在努力长高高喵",
+                    FULL = "已经香喷喷地成熟了喵",
+                    OVER = "长成了级大只的巨型作物喵",
+                    ROT = "烂掉了呜呜喵",
+                    SALT_FULL = "结满了咸咸的盐晶喵",
+                    SALT_MED = "正在结晶的半路上喵",
+                    SALT_LOW = "只结了一点点小盐晶喵",
+                    SALT_EMPTY = "已经被小猫爪刨空了喵",
+                    MARBLE_TALL = "完全长成大理石柱了喵",
+                    MARBLE_NORMAL = "处于不大不小的体型喵",
+                    MARBLE_SHORT = "才刚刚破土钻出来喵",
+                    BEEBOX_FULL = "小甜蜜都快溢出来洗爪子了喵",
+                    BEEBOX_SOME = "积攒了一点点蜂蜜糖喵",
+                    BEEBOX_EMPTY = "连一滴甜头都没有喵",
+                    PICKABLE_READY = "可以伸爪去采摘了喵",
+                    PICKABLE_EMPTY = "还在长新芽的冬眠期喵",
+                    NEST_HAS_EGG = "里面躺着一颗大高鸟蛋喵",
+                    NEST_EMPTY = "只是个草编的空巢喵",
+                    MUSHROOMFARM_ROTTEN = "变成不能磨爪子的烂木头了喵",
+                    MUSHROOMFARM_EMPTY = "里面还没播种喵",
+                    MUSHROOMFARM_STAGE1 = "才刚种下去不久喵",
+                    MUSHROOMFARM_STAGE2 = "长势探头探脑挺喜人的喵",
+                    MUSHROOMFARM_STAGE3 = "已经长成小伞了喵",
+                    MUSHROOMFARM_STAGE4 = "多得快要把木头给挤爆啦喵",
+
+                    STUMP = "变成可以当凳子坐的树桩了喵",
+                    SAPLING = "还是个柔弱的小树苗喵",
+                    SHORT = "才刚刚探出个小绿头喵",
+                    NORMAL = "长得郁郁葱葱正茂盛呢喵",
+                    TALL = "长得像超级大猫爬架一样高喵",
+                    BOULDER = "已经石化变成矿床了喵",
+                    ANCIENT_READY = "结满了沉甸甸的果实喵",
+                    ANCIENT_EMPTY = "光秃秃的什么果果都没有喵",
+                    MARBLE_TREE = "是由漂亮大理石构成的树树喵",
+
+                    L1 = "小小的一级巢喵",
+                    L2 = "变大了一点的二级巢喵",
+                    L3 = "超大的一堆毛线球三级巢喵",
+                    L1_BEDAZZLED = "被亮晶晶装饰过的一级巢喵",
+                    L2_BEDAZZLED = "被亮晶晶装饰过的二级巢喵",
+                    L3_BEDAZZLED = "被亮晶晶装饰过的三级巢喵",
                 }
             }
         }
     },
     SKIN = {
         FORMATS = {
-            DEFAULT = '我有{NUM}个{ITEM}皮肤（共{TOTAL}个），这个叫『{SKIN}』喵！',
+            DEFAULT = '我有 {NUM}件 {ITEM} 皮肤（共 {TOTAL} 个），这个叫『{SKIN}』喵！',
             NO_SKIN = '喵嗷！科雷什么时候才给人家出『{ITEM}』的皮肤呀！',
             HAS_NO_SKIN = '呜呜呜……人家连一个『{ITEM}』的漂亮衣服都没有喵！'
         },
@@ -457,10 +412,10 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     RECIPE = {
         FORMATS = {
-            BUFFERED = '人家用尾巴卷着刚做好的{ITEM}准备放置喵󰀍～',
-            WILL_MAKE = '材料像毛线球一样到位啦～人家随时可以开爪制作{ITEM}喵！',
-            WE_NEED = '人家的耳朵接收到需求～我们需要制造个{ITEM}喵！',
-            CAN_SOMEONE = '有人能帮人家做一个{ITEM}喵？人家需要{PROTOTYPE}才能造出它喵！',
+            BUFFERED = '人家用尾巴卷着刚做好的 {ITEM} 准备放置喵󰀍～',
+            WILL_MAKE = '材料像毛线球一样到位啦～人家随时可以开爪制作 {ITEM} 喵！',
+            WE_NEED = '人家的耳朵接收到需求～我们需要制造个 {ITEM} 喵！',
+            CAN_SOMEONE = '有人能帮人家做一个 {ITEM} 喵？人家需要 {PROTOTYPE} 才能造出它喵！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -543,16 +498,17 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     MEDAL_BUFF = {
         FORMATS = {
-            DEFAULT = '喵󰀍～人家现在有"{BUFF_NAME}"BUFF加持哦，还能持续{TIME}喵！',
+            DEFAULT = '喵󰀍～人家现在有"{BUFF_NAME}"BUFF加持哦，还能持续 {TIME} 喵！',
             FOREVER = '喵󰀍～人家现在有"{BUFF_NAME}"BUFF的永久加持喵！',
+            EXAM = '喵嗷求助～有谁知道"{QUESTION}"的答案喵？选项有：{OPTIONS}～帮帮人家喵！',
         },
         MAPPINGS = {}
     },
     ITEM = {
         FORMATS = {
-            INV_SLOT = '{PRONOUN}的包包里偷偷藏了{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
-            EQUIP_SLOT = '{PRONOUN}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
-            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            INV_SLOT = '{PRONOUN}的包包里偷偷藏了 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            EQUIP_SLOT = '{PRONOUN}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
             EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有装备任何东西喵󰀍～'
         },
         MAPPINGS = {
@@ -566,18 +522,18 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     HOT = '，滚烫烫的'
                 },
                 RECHARGE = {
-                    CHARGING = '，还差{TIME}就能发光喵',
+                    CHARGING = '，还差 {TIME} 就能发光喵',
                     FULL = '，尾巴能量已就绪喵'
                 },
                 PERCENT_TYPE = { DURABILITY = '的耐久度', FRESHNESS = '新鲜小鱼干味' },
                 TIME = { MINUTES = '分', SECONDS = '秒' },
                 WORDS = {
                     THIS_ONE = '其中这个',
-                    ITEM_NAME = ' (有{NUM}个叫{NAME})',
-                    ITEM_NUM = ' (一共屯了{NUM}个)',
-                    IN_CONTAINER = ' 藏在这个{NAME}里',
-                    WITH_PERCENT = '，{THIS_ONE}散发着{PERCENT}{TYPE}喵',
-                    SUSPICIOUS_MARBLE = '，喵呜这是{NAME}',
+                    ITEM_NAME = ' (有 {NUM}个 叫 {NAME})',
+                    ITEM_NUM = ' (一共屯了 {NUM}个)',
+                    IN_CONTAINER = ' 藏在这个 {NAME} 里',
+                    WITH_PERCENT = '，{THIS_ONE}散发着 {PERCENT} {TYPE} 喵',
+                    SUSPICIOUS_MARBLE = '，喵呜这是 {NAME}',
                     SHOW_ME = '（这个有 {SHOW_ME}）',
 
                     SLOT_HEAD = '小脑袋上',
@@ -591,44 +547,29 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             }
         }
     },
-    INGREDIENT = {
+    CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            NEED_MULTIPLE = "我们需要{INGREDIENT}才能把{RECIPE}弄出来喵{AND_PROTOTYPE}！",
-            HAVE_ALL = "用肉垫拍拍{INGREDIENT}～马上就能变出{RECIPE}喵{BUT_PROTOTYPE}！",
+            CRAFT_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 弄出来喵{AND_PROTOTYPE}！",
+            CRAFT_HAVE = "人家已经把 {INGREDIENT} 准备好做 {RECIPE} 啦喵{BUT_PROTOTYPE}！",
+            CRAFT_HAVE_ALL = "用肉垫拍拍把 {INGREDIENT} 凑齐啦～马上就能变出 {RECIPE} 喵{BUT_PROTOTYPE}！",
+
+            CONS_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 建好喵󰀍～",
+            CONS_HAVE = "所有毛线球都备齐啦～{RECIPE} 随时可以拔地而起喵！",
+            CONS_HAVE_ITEM = "人家的小爪爪已经准备好 {INGREDIENT} 来建 {RECIPE} 了喵󰀍～", 
+
+            TRADE_NEED = "喵呜……想要和 {RECIPE} 换东西，人家的小兜兜里还缺 {INGREDIENT} 喵󰀍～",
+            TRADE_HAVE = "太棒啦！有足够的 {INGREDIENT} 和 {RECIPE} 交易喵！快去快去～",
+            TRADE_HAVE_ITEM = "太好啦！人家有足够的 {INGREDIENT} 可以和 {RECIPE} 换小礼物了喵！", 
         },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    ITEM_AMOUNT_FORMAT = "{NUM}个{ITEM}",
+                    AMOUNT_FMT = "{NUM}个 {ITEM}",
                     COMMA = "，",
                     ALL_MATERIALS = "所有发光材料",
-                    AND_PROTOTYPE = '，而且需要{PROTOTYPE}的认证喵',
-                    BUT_PROTOTYPE = '，不过现在就差{PROTOTYPE}的认证啦喵'
+                    AND_PROTOTYPE = '，而且需要 {PROTOTYPE} 的认证喵',
+                    BUT_PROTOTYPE = '，不过现在就差 {PROTOTYPE} 的认证啦喵'
                 }
-            }
-        }
-    },
-    CONSTRUCTION = {
-        FORMATS = {
-            NEED = "我们需要{INGREDIENT}才能把{RECIPE}建好喵󰀍～",
-            HAVE = "所有毛线球都备齐啦～{RECIPE}随时可以拔地而起喵！",
-            HAVE_ITEM = "人家的小爪爪已经准备好{INGREDIENT}来建{RECIPE}了喵󰀍～", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
-            }
-        }
-    },
-    TRADE = {
-        FORMATS = {
-            NEED = "喵呜……想要和{RECIPE}换东西，人家的小兜兜里还缺{INGREDIENT}喵󰀍～",
-            HAVE = "有足够的{INGREDIENT}和{RECIPE}交易喵！快去快去～",
-            HAVE_ITEM = "人家有足够的{INGREDIENT}可以和{RECIPE}换小礼物了喵！", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = { AMOUNT_FMT = "{NUM}个{ITEM}" }
             }
         }
     },
@@ -725,11 +666,11 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(用尾巴拍拍圆滚滚的小肚子)喵呜～',
-                    HIGH = '(肉垫在肚皮上弹钢琴)叮咚～饱足感满分喵󰀍～',
-                    MID = '(耳朵耷拉成飞机耳)喵嗷～投食雷达有反应！',
-                    LOW = '(瞳孔放大紧抓主人衣角)ฅ(๑*д*๑)ฅ',
-                    EMPTY = '(瘫成猫饼用爪爪比划小鱼干形状)喵……喵……',
+                    FULL = '(用尾巴拍拍圆滚滚的小肚子) 喵呜～',
+                    HIGH = '(肉垫在肚皮上弹钢琴) 叮咚～饱足感满分喵󰀍～',
+                    MID = '(耳朵耷拉成飞机耳) 喵嗷～投食雷达有反应！',
+                    LOW = '(瞳孔放大紧抓主人衣角) ฅ(๑*д*๑)ฅ',
+                    EMPTY = '(瘫成猫饼用爪爪比划小鱼干形状) 喵……喵……',
                 }
             },
             WAXWELL = {
@@ -828,7 +769,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     NAUGHTINESS = {
         FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
-            LUCK = '喵󰀍～人家现在的幸运值是：{CURRENT}喔！' 
+            LUCK = '喵󰀍～人家现在的幸运值是：{CURRENT} 喔！' 
         },
         MAPPINGS = {
             DEFAULT = {
@@ -923,11 +864,11 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(行屈膝礼时尾巴划出爱心轨迹)喵󰀍～',
-                    HIGH = '(用胡须比出OK的翘起拇指)ฅ^•ﻌ•^ฅ',
-                    MID = '(用肉垫按摩太阳穴)呼噜……头晕喵……',
-                    LOW = '(尾巴炸毛四处扫视)喵嗷！疯狂的家伙！',
-                    EMPTY = '(摇篮一样的头来回摇摆)喵呜呜……救命……',
+                    FULL = '(行屈膝礼时尾巴划出爱心轨迹) 喵󰀍～',
+                    HIGH = '(用胡须比出OK的翘起拇指) ฅ^•ﻌ•^ฅ',
+                    MID = '(用肉垫按摩太阳穴) 呼噜……头晕喵……',
+                    LOW = '(尾巴炸毛四处扫视) 喵嗷！疯狂的家伙！',
+                    EMPTY = '(摇篮一样的头来回摇摆) 喵呜呜……救命……',
                 }
             },
             WAXWELL = {
@@ -1007,7 +948,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     HEALTH = {
         FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
-            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
+            WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，猫猫护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -1085,11 +1026,11 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             },
             WES = {
                 MESSAGE = {
-                    FULL = '(尾巴比出爱心)喵󰀍～手结成心！',
-                    HIGH = '(展示小爪爪)喵呜～触摸脉搏竖大拇指！',
-                    MID = '(玩绷带)喵呀～手在手臂示意包扎！',
-                    LOW = '(摇晃尾巴SOS)喵……摇晃手臂……',
-                    EMPTY = '(抛出小纸团倒下)遗书……大幅摇摆摔倒喵……',
+                    FULL = '(尾巴比出爱心) 喵󰀍～手结成心！',
+                    HIGH = '(展示小爪爪) 喵呜～触摸脉搏竖大拇指！',
+                    MID = '(玩绷带) 喵呀～手在手臂示意包扎！',
+                    LOW = '(摇晃尾巴SOS) 喵……摇晃手臂……',
+                    EMPTY = '(抛出小纸团倒下) 遗书……大幅摇摆摔倒喵……',
                 }
             },
             WAXWELL = {
@@ -1203,145 +1144,145 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             WILSON = {
                 MESSAGE = {
                     FULL = '彻底变成水煮猫猫啦～达到饱和点喵！',
-                    HIGH = '水快滚出去喵！',
-                    MID = '绒毛结成缕，衣服几乎渗透喵。',
-                    LOW = '胡须挂着露珠，Oh，H2O喵。',
-                    EMPTY = '干爽得能当镜子，比较干燥喵。',
+                    HIGH = '讨厌的水快滚出去喵！',
+                    MID = '绒毛都结成缕了，衣服几乎被水浸透了喵。',
+                    LOW = '胡须上挂满水珠，Oh，讨厌的 H2O 喵。',
+                    EMPTY = '身上干爽得能当镜子照，现在非常干燥喵。',
                 }
             },
             WILLOW = {
                 MESSAGE = {
-                    FULL = 'Ugh，这雨水是最坏的喵！',
+                    FULL = 'Ugh，这讨厌的雨水是世界上最坏的东西喵！',
                     HIGH = '全身湿透，人家讨厌这水喵！',
-                    MID = '雨水成河，这雨太多了喵。',
-                    LOW = 'Uh oh，如果雨持续下尾巴要熄灭了喵……',
-                    EMPTY = '干燥到能擦火星，没雨能灭火喵。',
+                    MID = '地上积水成河，这雨太多了喵。',
+                    LOW = 'Uh oh，如果雨一直下，尾巴上的火焰都要熄灭了喵……',
+                    EMPTY = '身上干燥得都能擦出火星啦，一点水都灭不了我的火喵。',
                 }
             },
             WOLFGANG = {
                 MESSAGE = {
-                    FULL = '变成水球，沃尔夫冈可能是水做的喵！',
-                    HIGH = '就像坐在池塘里一样喵……',
+                    FULL = '变成圆滚滚的水球啦，沃尔夫冈现在简直是水做的喵！',
+                    HIGH = '浑身湿漉漉的，就像一屁股坐在池塘里一样喵……',
                     MID = '洗澡时间没到，沃尔夫冈不喜欢洗澡喵。',
-                    LOW = '雨水时代来啦喵。',
-                    EMPTY = '沃尔夫冈是干燥的喵。',
+                    LOW = '滴滴答答的雨水时代来啦喵。',
+                    EMPTY = '沃尔夫冈现在是非常干燥的喵。',
                 }
             },
             WENDY = {
                 MESSAGE = {
-                    FULL = '满是雨水和眼泪的末世喵。',
-                    HIGH = '长久的湿润和悲伤的落汤猫喵。',
+                    FULL = '周围全是雨水和眼泪，像末世一样让人悲伤喵。',
+                    HIGH = '变成了一只长久湿润又悲伤的落汤猫喵。',
                     MID = '和姐姐大人一样湿软又悲伤喵。',
-                    LOW = '或许这些水分能填补心灵虚空喵。',
-                    EMPTY = '皮肤和心灵一样干燥喵。',
+                    LOW = '或许这些冰冷的雨水，能够填满心里的空虚吧喵。',
+                    EMPTY = '现在的皮肤和心灵一样干燥喵。',
                 }
             },
             WX78 = {
                 MESSAGE = {
-                    FULL = '受潮状况：短路到达临界值喵',
-                    HIGH = '受潮状况：天线进水接近临界喵',
-                    MID = '受潮状况：长蘑菇无法接受的喵',
-                    LOW = '受潮状况：露珠可容许的喵',
-                    EMPTY = '受潮状况：干燥完美合意的喵',
+                    FULL = '受潮状况：短路危险！水分已经到达临界值啦喵',
+                    HIGH = '受潮状况：天线进水了！已经接近危险临界喵',
+                    MID = '受潮状况：身上要长蘑菇了，完全无法接受的喵',
+                    LOW = '受潮状况：只有点小露珠，还是可容许的喵',
+                    EMPTY = '受潮状况：全身完美干燥，非常合意的喵',
                 }
             },
             WICKERBOTTOM = {
                 MESSAGE = {
-                    FULL = '保护罩失效！完全绝对浸湿喵！',
-                    HIGH = '我是湿的，湿的，湿的！重要说三遍喵！',
-                    MID = '长袍吸水，想知道我的最高承受力喵。',
-                    LOW = '书页卷边了，水膜开始形成喵。',
-                    EMPTY = '羊皮纸完美，水分足够缺乏喵。',
+                    FULL = '魔法保护罩失效！完全绝对被浸湿了喵！',
+                    HIGH = '我是湿的！湿的！湿的！重要的事情要说三遍喵！',
+                    MID = '长袍疯狂吸水，我想知道我的最高承受力喵。',
+                    LOW = '书页都卷边了，讨厌的水膜开始形成喵。',
+                    EMPTY = '羊皮纸保存完美，身上的水分极度匮乏，很好喵。',
                 }
             },
             WOODIE = {
                 MESSAGE = {
-                    FULL = '这鬼天气导致人家不能砍树喵！',
-                    HIGH = '格子披风吸水，不再保暖了喵。',
-                    MID = '储水罐装满，获得了相当水分喵。',
-                    LOW = '格子花纹很温暖，也很潮湿喵。',
-                    EMPTY = '对我几乎不受影响的喵。',
+                    FULL = '这鬼天气导致人家连树都不能砍了喵！',
+                    HIGH = '格子小披风吸满了水，一点都不保暖了喵。',
+                    MID = '小水壶装得满满的，获得了相当多的水分喵。',
+                    LOW = '格子花纹虽然很温暖，但也很潮湿喵。',
+                    EMPTY = '这种程度对我来说，几乎是不受影响的喵。',
                 }
             },
             WES = {
                 MESSAGE = {
                     FULL = '*疯狂地像蝶泳一样向上游泳喵*',
-                    HIGH = '*把耳朵当螺旋桨向上游泳喵*',
-                    MID = '*歪头悲惨地看向乌云天空喵*',
-                    LOW = '*保护头部把尾巴当伞武装喵*',
-                    EMPTY = '*微笑，拿着无形的空气伞喵*',
+                    HIGH = '*把小耳朵当成螺旋桨努力向上游喵*',
+                    MID = '*歪着头悲惨地看向乌云密布的天空喵*',
+                    LOW = '*为了保护头部把尾巴当伞武装起来喵*',
+                    EMPTY = '*扬起微笑，手里拿着无形的空气伞喵*',
                 }
             },
             WAXWELL = {
                 MESSAGE = {
-                    FULL = '湿润的好比落在水里的黑猫本身喵。',
-                    HIGH = '燕尾服吸水，不认为我会再干燥喵。',
-                    MID = '这水会毁了我的定制西装喵。',
-                    LOW = '领结的潮湿使我变得不整洁喵。',
-                    EMPTY = '绒毛干燥而整洁的喵。',
+                    FULL = '湿透了的感觉，就好比掉进水里的黑猫本身喵。',
+                    HIGH = '小燕尾服吸满了水，我不认为我还能再变干了喵。',
+                    MID = '这讨厌的脏水会毁了我精心定制的西装喵。',
+                    LOW = '领结的潮湿使我整个人变得不整洁喵。',
+                    EMPTY = '身上的绒毛干燥蓬松，整洁得不得了喵。',
                 }
             },
             WEBBER = {
                 MESSAGE = {
-                    FULL = '哇哈，八条腿都在划水，湿透了喵！',
-                    HIGH = '绒毛变成海胆，被浸泡了喵！',
-                    MID = '吊床变水床，我们很湿喵！',
-                    LOW = '我们湿润地不讨猫喜欢喵。',
-                    EMPTY = '我们在沙坑玩耍干燥得很喵。',
+                    FULL = '哇哈，八条小短腿都在划水，彻底湿透了喵！',
+                    HIGH = '绒毛吸水变成了小海胆，被浸泡坏了喵！',
+                    MID = '蜘蛛网做的小吊床变成水床了，我们身上好湿喵！',
+                    LOW = '我们湿润润的样子一点都不讨猫喜欢喵。',
+                    EMPTY = '我们在干干的沙坑里玩耍，现在干燥得很喵。',
                 }
             },
             WATHGRITHR = {
                 MESSAGE = {
-                    FULL = '绒毛拖把，我完全湿透了喵！',
-                    HIGH = '一个猫娘战士雨天无法战斗喵！',
-                    MID = '我的铁爪子护甲会生锈喵！',
-                    LOW = '人家不需要洗澡喵。',
-                    EMPTY = '干燥够了继续水上漂战斗喵！',
+                    FULL = '衣服变成了沉重的绒毛拖把，我完完全全湿透了喵！',
+                    HIGH = '人家可是一个战士！下雨天怎么能没法战斗喵！',
+                    MID = '人家的铁爪子护甲被水泡得要生锈了喵！',
+                    LOW = '人家现在干干净净的，才不需要洗澡喵。',
+                    EMPTY = '干燥够了！继续在水上漂着去战斗喵！',
                 }
             },
             WINONA = {
                 MESSAGE = {
-                    FULL = '工具箱生锈，不能在这种湿度工作喵！',
-                    HIGH = '工作服变成潜水服吸收水分喵！',
-                    MID = '太空步滑倒，该放湿地板标志喵。',
-                    LOW = '工作补充水分总是好的喵。',
-                    EMPTY = '摩擦起电这里没有什么喵。',
+                    FULL = '工具箱要生锈啦！根本不能在这种湿度下工作喵！',
+                    HIGH = '工作服变成了潜水服把水分全都吸收了喵！',
+                    MID = '走太空步滑倒啦，这里应该放一个湿地板警告标志喵。',
+                    LOW = '在干活的时候补充一点水分总是好的喵。',
+                    EMPTY = '身上干到摩擦起电啦，这里一点水都没有喵。',
                 }
             },
             WARLY = {
                 MESSAGE = {
-                    FULL = '变成海鲜浓汤，感觉鱼在衬衫游泳喵。',
-                    HIGH = '小金鱼游出，水会毁了完美的菜喵！',
-                    MID = '当雨刷，在感冒前要把衣服烘干喵。',
-                    LOW = '现在不是厨师猫洗澡的时间喵。',
-                    EMPTY = '只有几滴在围裙上没有坏处喵。',
+                    FULL = '变成了海鲜浓汤啦，感觉有小鱼在衬衫里游泳喵。',
+                    HIGH = '小金鱼游出来了，这脏水会毁了完美的菜肴喵！',
+                    MID = '在打喷嚏感冒之前，我必须得把衣服烘干才行喵。',
+                    LOW = '现在可不是厨师猫洗澡的时间和地点喵。',
+                    EMPTY = '只有几滴小水珠溅在围裙上，没有什么坏处喵。',
                 }
             },
             WORMWOOD = {
                 MESSAGE = {
-                    FULL = '储水系统满载，真的真的湿了喵！',
-                    HIGH = '叶子淋浴，真的湿了喵！',
-                    MID = '夜露收集，感觉有点湿喵。',
-                    LOW = '下雨发芽啦！哦吼喵！',
-                    EMPTY = '树皮感到干燥喵。',
+                    FULL = '储水系统装得满满的啦，真的真的好湿好湿喵！',
+                    HIGH = '开启叶子淋浴模式，真的湿透了喵！',
+                    MID = '夜露收集器工作中，感觉身体有点湿漉漉喵。',
+                    LOW = '天上掉水珠啦！发芽啦发芽啦！哦吼喵！',
+                    EMPTY = '小树皮摸起来干巴巴的，感到很干燥喵。',
                 }
             },
             WURT = {
                 MESSAGE = {
-                    FULL = '跳水上芭蕾，水花溅呀溅喵！！',
-                    HIGH = '泡澡舒服，鳞片很舒服喵！',
-                    MID = '鱼鳍舒展，美人鱼喜欢水，小花喵！',
-                    LOW = '啊哈……有点水更好，小花喵！',
-                    EMPTY = '尾巴变鱼干，太干燥了，格鲁喵。',
+                    FULL = '跳起欢快的水上芭蕾，水花到处溅呀溅喵！！',
+                    HIGH = '泡澡好舒服，小鳞片也觉得很舒服喵！',
+                    MID = '小鱼鳍舒展开啦，美人鱼最喜欢玩水了，小花喵！',
+                    LOW = '啊哈……身上再多沾点水水就更好了，小花喵！',
+                    EMPTY = '尾巴都要变成小鱼干了，实在是太干燥了，格鲁喵。',
                 }
             },
             WORTOX = {
                 MESSAGE = {
-                    FULL = '翅膀变降落伞，完全湿透了喵！',
-                    HIGH = '我是街上最潮湿的恶魔喵Hyuyu！',
-                    MID = '尾巴好重，这有湿漉漉恶魔喵！',
-                    LOW = '世界正赐予我一场恶作剧淋浴喵！',
-                    EMPTY = '保持干燥，摩擦闪电留意天气喵！',
+                    FULL = '小翅膀变成了沉重的降落伞，完全被水浸透了喵！',
+                    HIGH = '人家绝对是这条街上最最潮湿的小恶魔喵Hyuyu！',
+                    MID = '尾巴变得好重好重，这里有一只湿漉漉的小恶魔喵！',
+                    LOW = '世界正在赐予人家一场超级棒的恶作剧淋浴喵！',
+                    EMPTY = '想要保持干燥的话，就得用摩擦闪电多留意天气喵！',
                 }
             }
         }

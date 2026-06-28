@@ -4,15 +4,15 @@ GLOBAL.STRINGS.NOMU_QA = {
     COMMA = '，',
     MEASURE_WORD = '个',
     HOUNDFIRE = '火焰',
-    SKETCH = '草图',
+    TOADSTOOL_CAP = '蟾蜍洞穴',
     ICEFISHING_HOLE = '冰钓洞',
-    SAPLING_MOON = '月亮树苗',
     FISSURE_LOWER = '梦魇裂隙（遗迹内）',
     FISSURE = '梦魇裂隙',
     OCEAN_SHOAL = '鱼群',
     BEARD_SACK_1 = '胡子',
     BEARD_SACK_2 = '胡子',
     BEARD_SACK_3 = '胡子',
+    BOAT_ICE = '浮冰船',
     RABBITKINGHORN_CONTAINER = '便携式巢穴',
     MESSAGEBOTTLE_THROWABLE = '寄居蟹漂流瓶',
     ATRIUM_FENCE = '远古尖刺',
@@ -29,9 +29,6 @@ GLOBAL.STRINGS.NOMU_QA = {
     ARCHIVE_SECURITY_PULSE = '充能光球',
     UNDERWATER_SALVAGEABLE = '沉底物品',
     OCEANFISHABLEFLOTSAM_WATER = '水上漂浮物',
-    WORMWOOD_MUTANTPROXY_FRUITDRAGON = '沙拉蝾螈',
-    WORMWOOD_MUTANTPROXY_CARRAT = '胡萝卜鼠',
-    WORMWOOD_MUTANTPROXY_LIGHTFLIER = '球状光果',
     SHADOW_CONTAINER = '暗影空间',
     WOBY_RACK_CONTAINER = '沃比的晾肉架',
     SLINGSHOTMODSCONTAINER = '弹弓野外作业包',
@@ -120,7 +117,7 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF = '常用语（宣告后保留）',
     BUTTON_TEXT_SHOW_ME_OFF = 'Show Me（关）',
     BUTTON_TEXT_SHOW_ME_ON = 'Show Me（开）',
-    BUTTON_TEXT_SHOW_ME_GIFT = 'SHOW ME（仅礼物）',
+    BUTTON_TEXT_SHOW_ME_GIFT = 'Show Me(仅礼物/血量)',
 
 
     BUTTON_TEXT_SHOW_MOD_NAME_ON = '模组来源（开）',
@@ -188,12 +185,19 @@ GLOBAL.STRINGS.NOMU_QA = {
     TITLE_TEXT_MAPPING_DEFAULT = '人物通用',
     BUTTON_TEXT_MAPPING = '当前映射：{NAME}',
 
+    INSIGHT_CODE_MAP = {
+        ["farming_manager_lordfruitfly"] = "果蝇王重生时间",
+        ["lunarthrall_plant"] = "致命亮茄",
+        ["sharkboi"] = "大霜鲨重生时间",
+        ["shadowparasite"] = "暗影寄生",
+        ["shadowthrall"] = "绝望石矿苗",
+        ["mock_dragonfly"] = "时令龙蝇重生时间",
+    },
+
     FUNC = {
         SEASON = '季节',
         WORLD_TEMPERATURE_AND_RAIN = '世界温度',
         TEMPERATURE = '人物温度',
-        CROP = '农田作物',
-        TREE = '树木',
         MOON_PHASE = '月相',
         COOK = '料理',
         CLOCK = '时钟',
@@ -208,15 +212,11 @@ GLOBAL.STRINGS.NOMU_QA = {
         SERVER = '服务器',
         SKILL_TREE = '技能树',
         ENV = '周围环境',
-        SPIDERDEN = '蜘蛛巢',
         SKIN = '皮肤',
         RECIPE = '配方',
-        CONSTRUCTION = '建造',
+        CONSTRUCTION_AND_TRADE = '建造与交易',
         SPACE= '空位',
         ITEM = '物品',
-        PORTAL= '传送塔',
-        INGREDIENT = '材料',
-        TRADE = '交易',
         STOMACH = '饥饿值',
         SANITY = '精神值',
         HEALTH = '生命值',
@@ -463,6 +463,10 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             I_AM_HERE = "{NAME} 在这里！",
             ME_FISHING = '嘘——{NAME} 正在施展钓鱼魔法，小鱼小鱼快快咬钩吧！',
             THEY_FISHING = '哇喔！{NAME} 正在全神贯注地钓鱼呢，祝你钓到超大号胖鱼！',
+            ME_RIDING = '{NAME} 正在骑着 {MOUNT} 兜风！',
+            ME_CARRYING = '{NAME} 正在搬运着沉重的 {ITEM}，走得好慢啊！',
+            PORTAL_ON = '我已经在摸 {NAME} 了！',
+            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。'
         },
         MAPPINGS = {}
     },
@@ -483,16 +487,9 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
         },
         MAPPINGS = {}
     },
-    PORTAL = {
-        FORMATS = {
-            ON = '我已经摸到 {NAME} 了！',
-            OFF = '{NAME} 在我这儿，快准备触摸。'
-        },
-        MAPPINGS = {}
-    },
     SPACE = {
         FORMATS = {
-            PLAYER = "我的物品栏还有 {COUNT} 格空间。",
+            PLAYER = "我的 物品栏 还有 {COUNT} 格空间。",
             INV = "我的 {CONTAINER_NAME} 还有 {COUNT} 格空间。",
             CONTAINER = "这个 {CONTAINER_NAME} 还空余 {COUNT} 格空间。"
         },
@@ -540,133 +537,21 @@ BEEFALO = {
             }
         }
     },
-TREE = {
+ENV = {
         FORMATS = {
-            EQUAL = '我附近有 {COUNT} 棵 {NAME}，它们全都{ADJ}{SHOW_ME}。',
-            DESCRIBE = '我附近有 {COUNT} 棵 {NAME}，其中 {NUM} 棵{ADJ}{SHOW_ME}。'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    STUMP = "只剩树桩了",
-                    SAPLING = "还是小树苗",
-                    SHORT = "刚刚长出",
-                    NORMAL = "长得不错",
-                    TALL = "长得高高大大",
-                    BOULDER = "被砍成了矿床",
-                    SEED = "刚种下",
-                    ANCIENT_READY = "长满了果实",
-                    ANCIENT_EMPTY = "空空的",
-                    MARBLE_TALL = "完全长大",
-                    MARBLE_NORMAL = "中等大小",
-                    MARBLE_SHORT = "刚刚长出",
-                    MARBLE_TREE = "是由大理石构成的"
-                }
-            }
-        }
-    },
-    CROP = {
-        FORMATS = {
-            EQUAL = '我附近有 {COUNT} 个 {NAME}，它们全都{ADJ}{SHOW_ME}。',
-            DESCRIBE = '我附近有 {COUNT} 个 {NAME}，其中 {NUM} 个{ADJ}{SHOW_ME}。'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    WITH_BARNACLES = "长着藤壶",
-                    NO_BARNACLES = "光秃秃的",
-                    SEED = "还是种子",
-                    GROW = "还在生长期",
-                    FULL = "已经成熟",
-                    OVER = "已经巨大",
-                    ROT = "已经腐烂",
-                    SALT_FULL = "长满了盐矿",
-                    SALT_MED = "正在形成中",
-                    SALT_LOW = "只长出一点盐晶",
-                    SALT_EMPTY = "已被开采",
-                    MARBLE_TALL = "完全长大",
-                    MARBLE_NORMAL = "中等大小",
-                    MARBLE_SHORT = "刚刚长出",
-                    BEEBOX_FULL = "挂满了蜂蜜",
-                    BEEBOX_SOME = "积攒了点蜂蜜",
-                    BEEBOX_EMPTY = "空空的",
-                    PICKABLE_READY = "长好了",
-                    PICKABLE_EMPTY = "还在生长",
-                    NEST_HAS_EGG = "有高鸟蛋",
-                    NEST_EMPTY = "是空巢",
-                    MUSHROOMFARM_ROTTEN = "变成烂木头了",
-                    MUSHROOMFARM_EMPTY = "空空的",
-                    MUSHROOMFARM_STAGE1 = "刚种下",
-                    MUSHROOMFARM_STAGE2 = "长得不错",
-                    MUSHROOMFARM_STAGE3 = "完全长大了",
-                    MUSHROOMFARM_STAGE4 = "长得爆满了"
-                }
-            }
-        }
-    },
-SPIDERDEN = {
-        FORMATS = {
-            EQUAL = '我附近有 {COUNT} 个 {NAME}，它们全是{ADJ}{SHOW_ME}。',
-            DESCRIBE = '我附近有 {COUNT} 个 {NAME}，其中 {NUM} 个是{ADJ}{SHOW_ME}。'
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                ADJ = {
-                    L1 = "一级的",
-                    L2 = "二级的",
-                    L3 = "三级的",
-                    L1_BEDAZZLED = "被装饰的一级巢",
-                    L2_BEDAZZLED = "被装饰的二级巢",
-                    L3_BEDAZZLED = "被装饰的三级巢",
-                }
-            }
-        }
-    },
-  ENV = {
-        FORMATS = {
-            SINGLE = '我附近有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
-            DEFAULT = '我附近有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
-            NAMED = '我附近有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
+            SINGLE = '这里有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
+            DEFAULT = '这里有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
+
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
-            BURNT_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经被烧毁了{SHOW_ME}{DISTANCE}。',
-            BURNT_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 被烧毁了{SHOW_ME}{DISTANCE}。',
-            FIRE_EQUAL = '这里有 {TOTAL}个 {NAME}，全都正在燃烧{SHOW_ME}{DISTANCE}。',
-            FIRE_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 正在燃烧{SHOW_ME}{DISTANCE}。',
-            WITHERED_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经枯萎了{SHOW_ME}{DISTANCE}。',
-            WITHERED_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经枯萎了{SHOW_ME}{DISTANCE}。',
-            BARREN_EQUAL = '这里有 {TOTAL}个 {NAME}，全都还没有施肥{SHOW_ME}{DISTANCE}。',
-            BARREN_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 还没有施肥{SHOW_ME}{DISTANCE}。',
-            SMOLDER_EQUAL = '这里有 {TOTAL}个 {NAME}，全都要被引燃了{SHOW_ME}{DISTANCE}。',
-            SMOLDER_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 要被引燃了{SHOW_ME}{DISTANCE}。',
-            GOAT_CHARGED_EQUAL = '这里有 {TOTAL}只 {NAME}，全都是带电状态{SHOW_ME}{DISTANCE}。',
-            GOAT_CHARGED_DESCRIBE = '这里有 {TOTAL}只 {NAME}，其中有 {NUM}只 处于带电状态{SHOW_ME}{DISTANCE}。',
-            GOAT_NORMAL_EQUAL = '这里有 {TOTAL}只 {NAME}，全都是普通状态{SHOW_ME}{DISTANCE}。',
-            GOAT_NORMAL_DESCRIBE = '这里有 {TOTAL}只 {NAME}，其中有 {NUM}只 是普通状态{SHOW_ME}{DISTANCE}。',
-            FISH_SHOAL = '这里有群 {FISH}，共有 {NUM} 条 {FISH}{SHOW_ME}{DISTANCE}！',
-            FISH_HOLE = '这里有一处 {NAME}{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_BOMBED_EQUAL = '这里有 {TOTAL}个 {NAME}，水温都正合适{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_BOMBED_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 水温正合适{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_GLASSED_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经结晶了{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_GLASSED_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经结晶了{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_EMPTY_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经干涸了{SHOW_ME}{DISTANCE}。',
-            HOTSPRING_EMPTY_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经干涸了{SHOW_ME}{DISTANCE}。',
-            FRUITDRAGON_RIPE_EQUAL = '这里有 {TOTAL}只 {NAME}，全都已经红温了{SHOW_ME}{DISTANCE}。',
-            FRUITDRAGON_RIPE_DESCRIBE = '这里有 {TOTAL}只 {NAME}，其中有 {NUM}只 红温了{SHOW_ME}{DISTANCE}。',
-            FRUITDRAGON_UNRIPE_EQUAL = '这里有 {TOTAL}只 {NAME}，全都是普通状态{SHOW_ME}{DISTANCE}。',
-            FRUITDRAGON_UNRIPE_DESCRIBE = '这里有 {TOTAL}只 {NAME}，其中有 {NUM}只 是普通状态{SHOW_ME}{DISTANCE}。',
-            BIRDCAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，里面空空的{SHOW_ME}{DISTANCE}。',
-            BIRDCAGE_FULL = '这里有 {TOTAL}个 {NAME}，里面有一只小鸟{SHOW_ME}{DISTANCE}。',
-            BIRDCAGE_SICK = '这里有 {TOTAL}个 {NAME}，里面的小鸟生病了{SHOW_ME}{DISTANCE}。',
-            BIRDCAGE_DEAD = '这里有 {TOTAL}个 {NAME}，里面的小鸟已经饿死了{SHOW_ME}{DISTANCE}。',
-            ARCHIVE_SWITCH_FULL_EQUAL = '这里有 {TOTAL}个 {NAME}，全都已经激活了{SHOW_ME}{DISTANCE}。',
-            ARCHIVE_SWITCH_FULL_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经激活了{SHOW_ME}{DISTANCE}。',
-            ARCHIVE_SWITCH_EMPTY_EQUAL = '这里有 {TOTAL}个 {NAME}，全都没有激活{SHOW_ME}{DISTANCE}。',
-            ARCHIVE_SWITCH_EMPTY_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 还没激活{SHOW_ME}{DISTANCE}。',
-            TOADSTOOL_EMPTY = '这里有 蟾蜍洞穴，目前里面空空的{SHOW_ME}{DISTANCE}。',
-            TOADSTOOL_NORMAL = '这里有 蟾蜍洞穴，里面有一只毒菌蟾蜍{SHOW_ME}{DISTANCE}。',
-            TOADSTOOL_DARK = '这里有 蟾蜍洞穴，里面是悲惨的毒菌蟾蜍{SHOW_ME}{DISTANCE}！',
-            OASISLAKE_EMPTY = '这里有 1个 {NAME}，目前已经干涸了{SHOW_ME}{DISTANCE}。',
-            OASISLAKE_FULL = '这里有 1个 {NAME}，里面有满满的水{SHOW_ME}{DISTANCE}。',
+            
+            FISH_SHOAL = '这里有群 {FISH}，共有 {NUM}条 {FISH}{SHOW_ME}{DISTANCE}！',
+
+            STATE_EQUAL = '这里有 {TOTAL}个 {NAME}，目前全都{ADJ}{SHOW_ME}{DISTANCE}。',
+            STATE_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 {ADJ}{SHOW_ME}{DISTANCE}。',
+
+            STATE_THIS = '这里有 {TOTAL}个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -678,6 +563,81 @@ SPIDERDEN = {
                     DISTANCE_CLOSE_WATER = '，就在我旁边的水面上',
                     MOD_INFO = '，模组：{MOD_NAME}',
                     ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
+                },
+                ADJ = {
+                    BURNT = '被烧毁了',
+                    FIRE = '处于燃烧中',
+                    WITHERED = '枯萎了',
+                    BARREN = '需要施肥',
+                    SMOLDER = '冒烟快要烧起来了',
+                    GOAT_CHARGED = '处于带电状态',
+                    HOTSPRING_BOMBED = '水温正合适',
+                    HOTSPRING_GLASSED = '已经结晶了',
+                    HOTSPRING_EMPTY = '已经干涸了',
+                    FRUITDRAGON_RIPE = '红温了',
+                    BIRDCAGE_EMPTY = '空空的',
+                    BIRDCAGE_FULL = '关着小鸟',
+                    BIRDCAGE_SICK = '里面的小鸟生病了',
+                    BIRDCAGE_DEAD = '里面的小鸟饿死了',
+                    ARCHIVE_SWITCH_FULL = '处于激活状态',
+                    ARCHIVE_SWITCH_EMPTY = '还未被激活',
+                    TOADSTOOL_EMPTY = '空空的没有蛤蟆',
+                    TOADSTOOL_NORMAL = '藏着毒菌蟾蜍',
+                    TOADSTOOL_DARK = '藏着悲惨的毒菌蟾蜍',
+                    OASISLAKE_EMPTY = '已经干涸了',
+                    OASISLAKE_FULL = '装满了清澈的湖水',
+                    BEEFALO_SHAVED = '被剃光了毛',
+
+                    WITH_BARNACLES = "长满了藤壶",
+                    NO_BARNACLES = "光秃秃的",
+                    SEED = "还是种子状态",
+                    GROW = "还在生长期",
+                    FULL = "已经成熟了",
+                    OVER = "长成了巨型作物",
+                    ROT = "已经腐烂了",
+                    SALT_FULL = "长满了盐晶",
+                    SALT_MED = "正在结晶中",
+                    SALT_LOW = "只结出了一点盐晶",
+                    SALT_EMPTY = "已经被开采过了",
+                    MARBLE_TALL = "完全长大了",
+                    MARBLE_NORMAL = "处于中等体型",
+                    MARBLE_SHORT = "才刚刚破土而出",
+                    BEEBOX_FULL = "蜜都快溢出来了",
+                    BEEBOX_SOME = "攒了一些蜂蜜",
+                    BEEBOX_EMPTY = "连一滴蜜都没有",
+                    PICKABLE_READY = "可以采摘了",
+                    PICKABLE_EMPTY = "还在生长中",
+                    NEST_HAS_EGG = "里面有高鸟蛋",
+                    NEST_EMPTY = "只是个空巢",
+                    MUSHROOMFARM_ROTTEN = "变成烂木头了",
+                    MUSHROOMFARM_EMPTY = "还没种东西",
+                    MUSHROOMFARM_STAGE1 = "才刚种下不久",
+                    MUSHROOMFARM_STAGE2 = "长势挺喜人的",
+                    MUSHROOMFARM_STAGE3 = "已经长大了",
+                    MUSHROOMFARM_STAGE4 = "长得快爆满啦",
+
+                    STUMP = "变成树桩了",
+                    SAPLING = "还是小树苗",
+                    SHORT = "才刚刚长出来",
+                    NORMAL = "长得正茂盛",
+                    TALL = "长得高高大大的",
+                    BOULDER = "已经变成矿床了",
+                    ANCIENT_READY = "结满了果实",
+                    ANCIENT_EMPTY = "光秃秃的没有果实",
+                    MARBLE_TREE = "是由大理石构成的",
+
+                    L1 = "是一级的",
+                    L2 = "是二级的",
+                    L3 = "是三级的",
+                    L1_BEDAZZLED = "是一级装饰的",
+                    L2_BEDAZZLED = "是二级装饰的",
+                    L3_BEDAZZLED = "是三级装饰的",
+
+                    HEATROCK_COLD = '是冰冷的',
+                    HEATROCK_COOL = '有点冷的',
+                    HEATROCK_NORMAL = '是常温的',
+                    HEATROCK_WARM = '有点热的',
+                    HEATROCK_HOT = '是滚烫的',
                 }
             }
         }
@@ -788,7 +748,9 @@ MEDAL_BUFF = {
         FORMATS = {
             INV_SLOT = '{PRONOUN}拥有 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
             EQUIP_SLOT = '{PRONOUN}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
-            EQUIP_SLOT_POS = '{PRONOUN}的 {SLOT_POS} 装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
+            EQUIP_SLOT_POS = '{PRONOUN}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
+            EQUIP_SLOT_HEAVY = '{PRONOUN}正搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
+            EQUIP_SLOT_HEAVY_POS = '{PRONOUN}正搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
             EQUIP_SLOT_EMPTY = '{PRONOUN}的 {v} 没有装备任何物品。'
         },
         MAPPINGS = {
@@ -813,7 +775,6 @@ MEDAL_BUFF = {
                     ITEM_NUM = ' (共拥有 {NUM}个)',
                     IN_CONTAINER = ' 在这个 {NAME} 里',
                     WITH_PERCENT = '，{THIS_ONE}拥有 {PERCENT} {TYPE}',
-                    SUSPICIOUS_MARBLE = '，这个是 {NAME}',
                     SHOW_ME = '（这个有 {SHOW_ME}）',
 
                     SLOT_HEAD = '头部栏',
@@ -827,46 +788,26 @@ MEDAL_BUFF = {
             }
         }
     },
-    INGREDIENT = {
+    CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            NEED_MULTIPLE = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
-            HAVE_ALL = "我已经准备好 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",        },
+            CRAFT_NEED = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
+            CRAFT_HAVE = "我准备好了足够的 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE_ALL = "我准备好了所有的材料来制作 {RECIPE}{BUT_PROTOTYPE}。",
+
+            CONS_NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
+            CONS_HAVE = "我准备好了所有的材料来建造 {RECIPE}。",
+            CONS_HAVE_ITEM = "我准备好了足够的 {INGREDIENT} 来建造 {RECIPE}。", 
+
+            TRADE_NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
+            TRADE_HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
+            TRADE_HAVE_ITEM = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。", 
+        },
         MAPPINGS = {
             DEFAULT = {
                 WORDS = {
-                    ITEM_AMOUNT_FORMAT = "{NUM}个 {ITEM}",
-                    COMMA = "，",
-                    ALL_MATERIALS = "所有材料",
+                    AMOUNT_FMT = "{NUM}个 {ITEM}",
                     AND_PROTOTYPE = '，我还需要 {PROTOTYPE} 才能制造它',
                     BUT_PROTOTYPE = '，但我还需要 {PROTOTYPE} 才能制造它'
-                }
-            }
-        }
-    },
-   CONSTRUCTION = {
-        FORMATS = {
-            NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
-            HAVE = "我已经准备好所有材料来建造 {RECIPE}。",
-            HAVE_ITEM = "我已经准备好 {INGREDIENT} 来建造 {RECIPE}。", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = {
-                    AMOUNT_FMT = "{NUM}个 {ITEM}" 
-                }
-            }
-        }
-    },
-    TRADE = {
-        FORMATS = {
-            NEED = "和 {RECIPE} 交易还缺少 {INGREDIENT}。",
-            HAVE = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。",
-            HAVE_ITEM = "有足够的 {INGREDIENT} 可以和 {RECIPE} 交易。", 
-        },
-        MAPPINGS = {
-            DEFAULT = {
-                WORDS = {
-                    AMOUNT_FMT = "{NUM}个 {ITEM}"
                 }
             }
         }
