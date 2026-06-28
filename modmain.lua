@@ -111,6 +111,8 @@ GLOBAL.NOMU_QA = {
         SHOWME_FILTERS = {},
         FORBIDDEN_WORDS = {},
         REPLACEMENTS = {},
+        FORBIDDEN_WORDS_ESCAPED = {}, 
+        REPLACEMENTS_ESCAPED = {},
         SCHEMES = {
             {
                 name = STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME,
@@ -129,33 +131,25 @@ GLOBAL.NOMU_QA = {
 
 local function IsAltPressed()
     local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
-
-    local is_force_inspect = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
-
-    local is_alt_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
     
-    if mode == 1 then     -- 默认
-        return is_force_inspect
-    elseif mode == 2 then -- 兼容
-        return is_alt_key
-    else                  -- 通用
-        return is_force_inspect or is_alt_key
+    if mode == 1 then
+        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
+    elseif mode == 2 then
+        return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
+    else
+        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
     end
 end
 
 local function IsShiftPressed()
     local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.SHIFT_MODE) or 1
     
-    local is_force_trade = GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
-
-    local is_shift_key = GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
-    
-    if mode == 1 then     -- 默认
-        return is_force_trade
-    elseif mode == 2 then -- 兼容
-        return is_shift_key
-    else                  -- 通用
-        return is_force_trade or is_shift_key
+    if mode == 1 then
+        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
+    elseif mode == 2 then
+        return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
+    else
+        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
     end
 end
 
@@ -253,9 +247,39 @@ GLOBAL.NOMU_QA.ApplyScheme = function(scheme)
     GLOBAL.NOMU_QA.SCHEME = scheme.data
 end
 
-
--- 本地存储文件路径
+-- 数据存储与预处理缓存
 local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
+
+-- 转义正则特殊字符
+local function escape_pattern(text)
+    return text:gsub("([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
+end
+
+-- 更新转义缓存
+GLOBAL.NOMU_QA.UpdateEscapedCaches = function()
+    local data = GLOBAL.NOMU_QA.DATA
+    
+    data.FORBIDDEN_WORDS_ESCAPED = {}
+    if data.FORBIDDEN_WORDS then
+        for _, word in ipairs(data.FORBIDDEN_WORDS) do
+            if word and word ~= "" then
+                table.insert(data.FORBIDDEN_WORDS_ESCAPED, escape_pattern(word))
+            end
+        end
+    end
+
+    data.REPLACEMENTS_ESCAPED = {}
+    if data.REPLACEMENTS then
+        for _, rule in ipairs(data.REPLACEMENTS) do
+            if rule.target and rule.target ~= "" then
+                table.insert(data.REPLACEMENTS_ESCAPED, {
+                    target = escape_pattern(rule.target),
+                    result = rule.result or ""
+                })
+            end
+        end
+    end
+end
 
 -- 通用的数据类型纠正函数
 local function EnsureDataType(template_val, saved_val)
@@ -263,14 +287,8 @@ local function EnsureDataType(template_val, saved_val)
     local s_type = type(saved_val)
 
     if t_type == s_type then return saved_val end
-
-    if t_type == "number" and s_type == "boolean" then
-        return saved_val and 1 or 0
-    end
-
-    if t_type == "boolean" and s_type == "number" then
-        return saved_val > 0
-    end
+    if t_type == "number" and s_type == "boolean" then return saved_val and 1 or 0 end
+    if t_type == "boolean" and s_type == "number" then return saved_val > 0 end
 
     return template_val
 end
@@ -298,15 +316,10 @@ GLOBAL.NOMU_QA.LoadData = function()
 
         local schemes = GLOBAL.NOMU_QA.DATA.SCHEMES
         if schemes then
-            --  强制刷新前4个内置方案
             for i, template in ipairs(BUILTIN_SCHEMES) do
                 if not schemes[i] or schemes[i].name ~= template.name then
                     local new_scheme = { name = template.name, data = DeepCopy(template.source), version = VERSION }
-                    if not schemes[i] then
-                        schemes[i] = new_scheme
-                    else
-                        table.insert(schemes, i, new_scheme)
-                    end
+                    if not schemes[i] then schemes[i] = new_scheme else table.insert(schemes, i, new_scheme) end
                 else
                     schemes[i].data = DeepCopy(template.source)
                     schemes[i].name = template.name
@@ -314,9 +327,7 @@ GLOBAL.NOMU_QA.LoadData = function()
             end
 
             for i, scheme in ipairs(schemes) do
-                if i > 4 then 
-                    GLOBAL.NOMU_QA.UpdateScheme(scheme)
-                end
+                if i > 4 then GLOBAL.NOMU_QA.UpdateScheme(scheme) end
             end
         end
 
@@ -330,22 +341,18 @@ GLOBAL.NOMU_QA.LoadData = function()
             end
             GLOBAL.NOMU_QA.ApplyScheme(current)
         end
+
+        GLOBAL.NOMU_QA.UpdateEscapedCaches()
     end)
 end
 
 -- 保存本地数据
 GLOBAL.NOMU_QA.SaveData = function()
+    GLOBAL.NOMU_QA.UpdateEscapedCaches()
     SavePersistentString(DATA_FILE, DataDumper(GLOBAL.NOMU_QA.DATA, nil, true), false, nil)
 end
 
-
 -- [3] 核心辅助工具 
-
--- 转义正则特殊字符
-local function escape_pattern(text)
-    return text:gsub("([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
-end
-
 -- 批量检查动画状态
 local function CheckAnims(animState, anim_list)
     if not animState then return false end
@@ -409,12 +416,10 @@ end
 
 -- 核心发送宣告消息的函数
 local function Announce(message, no_whisper, debug_info)
-    -- 文本替换处理
-    if GLOBAL.NOMU_QA.DATA.ENABLE_REPLACE and GLOBAL.NOMU_QA.DATA.REPLACEMENTS then
-        for _, rule in ipairs(GLOBAL.NOMU_QA.DATA.REPLACEMENTS) do
-            if rule.target and rule.target ~= "" then
-                message = message:gsub(escape_pattern(rule.target), rule.result or "")
-            end
+    -- 文本替换处理 
+    if GLOBAL.NOMU_QA.DATA.ENABLE_REPLACE and GLOBAL.NOMU_QA.DATA.REPLACEMENTS_ESCAPED then
+        for _, rule in ipairs(GLOBAL.NOMU_QA.DATA.REPLACEMENTS_ESCAPED) do
+            message = message:gsub(rule.target, rule.result)
         end
     end
 
@@ -422,11 +427,9 @@ local function Announce(message, no_whisper, debug_info)
     message = message:gsub("(%d)\176", "%1°")
 
     -- 违禁词处理
-    if GLOBAL.NOMU_QA.DATA.ENABLE_FORBIDDEN and GLOBAL.NOMU_QA.DATA.FORBIDDEN_WORDS then
-        for _, word in ipairs(GLOBAL.NOMU_QA.DATA.FORBIDDEN_WORDS) do
-            if word and word ~= "" then
-                message = message:gsub(escape_pattern(word), "")
-            end
+    if GLOBAL.NOMU_QA.DATA.ENABLE_FORBIDDEN and GLOBAL.NOMU_QA.DATA.FORBIDDEN_WORDS_ESCAPED then
+        for _, escaped_word in ipairs(GLOBAL.NOMU_QA.DATA.FORBIDDEN_WORDS_ESCAPED) do
+            message = message:gsub(escaped_word, "")
         end
     end
 
@@ -439,13 +442,13 @@ local function Announce(message, no_whisper, debug_info)
     end
 
     -- 确定是否为私聊宣告
-    local whisper = GLOBAL.NOMU_QA.DATA.DEFAULT_WHISPER ~= TheInput:IsKeyDown(KEY_LCTRL)
+    local whisper = GLOBAL.NOMU_QA.DATA.DEFAULT_WHISPER ~= GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL)
     if no_whisper then
         whisper = false
     end
 
     if message ~= "" then
-        TheNet:Say(STRINGS.LMB .. ' ' .. message, whisper)
+        GLOBAL.TheNet:Say(GLOBAL.STRINGS.LMB .. ' ' .. message, whisper)
         return true
     end
     return false
@@ -651,58 +654,102 @@ local SPECIAL_CROPS = {
     lureplant = true
 }
 
-local function GetCropStat(animState)
-    if not animState then return nil end
-    if CheckAnims(animState, {"crop_seed"}) then return "SEED" end
-    if CheckAnims(animState, {"crop_sprout", "crop_small", "crop_med"}) then return "GROW" end
-    if CheckAnims(animState, {"crop_full"}) then return "FULL" end
-    if CheckAnims(animState, {"crop_oversized"}) then return "OVER" end
-    if CheckAnims(animState, {"crop_rot", "crop_rot_oversized"}) then return "ROT" end
-    return nil
-end
+-- 统一状态配置表
+local ANIM_STATE_CONFIG = {
+    crop = {
+        { state = "SEED", anims = {"crop_seed"} },
+        { state = "GROW", anims = {"crop_sprout", "crop_small", "crop_med"} },
+        { state = "FULL", anims = {"crop_full"} },
+        { state = "OVER", anims = {"crop_oversized"} },
+        { state = "ROT",  anims = {"crop_rot", "crop_rot_oversized"} }
+    },
+    saltstack = {
+        { state = "SALT_FULL",  anims = {"full", "med_to_full"} },
+        { state = "SALT_MED",   anims = {"med", "low_to_med"} },
+        { state = "SALT_LOW",   anims = {"low", "empty_to_low"} },
+        { state = "SALT_EMPTY", anims = {"empty"} }
+    },
+    marbleshrub = {
+        { state = "MARBLE_TALL",   anims = {"idle_tall", "hit_tall", "grow_normal_to_tall"} },
+        { state = "MARBLE_NORMAL", anims = {"idle_normal", "hit_normal", "grow_short_to_normal"} },
+        { state = "MARBLE_SHORT",  anims = {"idle_short", "hit_short", "grow_tall_to_short", "grow_seed_to_short"} }
+    },
+    beebox = {
+        { state = "BEEBOX_FULL",  anims = {"honey3", "hit_honey3"} },
+        { state = "BEEBOX_SOME",  anims = {"honey2", "hit_honey2", "honey1", "hit_honey1"} },
+        { state = "BEEBOX_EMPTY", anims = {"bees_loop", "hit_idle", "idle", "place"} }
+    },
+    mushroom_farm = {
+        { state = "MUSHROOMFARM_ROTTEN", anims = {"expired"} },
+        { state = "MUSHROOMFARM_STAGE4", anims = {"mushroom_4_idle", "hit_mushroom_4", "mushroom_4"} },
+        { state = "MUSHROOMFARM_STAGE3", anims = {"mushroom_3_idle", "hit_mushroom_3", "mushroom_3"} },
+        { state = "MUSHROOMFARM_STAGE2", anims = {"mushroom_2_idle", "hit_mushroom_2", "mushroom_2"} },
+        { state = "MUSHROOMFARM_STAGE1", anims = {"mushroom_1_idle", "hit_mushroom_1", "mushroom_1"} },
+        { state = "MUSHROOMFARM_EMPTY",  anims = {"idle", "hit_idle", "place"} }
+    },
+    lureplant = {
+        { state = "PICKABLE_EMPTY", anims = {"idle_empty", "idle_hidden", "hibernate", "picked", "emerge", "hidebait", "grow_bait"} }
+    },
+    tree = {
+        { state = "SAPLING", anims = {"idle_sapling"} },
+        { state = "SHORT",   anims = {"idle_short", "sway1_loop_short", "sway2_loop_short", "sway_loop_short"} },
+        { state = "NORMAL",  anims = {"idle_normal", "sway1_loop_normal", "sway2_loop_normal", "sway_loop_normal"} },
+        { state = "TALL",    anims = {"idle_tall", "sway1_loop_tall", "sway2_loop_tall", "idle_old", "sway1_loop_old", "sway2_loop_old"} }
+    },
+    spiderden = {
+        { state = 2, anims = {"cocoon_medium", "cocoon_medium_hit", "frozen_medium", "frozen_loop_pst_medium", "cocoon_medium_bedazzled", "grow_small_to_medium"} },
+        { state = 3, anims = {"cocoon_large", "cocoon_large_hit", "frozen_large", "frozen_loop_pst_large", "cocoon_large_bedazzled", "grow_medium_to_large", "cocoon_sleep_loop"} }
+    },
+    hotspring = {
+        { state = "BOMBED", anims = {"glow_loop", "glow_pre", "bath_bomb"} },
+        { state = "EMPTY",  anims = {"empty"} }
+    }
+}
 
-local function GetSaltStackStat(animState)
-    if not animState then return nil end
-    if CheckAnims(animState, {"full", "med_to_full"}) then return "SALT_FULL" end
-    if CheckAnims(animState, {"med", "low_to_med"}) then return "SALT_MED" end
-    if CheckAnims(animState, {"low", "empty_to_low"}) then return "SALT_LOW" end
-    if CheckAnims(animState, {"empty"}) then return "SALT_EMPTY" end
-    return nil
-end
-
-local function GetMarbleShrubStat(animState)
-    if not animState then return nil end
-    if CheckAnims(animState, {"idle_tall", "hit_tall", "grow_normal_to_tall"}) then return "MARBLE_TALL" end
-    if CheckAnims(animState, {"idle_normal", "hit_normal", "grow_short_to_normal"}) then return "MARBLE_NORMAL" end
-    if CheckAnims(animState, {"idle_short", "hit_short", "grow_tall_to_short", "grow_seed_to_short"}) then return "MARBLE_SHORT" end
-    return nil
-end
-
-local function GetBeeboxStat(animState)
-    if not animState then return nil end
-    if CheckAnims(animState, {"honey3", "hit_honey3"}) then return "BEEBOX_FULL" end
-    if CheckAnims(animState, {"honey2", "hit_honey2", "honey1", "hit_honey1"}) then return "BEEBOX_SOME" end
-    if CheckAnims(animState, {"bees_loop", "hit_idle", "idle", "place"}) then return "BEEBOX_EMPTY" end
-    return nil
-end
-
-local function GetMushroomFarmStat(animState)
-    if not animState then return nil end
-    if CheckAnims(animState, {"expired"}) then return "MUSHROOMFARM_ROTTEN" end
-    if CheckAnims(animState, {"mushroom_4_idle", "hit_mushroom_4", "mushroom_4"}) then return "MUSHROOMFARM_STAGE4" end
-    if CheckAnims(animState, {"mushroom_3_idle", "hit_mushroom_3", "mushroom_3"}) then return "MUSHROOMFARM_STAGE3" end
-    if CheckAnims(animState, {"mushroom_2_idle", "hit_mushroom_2", "mushroom_2"}) then return "MUSHROOMFARM_STAGE2" end
-    if CheckAnims(animState, {"mushroom_1_idle", "hit_mushroom_1", "mushroom_1"}) then return "MUSHROOMFARM_STAGE1" end
-    if CheckAnims(animState, {"idle", "hit_idle", "place"}) then return "MUSHROOMFARM_EMPTY" end
-    return nil
-end
-
-local function GetLureplantStat(animState)
-    if not animState then return "PICKABLE_EMPTY" end
-    if CheckAnims(animState, {"idle_empty", "idle_hidden", "hibernate", "picked", "emerge", "hidebait", "grow_bait"}) then
-        return "PICKABLE_EMPTY"
+-- 根据组名自动检索匹配状态
+local function GetStateFromAnimConfig(config_key, animState, default_state)
+    if not animState or not ANIM_STATE_CONFIG[config_key] then return default_state end
+    for _, config in ipairs(ANIM_STATE_CONFIG[config_key]) do
+        if CheckAnims(animState, config.anims) then
+            return config.state
+        end
     end
-    return "PICKABLE_READY"
+    return default_state
+end
+
+-- 接口包装
+local function GetCropStat(animState) return GetStateFromAnimConfig("crop", animState) end
+local function GetSaltStackStat(animState) return GetStateFromAnimConfig("saltstack", animState) end
+local function GetMarbleShrubStat(animState) return GetStateFromAnimConfig("marbleshrub", animState) end
+local function GetBeeboxStat(animState) return GetStateFromAnimConfig("beebox", animState) end
+local function GetMushroomFarmStat(animState) return GetStateFromAnimConfig("mushroom_farm", animState) end
+local function GetLureplantStat(animState) return GetStateFromAnimConfig("lureplant", animState, "PICKABLE_READY") end
+
+local function GetHotspringStat(ent)
+    if not ent or ent.prefab ~= "hotspring" then return nil end
+    if ent:HasTag("moonglass") then return "GLASSED" end
+    return GetStateFromAnimConfig("hotspring", ent.AnimState)
+end
+
+local function GetSpiderDenStat(ent)
+    if not ent then return nil end
+
+    if ent:HasTag("shadowchesspiece") then
+        return ent:HasTag("epic") and "L3" or (ent:HasTag("smallepic") and "L2" or "L1")
+    end
+
+    if not ent:HasTag("spiderden") then return nil end
+    
+    local level = 1
+    if ent:HasTag("tent") then
+        level = 3
+    elseif ent.prefab == "spiderden_2" then level = 2
+    elseif ent.prefab == "spiderden_3" then level = 3
+    else
+        level = GetStateFromAnimConfig("spiderden", ent.AnimState, 1)
+    end
+
+    return "L" .. tostring(level) .. (ent:HasTag("bedazzled") and "_BEDAZZLED" or "")
 end
 
 local function GetTreeStat(ent)
@@ -714,7 +761,7 @@ local function GetTreeStat(ent)
         if ent.AnimState and CheckAnims(ent.AnimState, {"idle_normal", "sway1_loop_normal"}) then return "TALL" end
     end
 
-    if ent.prefab == "marbleshrub" then return GetMarbleShrubStat(ent.AnimState) end
+    if ent.prefab == "marbleshrub" then return GetStateFromAnimConfig("marbleshrub", ent.AnimState) end
     if ent.prefab and string.find(ent.prefab, "marbletree") then return "MARBLE_TREE" end
 
     if ent.prefab and string.find(ent.prefab, "ancienttree") then
@@ -723,7 +770,7 @@ local function GetTreeStat(ent)
             if ent.AnimState and ent.AnimState:IsCurrentAnimation("sprout_idle") then return "SAPLING" end
         end
         if ent:HasTag("ancienttree") then
-            if ent:HasTag("pickable") then return "ANCIENT_READY" else return "ANCIENT_EMPTY" end
+            return ent:HasTag("pickable") and "ANCIENT_READY" or "ANCIENT_EMPTY"
         end
     end
 
@@ -737,83 +784,42 @@ local function GetTreeStat(ent)
         return "NORMAL"
     end
 
-    local anim = ent.AnimState
-    if not anim then return nil end
-    if anim:IsCurrentAnimation("idle_sapling") then return "SAPLING" end
-    if CheckAnims(anim, {"idle_short", "sway1_loop_short", "sway2_loop_short", "sway_loop_short"}) then return "SHORT" end
-    if CheckAnims(anim, {"idle_normal", "sway1_loop_normal", "sway2_loop_normal", "sway_loop_normal"}) then return "NORMAL" end
-    if CheckAnims(anim, {"idle_tall", "sway1_loop_tall", "sway2_loop_tall", "idle_old", "sway1_loop_old", "sway2_loop_old"}) then return "TALL" end
-
-    return nil
-end
-
-local function GetSpiderDenStat(ent)
-    if not ent then return nil end
-
-    if ent:HasTag("shadowchesspiece") then
-        if not ent:HasTag("epic") then return "L1"
-        elseif ent:HasTag("smallepic") then return "L2"
-        else return "L3" end
-    end
-
-    -- 蜘蛛巢等级判定
-    if not ent:HasTag("spiderden") then return nil end
-    local level = 1
-
-    if ent:HasTag("tent") then
-        level = 3
-    else
-        if ent.prefab == "spiderden_2" then level = 2
-        elseif ent.prefab == "spiderden_3" then level = 3 end
-
-        if ent.AnimState then
-            if CheckAnims(ent.AnimState, {"cocoon_medium", "cocoon_medium_hit", "frozen_medium", "frozen_loop_pst_medium", "cocoon_medium_bedazzled", "grow_small_to_medium"}) then
-                level = 2
-            elseif CheckAnims(ent.AnimState, {"cocoon_large", "cocoon_large_hit", "frozen_large", "frozen_loop_pst_large", "cocoon_large_bedazzled", "grow_medium_to_large", "cocoon_sleep_loop"}) then
-                level = 3
-            end
-        end
-    end
-
-    local bedazzled = ent:HasTag("bedazzled")
-    return "L" .. tostring(level) .. (bedazzled and "_BEDAZZLED" or "")
-end
-
-local function GetHotspringStat(ent)
-    if not ent or ent.prefab ~= "hotspring" then return nil end
-    if ent:HasTag("moonglass") then return "GLASSED" end
-    if ent.AnimState then
-        if CheckAnims(ent.AnimState, {"glow_loop", "glow_pre", "bath_bomb"}) then return "BOMBED" end
-        if ent.AnimState:IsCurrentAnimation("empty") then return "EMPTY" end
-    end
-    return nil
+    return GetStateFromAnimConfig("tree", ent.AnimState)
 end
 
 local function GetHeatrockStat(ent)
-    if not ent or ent.prefab ~= "heatrock" then return nil end
-    local range = nil
-
-    -- 优先检测实体的当前动画状态
-    if ent.AnimState then
-        for i = 1, 5 do
-            if ent.AnimState:IsCurrentAnimation(tostring(i)) then
-                range = i
-                break
-            end
+    if not ent or ent.prefab ~= "heatrock" or not ent.AnimState then return nil end
+    local states = { 'COLD', 'COOL', 'NORMAL', 'WARM', 'HOT' }
+    for i = 1, 5 do
+        if ent.AnimState:IsCurrentAnimation(tostring(i)) then
+            return states[i]
         end
     end
+    return nil
+end
 
-    local states = { 'COLD', 'COOL', 'NORMAL', 'WARM', 'HOT' }
-    return range and states[range] or nil
+-- 植物/农作物状态获取
+local function GetGenericCropStat(entity)
+    if entity:HasTag("farm_plant") then return GetCropStat(entity.AnimState)
+    elseif entity.prefab == "waterplant" then return entity:HasTag("harvestable") and "WITH_BARNACLES" or "NO_BARNACLES"
+    elseif entity.prefab == "saltstack" then return GetSaltStackStat(entity.AnimState)
+    elseif entity.prefab == "marbleshrub" then return GetMarbleShrubStat(entity.AnimState)
+    elseif entity:HasTag("beebox") then return GetBeeboxStat(entity.AnimState)
+    elseif entity.prefab == "mushroom_farm" then return GetMushroomFarmStat(entity.AnimState)
+    elseif entity.prefab == "tallbirdnest" then return entity:HasTag("pickable") and "NEST_HAS_EGG" or "NEST_EMPTY"
+    elseif entity.prefab == "lureplant" then return GetLureplantStat(entity.AnimState)
+    elseif BASIC_PICKABLES[entity.prefab] then return entity:HasTag("pickable") and "PICKABLE_READY" or "PICKABLE_EMPTY"
+    end
+    return nil
 end
 
 -- [5] 核心宣告逻辑与事件处理
-local function OnHUDMouseButton(HUD)
-    local status = HUD.controls.status
-    local widget = TheInput:GetHUDEntityUnderMouse()
-    local default_thresholds = { .15, .35, .55, .75 }
-    local levels = { 'EMPTY', 'LOW', 'MID', 'HIGH', 'FULL' }
- --  Insight面板宣告
+local QA_DEFAULT_THRESHOLDS = { .15, .35, .55, .75 }
+local QA_BADGE_LEVELS = { 'EMPTY', 'LOW', 'MID', 'HIGH', 'FULL' }
+
+-- 处理外部模组 UI (Insight 面板 & 勋章 Buff)
+local function HandleExternalMods(HUD, status, widget)
+    --  Insight 面板宣告
     if widget and widget.widget then
         local w = widget.widget
         local is_insight_menu = false
@@ -851,16 +857,16 @@ local function OnHUDMouseButton(HUD)
 
             if text_str and text_str ~= "" then
                 local clean_info = text_str
-
                 local raw_code = clean_info:match("<icon=([^>]+)>") or clean_info:match("<prefab=([^>]+)>")
+                
                 if not raw_code and comp_name then
                     raw_code = string.gsub(comp_name, "spawner$", "")
                     raw_code = string.gsub(raw_code, "manager$", "")
                 end
 
                 local INSIGHT_CODE_MAP = GLOBAL.STRINGS.NOMU_QA.INSIGHT_CODE_MAP or {}
-                
                 local prefix_name = ""
+                
                 if raw_code and INSIGHT_CODE_MAP[string.lower(raw_code)] then
                     prefix_name = INSIGHT_CODE_MAP[string.lower(raw_code)] .. "："
                 end
@@ -883,7 +889,6 @@ local function OnHUDMouseButton(HUD)
                 end)
 
                 clean_info = clean_info:gsub("<temperature=([^>]+)>", "%1")
-
                 clean_info = clean_info:gsub("</?%a+[^>]*>", "")
 
                 if prefix_name ~= "" and not string.find(clean_info, INSIGHT_CODE_MAP[string.lower(raw_code)]) then
@@ -900,7 +905,7 @@ local function OnHUDMouseButton(HUD)
         end
     end
 
-    -- 勋章 Buff 宣告
+    --  勋章 Buff 宣告
     if widget and widget.widget then
         local w = widget.widget
         local parent = w
@@ -934,62 +939,11 @@ local function OnHUDMouseButton(HUD)
         end
     end
 
-    -- 绽放值宣告
-    if status.bloombadge and status.bloombadge.focus and ThePlayer and ThePlayer.components._bloomness then
-        local current = status.bloombadge.val or 0
-        local max = status.bloombadge.max or 100
-        local level = ThePlayer.components._bloomness:GetLevel()
-        local stage = level
+    return false
+end
 
-        if (stage == 1 or stage == 2) and not ThePlayer.components._bloomness.is_blooming then
-            stage = stage + 3
-        end
-
-        local qa = GLOBAL.NOMU_QA.SCHEME.BLOOMNESS
-        local fmts = {
-            CURRENT = math.floor(current + 0.5),
-            MAX = max,
-            LEVEL = tostring(level),
-            MESSAGE = GetMapping(qa, 'MESSAGE', "STAGE_" .. tostring(stage))
-        }
-
-        local emoji_key = GetMapping(qa, 'SYMBOL', 'EMOJI')
-        if emoji_key and TheInventory:CheckOwnership('emoji_' .. emoji_key) then
-            fmts.SYMBOL = ':' .. emoji_key .. ':'
-        else
-            fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
-        end
-
-        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
-    end
-
-    -- 淘气值宣告
-    if (status.naughtiness and status.naughtiness.focus) or (status.naughtybadge and status.naughtybadge.focus) then
-        local current, max = 0, 50
-        if status.naughtiness and status.naughtiness.num then
-            local cur_str, max_str = string.match(status.naughtiness.num:GetString() or "", "(%d+)[ \t\r\n]*/[ \t\r\n]*(%d+)")
-            if cur_str and max_str then
-                current, max = tonumber(cur_str), tonumber(max_str)
-            end
-        end
-        if max > 0 then
-            return AnnounceBadge(
-                GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS,
-                current,
-                max,
-                levels[get_category(default_thresholds, current / max)]
-            )
-        end
-    end
-
-    -- 幸运值宣告
-    if (status.luck and status.luck.focus) or (status.luckbadge and status.luckbadge.focus) then
-        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS.FORMATS.LUCK, {
-            CURRENT = status.luck.num and status.luck.num:GetString() or "0.00"
-        }))
-    end
-
-    -- Beefalo HUD 宣告 
+-- 处理皮弗娄牛 UI (BeefaloHUD)
+local function HandleBeefaloStats(HUD, status, widget)
     if HUD.controls and HUD.controls.BeefaloStatusBar and HUD.controls.BeefaloStatusBar:IsVisible() and not HUD.controls.BeefaloStatusBar.isHidden then
         local b_hud = HUD.controls.BeefaloStatusBar
         local w = widget and widget.widget
@@ -1076,68 +1030,84 @@ local function OnHUDMouseButton(HUD)
         end
     end
 
-    -- 通用属性徽章配置
-    local BADGE_CONFIG = {
-        {
-            btn = status.pethungerbadge,
-            comp = ThePlayer.pet_hunger_classified,
-            qa = "WOBY_HUNGER",
-            cur_fn = function(c) return c:GetPercent() * (c:Max() or 50) end,
-            max_fn = function(c) return c:Max() or 50 end
-        },
-        {
-            btn = status.waterstomach,
-            comp = ThePlayer.replica.thirst,
-            qa = "THIRST",
-            cur_fn = function(c) return c:GetPercent() * (c:Max() or 100) end,
-            max_fn = function(c) return c:Max() or 100 end
-        },
-        {
-            btn = status.stomach,
-            comp = ThePlayer.player_classified,
-            qa = "STOMACH",
-            cur_fn = function(c) return c.currenthunger:value() end,
-            max_fn = function(c) return c.maxhunger:value() end
-        },
-        {
-            btn = status.brain,
-            comp = ThePlayer.player_classified,
-            qa = "SANITY",
-            cur_fn = function(c) return c.currentsanity:value() end,
-            max_fn = function(c) return c.maxsanity:value() end
-        },
-        {
-            btn = status.heart,
-            comp = ThePlayer.player_classified,
-            qa = "HEALTH",
-            thresholds = { .25, .5, .75, 1 },
-            cur_fn = function(c) return c.currenthealth:value() end,
-            max_fn = function(c) return c.maxhealth:value() end
-        },
-        {
-            btn = status.moisturemeter,
-            comp = ThePlayer.player_classified,
-            qa = "WETNESS",
-            cur_fn = function(c) return c.moisture:value() end,
-            max_fn = function(c) return c.maxmoisture:value() end
-        },
-        {
-            btn = status.wereness,
-            comp = ThePlayer.player_classified,
-            qa = "LOG_METER",
-            thresholds = { .25, .5, .7, .9 },
-            cur_fn = function(c) return c.currentwereness:value() end,
-            max_fn = function(c) return 100 end
+    return false
+end
+
+-- 处理玩家状态徽章 (三维、湿度、沃比等)
+local function HandlePlayerStats(HUD, status, widget)
+    -- 绽放值
+    if status.bloombadge and status.bloombadge.focus and ThePlayer and ThePlayer.components._bloomness then
+        local current = status.bloombadge.val or 0
+        local max = status.bloombadge.max or 100
+        local level = ThePlayer.components._bloomness:GetLevel()
+        local stage = level
+
+        if (stage == 1 or stage == 2) and not ThePlayer.components._bloomness.is_blooming then
+            stage = stage + 3
+        end
+
+        local qa = GLOBAL.NOMU_QA.SCHEME.BLOOMNESS
+        local fmts = {
+            CURRENT = math.floor(current + 0.5),
+            MAX = max,
+            LEVEL = tostring(level),
+            MESSAGE = GetMapping(qa, 'MESSAGE', "STAGE_" .. tostring(stage))
         }
+
+        local emoji_key = GetMapping(qa, 'SYMBOL', 'EMOJI')
+        if emoji_key and TheInventory:CheckOwnership('emoji_' .. emoji_key) then
+            fmts.SYMBOL = ':' .. emoji_key .. ':'
+        else
+            fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
+        end
+
+        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
+    end
+
+    --  淘气值
+    if (status.naughtiness and status.naughtiness.focus) or (status.naughtybadge and status.naughtybadge.focus) then
+        local current, max = 0, 50
+        if status.naughtiness and status.naughtiness.num then
+            local cur_str, max_str = string.match(status.naughtiness.num:GetString() or "", "(%d+)[ \t\r\n]*/[ \t\r\n]*(%d+)")
+            if cur_str and max_str then
+                current, max = tonumber(cur_str), tonumber(max_str)
+            end
+        end
+        if max > 0 then
+            return AnnounceBadge(
+                GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS,
+                current,
+                max,
+                QA_BADGE_LEVELS[get_category(QA_DEFAULT_THRESHOLDS, current / max)]
+            )
+        end
+    end
+
+    -- 幸运值
+    if (status.luck and status.luck.focus) or (status.luckbadge and status.luckbadge.focus) then
+        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS.FORMATS.LUCK, {
+            CURRENT = status.luck.num and status.luck.num:GetString() or "0.00"
+        }))
+    end
+
+    -- 通用属性徽章列表配置
+    local BADGE_CONFIG = {
+        { btn = status.pethungerbadge, comp = ThePlayer.pet_hunger_classified, qa = "WOBY_HUNGER", cur_fn = function(c) return c:GetPercent() * (c:Max() or 50) end, max_fn = function(c) return c:Max() or 50 end },
+        { btn = status.waterstomach, comp = ThePlayer.replica.thirst, qa = "THIRST", cur_fn = function(c) return c:GetPercent() * (c:Max() or 100) end, max_fn = function(c) return c:Max() or 100 end },
+        { btn = status.stomach, comp = ThePlayer.player_classified, qa = "STOMACH", cur_fn = function(c) return c.currenthunger:value() end, max_fn = function(c) return c.maxhunger:value() end },
+        { btn = status.brain, comp = ThePlayer.player_classified, qa = "SANITY", cur_fn = function(c) return c.currentsanity:value() end, max_fn = function(c) return c.maxsanity:value() end },
+        { btn = status.heart, comp = ThePlayer.player_classified, qa = "HEALTH", thresholds = { .25, .5, .75, 1 }, cur_fn = function(c) return c.currenthealth:value() end, max_fn = function(c) return c.maxhealth:value() end },
+        { btn = status.moisturemeter, comp = ThePlayer.player_classified, qa = "WETNESS", cur_fn = function(c) return c.moisture:value() end, max_fn = function(c) return c.maxmoisture:value() end },
+        { btn = status.wereness, comp = ThePlayer.player_classified, qa = "LOG_METER", thresholds = { .25, .5, .7, .9 }, cur_fn = function(c) return c.currentwereness:value() end, max_fn = function(c) return 100 end }
     }
 
     -- 遍历通用徽章进行宣告
     for _, cfg in ipairs(BADGE_CONFIG) do
         if cfg.btn and cfg.btn.focus and cfg.comp then
             local current, max = cfg.cur_fn(cfg.comp), cfg.max_fn(cfg.comp)
-            local category = levels[get_category(cfg.thresholds or default_thresholds, current / max)]
+            local category = QA_BADGE_LEVELS[get_category(cfg.thresholds or QA_DEFAULT_THRESHOLDS, current / max)]
             
-            -- WX-78 护盾判定
+            -- WX-78 护盾特殊判定
             if cfg.qa == "HEALTH" and ThePlayer.prefab == "wx78" and ThePlayer.wx78_classified then
                 local shield_cur = ThePlayer.wx78_classified.currentshield:value()
                 local shield_max = ThePlayer.wx78_classified.maxshield:value()
@@ -1145,10 +1115,8 @@ local function OnHUDMouseButton(HUD)
                 if shield_max > 1 then
                     local qa = GLOBAL.NOMU_QA.SCHEME[cfg.qa]
                     local fmts = {
-                        CURRENT = math.floor(current + 0.5),
-                        MAX = max,
-                        SHIELD_CUR = shield_cur,
-                        SHIELD_MAX = shield_max,
+                        CURRENT = math.floor(current + 0.5), MAX = max,
+                        SHIELD_CUR = shield_cur, SHIELD_MAX = shield_max,
                         MESSAGE = GetMapping(qa, 'MESSAGE', category)
                     }
 
@@ -1163,16 +1131,16 @@ local function OnHUDMouseButton(HUD)
                 end
             end
 
-            return AnnounceBadge(
-                GLOBAL.NOMU_QA.SCHEME[cfg.qa],
-                current,
-                max,
-                category
-            )
+            return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME[cfg.qa], current, max, category)
         end
     end
 
-    -- 温度宣告
+    return false
+end
+
+-- 处理环境与时间 (温度、天气、时钟、月相)
+local function HandleEnvironmentAndTime(HUD, status, widget)
+    --  人物温度宣告
     if status.temperature and status.temperature.focus then
         local qa = GLOBAL.NOMU_QA.SCHEME.TEMPERATURE
         local temp = ThePlayer:GetTemperature()
@@ -1181,39 +1149,29 @@ local function OnHUDMouseButton(HUD)
             MESSAGE = GetMapping(qa, 'MESSAGE', 'GOOD')
         }
 
-        if temp >= TUNING.OVERHEAT_TEMP then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'BURNING')
-        elseif temp >= TUNING.OVERHEAT_TEMP - 5 then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'HOT')
-        elseif temp >= TUNING.OVERHEAT_TEMP - 15 then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'WARM')
-        elseif temp <= 0 then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'FREEZING')
-        elseif temp <= 5 then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'COLD')
-        elseif temp <= 15 then
-            fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'COOL')
+        if temp >= TUNING.OVERHEAT_TEMP then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'BURNING')
+        elseif temp >= TUNING.OVERHEAT_TEMP - 5 then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'HOT')
+        elseif temp >= TUNING.OVERHEAT_TEMP - 15 then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'WARM')
+        elseif temp <= 0 then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'FREEZING')
+        elseif temp <= 5 then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'COLD')
+        elseif temp <= 15 then fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'COOL')
         end
 
         return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
     end
 
-    -- 预判断焦点是否在温度计或季节表盘上
+    --  世界温度 & 季节
     local is_worldtemp_focus = status.worldtemp and status.worldtemp.focus
     local is_season_focus = (HUD.controls.seasonclock and HUD.controls.seasonclock.focus) or (status.season and status.season.focus)
 
     if is_worldtemp_focus or is_season_focus then
-
        local raw_season = TheWorld.state.season:upper()
        local SEASON = GetMapping(GLOBAL.NOMU_QA.SCHEME.SEASON, 'SEASON_NAMES', raw_season) 
                        or GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season] 
                        or raw_season
 
-           -- 世界温度 & 降雨宣告
         if is_worldtemp_focus then
             local qa = GLOBAL.NOMU_QA.SCHEME.WORLD_TEMPERATURE_AND_RAIN
-            
-            -- 直接读取Combined Status上的文本
             local display_temp = math.floor(TheWorld.state.temperature + 0.5) .. "°"
             if status.worldtemp and status.worldtemp.num and status.worldtemp.num:GetString() then
                 display_temp = status.worldtemp.num:GetString()
@@ -1222,51 +1180,34 @@ local function OnHUDMouseButton(HUD)
             local px, py, pz = ThePlayer.Transform:GetWorldPosition()
             local is_winterland = TheWorld.components.winterlands_manager and TheWorld.components.winterlands_manager:IsWinterlandsAtPoint(px, py, pz)
 
-            local fmts = {
-                TEMPERATURE = display_temp,
-                SEASON = SEASON,
-                WEATHER = GetMapping(qa, 'WEATHER', raw_season)
-            }
+            local fmts = { TEMPERATURE = display_temp, SEASON = SEASON, WEATHER = GetMapping(qa, 'WEATHER', raw_season) }
             local qa_fmt = qa.FORMATS.NO_RAIN
 
             if TheWorld.state.pop ~= 1 then
                 local world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
-
                 fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
-                
                 if rain then
                     fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                     qa_fmt = qa.FORMATS.START_RAIN
                 end
             else
                 local world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
-
                 fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
-                
                 fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                 qa_fmt = qa.FORMATS.STOP_RAIN
             end
-
             return Announce(subfmt(qa_fmt, fmts))
         end
-        -- 季节宣告
+
         if is_season_focus then
             local DAYS_LEFT = TheWorld.state.remainingdaysinseason
             if DAYS_LEFT == 10000 then DAYS_LEFT = "∞" end
-
-            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SEASON.FORMATS.DEFAULT, {
-                SEASON = SEASON,
-                DAYS_LEFT = DAYS_LEFT
-            }))
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SEASON.FORMATS.DEFAULT, { SEASON = SEASON, DAYS_LEFT = DAYS_LEFT }))
         end
     end
 
-    -- 月相宣告
-    if HUD.controls.clock
-        and HUD.controls.clock._moonanim
-        and HUD.controls.clock._moonanim.focus
-        and HUD.controls.clock._moonanim.moontext then
-
+    --  月相宣告
+    if HUD.controls.clock and HUD.controls.clock._moonanim and HUD.controls.clock._moonanim.focus and HUD.controls.clock._moonanim.moontext then
         local qa = GLOBAL.NOMU_QA.SCHEME.MOON_PHASE
         local text_val = tostring(HUD.controls.clock._moonanim.moontext)
 
@@ -1276,7 +1217,7 @@ local function OnHUDMouseButton(HUD)
 
         local moonment = string.match(text_val, '(%d+)') or 0
         local worldment = TheWorld.state.cycles + 1 or 0
-        if moonment == 0 or worldment == 0 then return end
+        if moonment == 0 or worldment == 0 then return false end
 
         local fmts = { INTERVAL = GetMapping(qa, 'INTERVAL', 'COMMA') }
         local moonleft = moonment - worldment
@@ -1306,7 +1247,7 @@ local function OnHUDMouseButton(HUD)
         return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
     end
 
-    -- 时钟宣告
+    --  时钟宣告
     if HUD.controls.clock and HUD.controls.clock.focus then
         local clock = TheWorld.net.components.clock
         if clock and clock._remainingtimeinphase and clock._phase and clock.CalcRemainTimeOfDay then
@@ -1338,29 +1279,32 @@ local function OnHUDMouseButton(HUD)
         end
     end
 
-    -- 船耐久宣告
+    return false
+end
+
+-- 处理特殊机制 (船、阿比盖尔、力量、灵感、电路
+local function HandleSpecificMechanics(HUD, status, widget)
+    --  船耐久宣告
     if status.boatmeter and status.boatmeter.focus then
         local qa = GLOBAL.NOMU_QA.SCHEME.BOAT
-        local health = { 'EMPTY', 'LOW', 'MID', 'HIGH', 'FULL' }
         local max = status.boatmeter.boat.components.healthsyncer.max_health
         local current = status.boatmeter.boat.components.healthsyncer:GetPercent() * max
         local idx = math.floor(current / (max / 5 + 1)) + 1
 
         return Announce(subfmt(qa.FORMATS.DEFAULT, {
-            CURRENT = math.floor(current + 0.5),
-            MAX = max,
-            MESSAGE = GetMapping(qa, 'MESSAGE', health[idx])
+            CURRENT = math.floor(current + 0.5), MAX = max,
+            MESSAGE = GetMapping(qa, 'MESSAGE', QA_BADGE_LEVELS[idx])
         }))
     end
 
-    -- 阿比盖尔宣告
+    --  阿比盖尔宣告
     if status.pethealthbadge and status.pethealthbadge.focus and status.pethealthbadge.nomu_max then
         local max = status.pethealthbadge.nomu_max
         local current = status.pethealthbadge.nomu_percent * max
-        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.ABIGAIL, current, max, levels[math.floor(current / (max / 5 + 1)) + 1])
+        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.ABIGAIL, current, max, QA_BADGE_LEVELS[math.floor(current / (max / 5 + 1)) + 1])
     end
 
-    -- 力量值宣告
+    --  力量值宣告
     if status.mightybadge and status.mightybadge.focus and status.mightybadge.nomu_percent then
         local max = status.mightybadge.nomu_max or 100
         local current = status.mightybadge.nomu_percent * max
@@ -1369,49 +1313,37 @@ local function OnHUDMouseButton(HUD)
         return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.MIGHTINESS, current, max, mighty_states[idx])
     end
 
-    -- 灵感值宣告
+    --  灵感值宣告
     if status.inspirationbadge and status.inspirationbadge.focus and status.inspirationbadge.nomu_percent then
         local max = status.inspirationbadge.nomu_max or 100
         local pct = status.inspirationbadge.nomu_percent
         local idx = pct >= TUNING.BATTLESONG_THRESHOLDS[3] and 4
                  or (pct >= TUNING.BATTLESONG_THRESHOLDS[2] and 3
                  or (pct >= TUNING.BATTLESONG_THRESHOLDS[1] and 2 or 1))
-        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.INSPIRATION, pct * max, max, levels[idx])
+        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.INSPIRATION, pct * max, max, QA_BADGE_LEVELS[idx])
     end
 
-    -- 电路宣告 (WX-78)
-    if HUD.controls.secondary_status
-        and HUD.controls.secondary_status.upgrademodulesdisplay
-        and HUD.controls.secondary_status.upgrademodulesdisplay.focus then
-
+    --电路宣告 (WX-78)
+    if HUD.controls.secondary_status and HUD.controls.secondary_status.upgrademodulesdisplay and HUD.controls.secondary_status.upgrademodulesdisplay.focus then
         local qa = GLOBAL.NOMU_QA.SCHEME.ENERGY
         local module_display = HUD.controls.secondary_status.upgrademodulesdisplay
         local current = module_display.energy_level or 0
         local energy_levels = { 'ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX' }
 
-        -- 计算占用电量
         local used_slots = 0
         if module_display.chip_slotsinuse then
-            for _, v in pairs(module_display.chip_slotsinuse) do
-                used_slots = used_slots + (tonumber(v) or 0)
-            end
+            for _, v in pairs(module_display.chip_slotsinuse) do used_slots = used_slots + (tonumber(v) or 0) end
         else
             used_slots = module_display.slots_in_use or 0
         end
 
-        local min_x = math.huge
-        local max_x = -math.huge
-
+        local min_x, max_x = math.huge, -math.huge
         local function find_bounds(w)
             if not w or not w.GetWorldPosition then return end
             local px = w:GetWorldPosition().x
             if px < min_x then min_x = px end
             if px > max_x then max_x = px end
-            if w.children then
-                for _, child in pairs(w.children) do
-                    find_bounds(child)
-                end
-            end
+            if w.children then for _, child in pairs(w.children) do find_bounds(child) end end
         end
         find_bounds(module_display)
 
@@ -1419,20 +1351,14 @@ local function OnHUDMouseButton(HUD)
         local is_circuit_area = false
 
         if min_x < max_x then
-            local threshold = min_x + (max_x - min_x) * 0.70
-            if mx < threshold then
-                is_circuit_area = true
-            end
+            if mx < min_x + (max_x - min_x) * 0.70 then is_circuit_area = true end
         else
-            if mx < module_display:GetWorldPosition().x - 20 then
-                is_circuit_area = true
-            end
+            if mx < module_display:GetWorldPosition().x - 20 then is_circuit_area = true end
         end
 
         if is_circuit_area then
             local counts = {}
             local player = GLOBAL.ThePlayer
-
             if player and player.wx78_classified and player.wx78_classified.upgrademodulebars then
                 local GetWX78ModuleByNetID = GLOBAL.require("wx78_moduledefs").GetModuleDefinitionFromNetID
                 for bartype, bars in pairs(player.wx78_classified.upgrademodulebars) do
@@ -1442,9 +1368,7 @@ local function OnHUDMouseButton(HUD)
                             pcall(function() netid = module_netvar:value() end)
                             if netid > 0 then
                                 local def = GetWX78ModuleByNetID(netid)
-                                if def then
-                                    counts[def.name] = (counts[def.name] or 0) + 1
-                                end
+                                if def then counts[def.name] = (counts[def.name] or 0) + 1 end
                             end
                         end
                     end
@@ -1454,33 +1378,30 @@ local function OnHUDMouseButton(HUD)
             local modules_str_list = {}
             for modname, count in pairs(counts) do
                 local loc_name = GLOBAL.STRINGS.NAMES['WX78MODULE_' .. string.upper(modname)] or modname
-                local chip_fmt = qa.FORMATS.CHIP or "{NUM}个{ITEM}"
-                table.insert(modules_str_list, subfmt(chip_fmt, { ITEM = loc_name, NUM = count }))
+                table.insert(modules_str_list, subfmt(qa.FORMATS.CHIP or "{NUM}个{ITEM}", { ITEM = loc_name, NUM = count }))
             end
 
             if #modules_str_list > 0 then
-                local modules_str = table.concat(modules_str_list, "，")
-                return Announce(subfmt(qa.FORMATS.ALL_MODULES, { MODULES = modules_str }))
+                return Announce(subfmt(qa.FORMATS.ALL_MODULES, { MODULES = table.concat(modules_str_list, "，") }))
             else
                 return Announce(qa.FORMATS.NO_MODULES)
             end
-
         else
             return Announce(subfmt(qa.FORMATS.DEFAULT, {
-                CURRENT = math.floor(current + 0.5),
-                MAX = module_display.max_energy or TUNING.WX78_MAXELECTRICCHARGE or 6,
+                CURRENT = math.floor(current + 0.5), MAX = module_display.max_energy or TUNING.WX78_MAXELECTRICCHARGE or 6,
                 USED = used_slots,
                 MESSAGE = GetMapping(qa, 'MESSAGE', energy_levels[math.min(math.max(math.floor(current) + 1, 1), 7)])
             }))
         end
     end
 
-    -- 烹饪/料理宣告
-    if HUD.controls
-        and HUD.controls.foodcrafting
-        and HUD.controls.foodcrafting.focus
-        and HUD.controls.foodcrafting.focusItem
-        and HUD.controls.foodcrafting.focusItem.focus then
+    return false
+end
+
+-- 处理烹饪与料理
+local function HandleCooking(HUD, status, widget)
+    if HUD.controls and HUD.controls.foodcrafting and HUD.controls.foodcrafting.focus
+       and HUD.controls.foodcrafting.focusItem and HUD.controls.foodcrafting.focusItem.focus then
 
         local qa = GLOBAL.NOMU_QA.SCHEME.COOK
         local recipe = HUD.controls.foodcrafting.focusItem.recipe
@@ -1491,15 +1412,9 @@ local function OnHUDMouseButton(HUD)
             local fmts = { TYPE = GetMapping(qa, 'TYPE', 'POS'), NAME = name }
             local fmt, value
 
-            if popup.health and popup.health.focus then
-                value = recipe.health; fmt = qa.FORMATS.HEALTH
-            end
-            if popup.sanity and popup.sanity.focus then
-                value = recipe.sanity; fmt = qa.FORMATS.SANITY
-            end
-            if popup.hunger and popup.hunger.focus then
-                value = recipe.hunger; fmt = qa.FORMATS.HUNGER
-            end
+            if popup.health and popup.health.focus then value = recipe.health; fmt = qa.FORMATS.HEALTH end
+            if popup.sanity and popup.sanity.focus then value = recipe.sanity; fmt = qa.FORMATS.SANITY end
+            if popup.hunger and popup.hunger.focus then value = recipe.hunger; fmt = qa.FORMATS.HUNGER end
 
             if value then
                 if type(value) == 'number' and value < 0 then
@@ -1512,10 +1427,7 @@ local function OnHUDMouseButton(HUD)
 
             if popup.name and popup.name.focus and popup.hunger and popup.sanity and popup.health then
                 return Announce(subfmt(qa.FORMATS.FOOD, {
-                    NAME = name,
-                    HUNGER = popup.hunger:GetString(),
-                    SANITY = popup.sanity:GetString(),
-                    HEALTH = popup.health:GetString()
+                    NAME = name, HUNGER = popup.hunger:GetString(), SANITY = popup.sanity:GetString(), HEALTH = popup.health:GetString()
                 }))
             end
 
@@ -1524,9 +1436,7 @@ local function OnHUDMouseButton(HUD)
                     if ingredient.focus then
                         local ing_fmt = ingredient.is_min and 'MIN_INGREDIENT' or (ingredient.quantity > 0 and 'MAX_INGREDIENT' or 'ZERO_INGREDIENT')
                         return Announce(subfmt(qa.FORMATS[ing_fmt], {
-                            NAME = name,
-                            INGREDIENT = ingredient.localized_name,
-                            NUM = ingredient.quantity
+                            NAME = name, INGREDIENT = ingredient.localized_name, NUM = ingredient.quantity
                         }))
                     end
                 end
@@ -1535,6 +1445,29 @@ local function OnHUDMouseButton(HUD)
             return Announce(subfmt((recipe.readytocook or recipe.reqsmatch) and recipe.unlocked and qa.FORMATS.CAN or qa.FORMATS.NEED, { NAME = name }))
         end
     end
+    return false
+end
+
+local HUD_CLICK_HANDLERS = {
+    HandleExternalMods,
+    HandlePlayerStats,
+    HandleBeefaloStats,
+    HandleEnvironmentAndTime,
+    HandleSpecificMechanics,
+    HandleCooking
+}
+
+local function OnHUDMouseButton(HUD)
+    local status = HUD.controls.status
+    local widget = GLOBAL.TheInput:GetHUDEntityUnderMouse()
+
+    for _, handler in ipairs(HUD_CLICK_HANDLERS) do
+        if handler(HUD, status, widget) then
+            return true 
+        end
+    end
+    
+    return false
 end
 
 -- [6] 物品配方与容器相关方法
@@ -2227,15 +2160,13 @@ local function AnnounceRecipeCMIngredients(ingredients)
         specific_ingredient_type
     )
 end
-
 -- [7] 环境实体探测逻辑
+
+-- 环境实体辅助工具与缓存
 local PREFAB_MOD_CACHE, BUILD_CACHE = {}, {}
 
 local function GetModNameForPrefab(prefab)
-    if PREFAB_MOD_CACHE[prefab] ~= nil then
-        return PREFAB_MOD_CACHE[prefab]
-    end
-
+    if PREFAB_MOD_CACHE[prefab] ~= nil then return PREFAB_MOD_CACHE[prefab] end
     for _, modname in ipairs(GLOBAL.KnownModIndex:GetModNames()) do
         local pre = GLOBAL.Prefabs["MOD_" .. modname]
         if pre ~= nil and table.contains(pre.deps, prefab) then
@@ -2243,7 +2174,6 @@ local function GetModNameForPrefab(prefab)
             return PREFAB_MOD_CACHE[prefab]
         end
     end
-
     PREFAB_MOD_CACHE[prefab] = false
     return false
 end
@@ -2251,10 +2181,8 @@ end
 local function GetBuildCached(inst)
     if not inst or not inst.entity or not inst.prefab then return nil, nil end
     if BUILD_CACHE[inst.prefab] then return BUILD_CACHE[inst.prefab].bank, BUILD_CACHE[inst.prefab].build end
-
     local str = inst.entity:GetDebugString()
     if not str then return nil, nil end
-
     local bank, build = str:match("bank: (.+) build: (.+) anim: ")
     if bank and build then
         BUILD_CACHE[inst.prefab] = { bank = bank, build = build }
@@ -2267,315 +2195,253 @@ local function GetCleanEntityName(entity, base_prefab_name)
     return CleanPrefixName(entity:GetDisplayName(), entity.prefab and STRINGS.NAMES[entity.prefab:upper()], base_prefab_name)
 end
 
-TheInput:AddMouseButtonHandler(function(button, down)
-    if not (IsDefaultScreen() and IsAltPressed() and IsShiftPressed() and down) then
-        return
+-- 统一实体状态获取引擎
+local function GetEntitySpecialState(entity, is_target)
+    if not entity then return nil end
+
+    if entity:HasTag("fire") and not entity:HasTag("campfire") and not entity:HasTag("tree") then return "FIRE" end
+    if entity:HasTag("burnt") then return "BURNT" end
+    if entity:HasTag("smolder") then return "SMOLDER" end
+    if entity.prefab == "lightninggoat" and entity:HasTag("charged") then return "GOAT_CHARGED" end
+    if entity:HasTag("withered") then return "WITHERED" end
+    if entity:HasTag("barren") then return "BARREN" end
+
+    local crop_stat = GetGenericCropStat(entity)
+    if crop_stat then return crop_stat end
+
+    local tree_stat = GetTreeStat(entity)
+    if tree_stat then return tree_stat end
+
+    local spiderden_stat = GetSpiderDenStat(entity)
+    if spiderden_stat then return spiderden_stat end
+
+    if entity.prefab == "hotspring" then return "HOTSPRING_" .. (GetHotspringStat(entity) or "NORMAL") end
+    
+    if entity.prefab == "fruitdragon" then
+        local ripe = (entity.AnimState and entity.AnimState:GetBuild() == "fruit_dragon_ripe_build") or string.find(entity:GetDisplayName() or "", "Ripe")
+        if ripe then return "FRUITDRAGON_RIPE" end
+    end
+    
+    if entity.prefab == "beefalo" and not entity:HasTag("has_beard") then return "BEEFALO_SHAVED" end
+    if entity.prefab == "archive_switch" then
+        return (entity.AnimState and (entity.AnimState:IsCurrentAnimation("idle_full") or entity.AnimState:IsCurrentAnimation("activate"))) and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY"
     end
 
-    local entity = ConsoleWorldEntityUnderMouse()
+    -- 特定物品判定
+    if is_target then
+        if entity.prefab == "heatrock" then
+            local heat_stat = GetHeatrockStat(entity)
+            if heat_stat then return "HEATROCK_" .. heat_stat end
+        elseif entity.prefab == "birdcage" then
+            if entity.AnimState then
+                if entity.AnimState:IsCurrentAnimation("idle_empty") then return "BIRDCAGE_EMPTY"
+                elseif CheckAnims(entity.AnimState, {"idle_sick", "idle_sick2", "idle_sick3", "fall_sick"}) then return "BIRDCAGE_SICK"
+                elseif CheckAnims(entity.AnimState, {"death", "idle_death", "idle_skeleton"}) then return "BIRDCAGE_DEAD"
+                end
+            end
+            return "BIRDCAGE_FULL"
+        elseif entity.prefab == "oasislake" then
+            return entity:HasTag("NOCLICK") and "OASISLAKE_EMPTY" or "OASISLAKE_FULL"
+        elseif entity.prefab == "toadstool_cap" then
+            if entity._state and entity._state:value() > 0 then
+                return entity._dark and entity._dark:value() and "TOADSTOOL_DARK" or "TOADSTOOL_NORMAL"
+            end
+            return "TOADSTOOL_EMPTY"
+        end
+    end
+    return nil
+end
 
+-- 玩家专属点击处理
+local function IsPlayerFishing(player)
+    local inventory = player.replica.inventory
+    if not inventory then return false end
+    local equip = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+    if not equip then return false end
+    if equip.replica.fishingrod and equip.replica.fishingrod:GetTarget() ~= nil then return true end
+    if equip.replica.oceanfishingrod then
+        if type(equip.replica.oceanfishingrod.GetBobber) == "function" and equip.replica.oceanfishingrod:GetBobber() ~= nil then return true end
+        if type(equip.replica.oceanfishingrod.GetTarget) == "function" and equip.replica.oceanfishingrod:GetTarget() ~= nil then return true end
+    end
+    return false
+end
+
+local function HandlePlayerClick(entity)
+    local is_fishing = IsPlayerFishing(entity)
+    local qa_formats = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS
+    
+    if entity == GLOBAL.ThePlayer then
+        if is_fishing and qa_formats.ME_FISHING then
+            return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }))
+        end
+        
+        local rider = entity.replica.rider
+        if rider and rider:IsRiding() then
+            local mount = rider:GetMount()
+            local mount_name = "坐骑"
+            if mount then
+                local prefab = mount.prefab or ""
+                local basic_name = ""
+                pcall(function() basic_name = mount:GetBasicDisplayName() end)
+                basic_name = (basic_name == "" and mount.name) or basic_name or ""
+                local default_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[string.upper(prefab)] or ""
+                
+                if basic_name ~= "" and basic_name ~= default_name and not string.find(string.upper(basic_name), "MISSING") then
+                    mount_name = basic_name
+                else
+                    mount_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[string.upper(prefab)]) or (default_name ~= "" and default_name or basic_name) or "坐骑"
+                end
+                mount_name = ApplyCustomName(prefab, mount_name)
+            end
+            if qa_formats.ME_RIDING then
+                return Announce(subfmt(qa_formats.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
+            end
+        end
+
+        local inventory = entity.replica.inventory
+        if inventory then
+            local equip_body = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+            if equip_body and equip_body:HasTag("heavy") then
+                local prefab = equip_body.prefab or ""
+                local heavy_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[string.upper(prefab)]) or (prefab ~= "" and GLOBAL.STRINGS.NAMES[string.upper(prefab)] or equip_body.name)
+                if not heavy_name or heavy_name == "" then
+                    pcall(function() heavy_name = equip_body:GetDisplayName() end)
+                end
+                heavy_name = ApplyCustomName(prefab, heavy_name or "未知重物")
+                if qa_formats.ME_CARRYING then
+                    return Announce(subfmt(qa_formats.ME_CARRYING, { NAME = entity:GetDisplayName(), ITEM = heavy_name }))
+                end
+            end
+        end
+        return Announce(subfmt(qa_formats.I_AM_HERE, { NAME = entity:GetDisplayName() }))
+    end
+    
+    -- 给物品给别人
+    local my_inventory = GLOBAL.ThePlayer.replica.inventory
+    local active_item = my_inventory and my_inventory:GetActiveItem()
+    if active_item then
+        return Announce(subfmt(qa_formats.GIVE_ITEM, {
+            NAME = entity:GetDisplayName(),
+            NUM = active_item.replica.stackable and active_item.replica.stackable:StackSize() or 1,
+            ITEM_NAME = string.gsub(active_item:GetDisplayName(), '\n', ' ')
+        }))
+    end
+
+    local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
+    local is_ent_ghost = entity:HasTag("playerghost")
+    if is_me_ghost or is_ent_ghost then
+        local player_fmt = (is_me_ghost and is_ent_ghost) and qa_formats.BOTH_GHOST
+                        or (is_me_ghost and qa_formats.ME_GHOST or qa_formats.THEY_GHOST)
+        return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
+    end
+
+    if is_fishing and qa_formats.THEY_FISHING then
+        return Announce(subfmt(qa_formats.THEY_FISHING, { NAME = entity:GetDisplayName() }))
+    end
+
+    return Announce(subfmt(qa_formats.GREET, { NAME = entity:GetDisplayName() }))
+end
+
+local function HandleEnvMiddleClick(entity)
+    if not GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) and entity:HasTag('player') then
+        if entity == GLOBAL.ThePlayer then
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }))
+        else
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
+        end
+    end
+
+    local qa = GLOBAL.NOMU_QA.SCHEME.ENV
+    local mod_str = ""
+    local mod_name = GetModNameForPrefab(entity.prefab)
+    if mod_name then
+        mod_str = subfmt(GetMapping(qa, 'WORDS', 'MOD_INFO'), { MOD_NAME = mod_name })
+    end
+
+    local entity_info = subfmt(qa.FORMATS.CODE, { 
+        PREFAB = entity.prefab, NAME = entity:GetDisplayName(),
+        MOD_INFO = mod_str, ASSET_INFO = "" 
+    })
+    
+    print(entity_info)
+    GLOBAL.ThePlayer.components.talker:Say(entity_info, 5)
+    return true
+end
+
+-- 主环境鼠标点击监听器
+GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
+    if not (IsDefaultScreen() and IsAltPressed() and IsShiftPressed() and down) then return end
+
+    local ThePlayer = GLOBAL.ThePlayer
+    local TheInput = GLOBAL.TheInput
+
+    local entity = ConsoleWorldEntityUnderMouse()
     if entity and (entity:HasTag("NOCLICK") or entity:HasTag("FX") or entity:HasTag("DECOR")) then
         entity = nil
     end
 
     local qa = GLOBAL.NOMU_QA.SCHEME.ENV
-    --鼠标中键
-    if button == MOUSEBUTTON_MIDDLE then
-        if entity then
-            if not TheInput:IsKeyDown(KEY_LCTRL) and entity:HasTag('player') then
-                if entity == ThePlayer then
-                    return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, { PING = TheNet:GetAveragePing() }))
-                else
-                    return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
-                end
-            end
 
-            local mod_str = ""
-            local mod_name = GetModNameForPrefab(entity.prefab)
-            if mod_name then
-                mod_str = subfmt(GetMapping(qa, 'WORDS', 'MOD_INFO'), { MOD_NAME = mod_name })
-            end
-
-            local entity_info = subfmt(qa.FORMATS.CODE, { 
-                PREFAB = entity.prefab, 
-                NAME = entity:GetDisplayName(),
-                MOD_INFO = mod_str,
-                ASSET_INFO = "" 
-            })
-            
-            print(entity_info)
-            ThePlayer.components.talker:Say(entity_info, 5)
-        end
+    if button == GLOBAL.MOUSEBUTTON_MIDDLE then
+        if entity then HandleEnvMiddleClick(entity) end
         return
     end
 
-    -- 鼠标左键
-    if button ~= MOUSEBUTTON_LEFT then return end
+    if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
 
+    -- 模糊匹配保底逻辑
     if not entity then
         local pos = TheInput:GetWorldPosition()
-        local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, GLOBAL.NOMU_QA.DATA.FUZZY_ANNOUNCE and 4 or 2, nil, { "INLIMBO", "player" })
+        local ents = GLOBAL.TheSim:FindEntities(pos.x, pos.y, pos.z, GLOBAL.NOMU_QA.DATA.FUZZY_ANNOUNCE and 4 or 2, nil, { "INLIMBO", "player" })
         local fuzzy_entity = nil
-
         for _, v in ipairs(ents) do
-            if v.prefab == "oasislake"
-                or v.prefab == "icefishing_hole"
-                or v.prefab == "oceanwhirlbigportal"
-                or v.prefab == "willow_ember"
-                or (v.prefab and string.find(v.prefab, "sinkhole"))
-                or v:HasTag("underwater_salvageable")
+            if v.prefab == "oasislake" or v.prefab == "icefishing_hole" or v.prefab == "oceanwhirlbigportal" or v.prefab == "willow_ember"
+                or (v.prefab and string.find(v.prefab, "sinkhole")) or v:HasTag("underwater_salvageable")
                 or (v:HasTag("oceanfishable") and v:HasTag("oceanfishinghookable")) then
                 entity = v
                 break
             end
-
-            if GLOBAL.NOMU_QA.DATA.FUZZY_ANNOUNCE
-                and not fuzzy_entity
-                and v.prefab
-                and v.name
-                and not v:HasTag("NOCLICK")
-                and not v:HasTag("FX")
-                and not v:HasTag("DECOR") then
+            if GLOBAL.NOMU_QA.DATA.FUZZY_ANNOUNCE and not fuzzy_entity and v.prefab and v.name and not v:HasTag("NOCLICK") and not v:HasTag("FX") and not v:HasTag("DECOR") then
                 fuzzy_entity = v
             end
         end
-        if not entity and fuzzy_entity then
-            entity = fuzzy_entity
-        end
+        entity = entity or fuzzy_entity
     end
 
     if not entity then return end
-    if not TheInput:IsKeyDown(KEY_LCTRL) and entity:HasTag('player') then
-        -- 判断玩家是否正在钓鱼
-        local is_fishing = false
-        local inventory = entity.replica.inventory
-        if inventory then
-            local equip = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
-            if equip then
-                if equip.replica.fishingrod and equip.replica.fishingrod:GetTarget() ~= nil then
-                    is_fishing = true
-                elseif equip.replica.oceanfishingrod then
-                    if type(equip.replica.oceanfishingrod.GetBobber) == "function" and equip.replica.oceanfishingrod:GetBobber() ~= nil then
-                        is_fishing = true
-                    elseif type(equip.replica.oceanfishingrod.GetTarget) == "function" and equip.replica.oceanfishingrod:GetTarget() ~= nil then
-                        is_fishing = true
-                    end
-                end
-            end
-        end
 
-        -- 宣告自己
-        if entity == ThePlayer then
-            --  钓鱼宣告
-            if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING then
-                return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_FISHING, { NAME = entity:GetDisplayName() }))
-            end
-            
-            -- 2. 骑行宣告
-            local rider = entity.replica.rider
-            if rider and rider:IsRiding() then
-                local mount = rider:GetMount()
-                local mount_name = "坐骑"
-                if mount then
-                    local prefab = mount.prefab or ""
-                    local upper_prefab = string.upper(prefab)
-                    local basic_name = ""
-                    pcall(function() basic_name = mount:GetBasicDisplayName() end)
-                    if not basic_name or basic_name == "" then
-                        basic_name = mount.name or ""
-                    end
-                    local default_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[upper_prefab] or ""
-                    if basic_name ~= "" and basic_name ~= default_name and not string.find(string.upper(basic_name), "MISSING") then
-                        mount_name = basic_name
-                    else
-                        local base_name = default_name ~= "" and default_name or basic_name
-                        mount_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[upper_prefab]) or base_name or "坐骑"
-                    end
-                    mount_name = ApplyCustomName(prefab, mount_name)
-                end
-                if GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_RIDING then
-                    return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
-                end
-            end
-
-            --  搬运宣告
-            if inventory then
-                local equip_body = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
-                if equip_body and equip_body:HasTag("heavy") then
-                    local prefab = equip_body.prefab or ""
-                    local upper_prefab = string.upper(prefab)
-                    local base_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[upper_prefab] or equip_body.name
-                    local heavy_item_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[upper_prefab]) or base_name
-                    
-                    if not heavy_item_name or heavy_item_name == "" then
-                        pcall(function() heavy_item_name = equip_body:GetDisplayName() end)
-                    end
-                    heavy_item_name = heavy_item_name or "未知重物"
-                    heavy_item_name = ApplyCustomName(prefab, heavy_item_name)
-                    
-                    if GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_CARRYING then
-                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_CARRYING, { NAME = entity:GetDisplayName(), ITEM = heavy_item_name }))
-                    end
-                end
-            end
-            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.I_AM_HERE, { NAME = entity:GetDisplayName() }))
-        end
-        
-        -- 宣告给物品 (从自己的物品栏拖给别人)
-        local my_inventory = ThePlayer.replica.inventory
-        local active_item = my_inventory and my_inventory:GetActiveItem()
-        if active_item then
-            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GIVE_ITEM, {
-                NAME = entity:GetDisplayName(),
-                NUM = active_item.replica.stackable and active_item.replica.stackable:StackSize() or 1,
-                ITEM_NAME = string.gsub(active_item:GetDisplayName(), '\n', ' ')
-            }))
-        end
-
-        -- 宣告鬼魂状态
-        local is_me = ThePlayer:HasTag("playerghost")
-        local is_ent = entity:HasTag("playerghost")
-        if is_me or is_ent then
-            local player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.DEFAULT
-            if is_me and is_ent then
-                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.BOTH_GHOST
-            elseif is_me then
-                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ME_GHOST
-            elseif is_ent then
-                player_fmt = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_GHOST
-            end
-            return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
-        end
-
-        -- 宣告他人正在钓鱼
-        if is_fishing and GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING then
-            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.THEY_FISHING, { NAME = entity:GetDisplayName() }))
-        end
-
-        -- 普通的打招呼
-        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, { NAME = entity:GetDisplayName() }))
+    if not TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) and entity:HasTag('player') then
+        return HandlePlayerClick(entity)
     end
 
+    -- 世界实体宣告核心逻辑
     local px, py, pz = entity:GetPosition():Get()
-
-    local is_on_water = TheWorld.Map and TheWorld.Map:IsOceanAtPoint(px, py, pz) and (entity.GetCurrentPlatform == nil or entity:GetCurrentPlatform() == nil)
-
+    local is_on_water = GLOBAL.TheWorld.Map and GLOBAL.TheWorld.Map:IsOceanAtPoint(px, py, pz) and (entity.GetCurrentPlatform == nil or entity:GetCurrentPlatform() == nil)
+    
     local radius = type(GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE) == "number" and GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE or 40
-    local entities = TheSim:FindEntities(px, py, pz, radius)
+    local entities = GLOBAL.TheSim:FindEntities(px, py, pz, radius)
 
-    local count_name, count_prefab, count_burnt, count_fire, count_withered = 0, 0, 0, 0, 0
-    local count_barren, count_smolder, count_charged_goat, count_normal_goat = 0, 0, 0, 0
-
-    local dist_sq = ThePlayer:GetDistanceSqToInst(entity)
-    local dist_str = ""
-
-    local show_dist = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
-
-    if show_dist > 0 then
-        local raw_dist = math.sqrt(dist_sq) / 4
-        if raw_dist >= 1 then
-            local dist_val = (show_dist == 2) and string.format("%.1f", raw_dist) or math.floor(raw_dist)
-
-            local word_key = is_on_water and 'DISTANCE_FAR_WATER' or 'DISTANCE_FAR'
-            local template = GetMapping(qa, 'WORDS', word_key) or GetMapping(qa, 'WORDS', 'DISTANCE_FAR')
-
-            dist_str = subfmt(template, { DIST = dist_val })
-        else
-            local word_key = is_on_water and 'DISTANCE_CLOSE_WATER' or 'DISTANCE_CLOSE'
-            dist_str = GetMapping(qa, 'WORDS', word_key) or GetMapping(qa, 'WORDS', 'DISTANCE_CLOSE')
-        end
-    end
-
-    local target_burnt = entity:HasTag("burnt")
-    local target_fire = entity:HasTag("fire")
-    local target_withered = entity:HasTag("withered")
-    local target_barren = entity:HasTag("barren")
-    local target_smolder = entity:HasTag("smolder")
-    local is_lightninggoat = entity.prefab == "lightninggoat"
-    local target_is_charged_goat = is_lightninggoat and entity:HasTag("charged")
-
-    local target_is_crop = entity:HasTag("farm_plant")
-                        or entity:HasTag("beebox")
-                        or SPECIAL_CROPS[entity.prefab]
-                        or BASIC_PICKABLES[entity.prefab]
-
-    local target_crop_stat = nil
-    if target_is_crop then
-        if entity:HasTag("farm_plant") then target_crop_stat = GetCropStat(entity.AnimState)
-        elseif entity.prefab == "waterplant" then target_crop_stat = entity:HasTag("harvestable") and "WITH_BARNACLES" or "NO_BARNACLES"
-        elseif entity.prefab == "saltstack" then target_crop_stat = GetSaltStackStat(entity.AnimState)
-        elseif entity.prefab == "marbleshrub" then target_crop_stat = GetMarbleShrubStat(entity.AnimState)
-        elseif entity:HasTag("beebox") then target_crop_stat = GetBeeboxStat(entity.AnimState)
-        elseif entity.prefab == "mushroom_farm" then target_crop_stat = GetMushroomFarmStat(entity.AnimState)
-        elseif entity.prefab == "tallbirdnest" then target_crop_stat = entity:HasTag("pickable") and "NEST_HAS_EGG" or "NEST_EMPTY"
-        elseif entity.prefab == "lureplant" then target_crop_stat = GetLureplantStat(entity.AnimState)
-        elseif BASIC_PICKABLES[entity.prefab] then target_crop_stat = entity:HasTag("pickable") and "PICKABLE_READY" or "PICKABLE_EMPTY"
-        end
-    end
-
-    local target_is_tree = entity:HasTag("tree")
-                        or entity:HasTag("rock_tree")
-                        or (entity.prefab and (string.find(entity.prefab, "sapling")
-                            or entity.prefab == "marbleshrub"
-                            or string.find(entity.prefab, "marbletree"))
-                            and not entity:HasTag("player"))
-    local target_tree_stat = target_is_tree and GetTreeStat(entity) or nil
-
-    local target_is_spiderden = (entity:HasTag("spiderden")
-                              and entity.prefab ~= "moonspiderden"
-                              and entity.prefab ~= "spiderhole")
-                              or entity:HasTag("shadowchesspiece")
-    local target_spiderden_stat = target_is_spiderden and GetSpiderDenStat(entity) or nil
-
-    local target_is_hotspring = entity.prefab == "hotspring"
-    local target_hotspring_stat = target_is_hotspring and GetHotspringStat(entity) or nil
-
-    local is_fruitdragon = entity.prefab == "fruitdragon"
-    local target_is_ripe_fruitdragon = is_fruitdragon and (
-        (entity.AnimState and entity.AnimState:GetBuild() == "fruit_dragon_ripe_build")
-        or string.find(entity:GetDisplayName() or "", "Ripe")
-    )
-
-    local is_beefalo = entity.prefab == "beefalo"
-    local target_is_shaved_beefalo = is_beefalo and not entity:HasTag("has_beard")
-
-    local is_archive_switch = entity.prefab == "archive_switch"
-    local target_is_full_archive_switch = is_archive_switch and entity.AnimState and (
-        entity.AnimState:IsCurrentAnimation("idle_full")
-        or entity.AnimState:IsCurrentAnimation("activate")
-    )
-
-    local count_crop_stat = 0
-    local count_tree_stat = 0
-    local count_spiderden_stat = 0
-    local count_hotspring_stat = 0
-    local count_ripe_fruitdragon = 0
-    local count_unripe_fruitdragon = 0
-    local count_archive_switch_full = 0
-    local count_archive_switch_empty = 0
-    local count_shaved_beefalo = 0
-
+    -- 优先评估目标实体状态
+    local target_state = GetEntitySpecialState(entity, true)
     local target_name = ""
     pcall(function() target_name = entity:GetDisplayName() end)
 
+    local count_prefab, count_name, stat_count = 0, 0, 0
     local is_shadow_centipede_piece = entity:HasTag("shadowthrall_centipede")
     local is_worm_boss_piece = entity:HasTag("worm_boss_piece")
     local centipede_has_piece = false
     local centipede_head_count = 0
 
+    -- 性能极度优化版的实体遍历
     for _, v in ipairs(entities) do
         local is_same_entity = false
-
         if is_shadow_centipede_piece and v:HasTag("shadowthrall_centipede") then
             is_same_entity = true
             centipede_has_piece = true
-            if v.prefab == "shadowthrall_centipede_head" then
-                centipede_head_count = centipede_head_count + 1
-            end
+            if v.prefab == "shadowthrall_centipede_head" then centipede_head_count = centipede_head_count + 1 end
         elseif is_worm_boss_piece and v:HasTag("worm_boss_piece") then
             is_same_entity = true
-        elseif ((ITEM_PREFAB_ALIAS[entity.prefab] and ITEM_PREFAB_ALIAS[entity.prefab] == ITEM_PREFAB_ALIAS[v.prefab])
-             or v.prefab == entity.prefab) then
+        elseif (ITEM_PREFAB_ALIAS and ITEM_PREFAB_ALIAS[entity.prefab] and ITEM_PREFAB_ALIAS[entity.prefab] == ITEM_PREFAB_ALIAS[v.prefab]) or v.prefab == entity.prefab then
             is_same_entity = true
         end
 
@@ -2585,107 +2451,37 @@ TheInput:AddMouseButtonHandler(function(button, down)
 
             local s = v.replica and v.replica.stackable and v.replica.stackable:StackSize() or 1
             count_prefab = count_prefab + s
-
             if v_name == target_name then count_name = count_name + s end
-            if target_burnt and v:HasTag("burnt") then count_burnt = count_burnt + 1 end
-            if target_fire and v:HasTag("fire") then count_fire = count_fire + 1 end
-            if target_withered and v:HasTag("withered") then count_withered = count_withered + 1 end
-            if target_barren and v:HasTag("barren") then count_barren = count_barren + 1 end
-            if target_smolder and v:HasTag("smolder") then count_smolder = count_smolder + 1 end
-
-            if is_lightninggoat and v.prefab == "lightninggoat" then
-                if v:HasTag("charged") then
-                    count_charged_goat = count_charged_goat + 1
-                else
-                    count_normal_goat = count_normal_goat + 1
-                end
-            end
-
-            if target_is_crop and target_crop_stat then
-                local v_crop_stat = nil
-                if v:HasTag("farm_plant") then v_crop_stat = GetCropStat(v.AnimState)
-                elseif v.prefab == "waterplant" then v_crop_stat = v:HasTag("harvestable") and "WITH_BARNACLES" or "NO_BARNACLES"
-                elseif v.prefab == "saltstack" then v_crop_stat = GetSaltStackStat(v.AnimState)
-                elseif v.prefab == "marbleshrub" then v_crop_stat = GetMarbleShrubStat(v.AnimState)
-                elseif v:HasTag("beebox") then v_crop_stat = GetBeeboxStat(v.AnimState)
-                elseif v.prefab == "mushroom_farm" then v_crop_stat = GetMushroomFarmStat(v.AnimState)
-                elseif v.prefab == "tallbirdnest" then v_crop_stat = v:HasTag("pickable") and "NEST_HAS_EGG" or "NEST_EMPTY"
-                elseif v.prefab == "lureplant" then v_crop_stat = GetLureplantStat(v.AnimState)
-                elseif BASIC_PICKABLES[v.prefab] then v_crop_stat = v:HasTag("pickable") and "PICKABLE_READY" or "PICKABLE_EMPTY"
-                end
-
-                if target_crop_stat == v_crop_stat then
-                    count_crop_stat = count_crop_stat + 1
-                end
-            end
-
-            if target_is_tree and target_tree_stat and target_tree_stat == GetTreeStat(v) then
-                count_tree_stat = count_tree_stat + 1
-            end
-
-            if target_is_spiderden and target_spiderden_stat and target_spiderden_stat == GetSpiderDenStat(v) then
-                count_spiderden_stat = count_spiderden_stat + 1
-            end
-
-            if target_is_hotspring and target_hotspring_stat and v.prefab == "hotspring" then
-                if target_hotspring_stat == GetHotspringStat(v) then
-                    count_hotspring_stat = count_hotspring_stat + 1
-                end
-            end
-
-            if is_fruitdragon and v.prefab == "fruitdragon" then
-                if (v.AnimState and v.AnimState:GetBuild() == "fruit_dragon_ripe_build")
-                    or string.find(v:GetDisplayName() or "", "Ripe") then
-                    count_ripe_fruitdragon = count_ripe_fruitdragon + 1
-                else
-                    count_unripe_fruitdragon = count_unripe_fruitdragon + 1
-                end
-            end
-
-            if is_beefalo and v.prefab == "beefalo" then
-                if not v:HasTag("has_beard") then
-                    count_shaved_beefalo = count_shaved_beefalo + 1
-                end
-            end
-
-            if is_archive_switch and v.prefab == "archive_switch" then
-                if v.AnimState and (v.AnimState:IsCurrentAnimation("idle_full") or v.AnimState:IsCurrentAnimation("activate")) then
-                    count_archive_switch_full = count_archive_switch_full + 1
-                else
-                    count_archive_switch_empty = count_archive_switch_empty + 1
-                end
+            
+            -- 使用相同的判断逻辑检测当前实体的状态是否匹配目标状态
+            if target_state and GetEntitySpecialState(v, false) == target_state then
+                stat_count = stat_count + 1
             end
         end
     end
 
+    -- Boss 部件逻辑修正
     if is_worm_boss_piece then
         local boss_count = 0
         for _, v in pairs(GLOBAL.Ents) do
-            if v.prefab == "worm_boss" then
-                if v:GetDistanceSqToInst(entity) <= 10000 then
-                    boss_count = boss_count + 1
-                end
-            end
+            if v.prefab == "worm_boss" and v:GetDistanceSqToInst(entity) <= 10000 then boss_count = boss_count + 1 end
         end
-        if boss_count == 0 then boss_count = 1 end
-        count_prefab = boss_count
-        count_name = boss_count
+        count_prefab, count_name = math.max(1, boss_count), math.max(1, boss_count)
     elseif is_shadow_centipede_piece then
         local boss_count = math.ceil(centipede_head_count / 2)
         if boss_count == 0 and centipede_has_piece then boss_count = 1 end
-        count_prefab = boss_count
-        count_name = boss_count
+        count_prefab, count_name = boss_count, boss_count
     end
 
-    local prefab_name = entity.prefab and (STRINGS.NOMU_QA[entity.prefab:upper()] or STRINGS.NAMES[entity.prefab:upper()])
+    -- 物品名称处理
+    local prefab_name = entity.prefab and (GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] or GLOBAL.STRINGS.NAMES[entity.prefab:upper()])
     prefab_name = ApplyCustomName(entity.prefab, prefab_name)
 
     local display_name = ""
     pcall(function()
         local raw_name = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and entity:GetDisplayName() or entity:GetBasicDisplayName()
         local lines = string.split(raw_name, '\n')
-        display_name = lines[1] or raw_name -- 默认保底第一行
-
+        display_name = lines[1] or raw_name
         if prefab_name and prefab_name ~= "" then
             for _, line in ipairs(lines) do
                 if string.find(line, prefab_name, 1, true) then
@@ -2696,200 +2492,95 @@ TheInput:AddMouseButtonHandler(function(button, down)
         end
     end)
 
-    if display_name == "" then
-        display_name = prefab_name or "MISSING NAME"
-    end
-
+    display_name = display_name == "" and (prefab_name or "MISSING NAME") or display_name
     if entity.prefab and string.find(entity.prefab, "sinkhole") then
-        prefab_name = GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()]
-                   or (display_name ~= entity.prefab and not string.find(display_name, "MISSING") and display_name or GLOBAL.STRINGS.NOMU_QA.SINKHOLE)
+        prefab_name = GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] or (display_name ~= entity.prefab and not string.find(display_name, "MISSING") and display_name or GLOBAL.STRINGS.NOMU_QA.SINKHOLE)
     end
 
     local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
-
     local start_line = #(string.split(entity:GetBasicDisplayName(), '\n')) + 1
     local show_me = GetShowMeString(entity, qa, start_line, nil, nil, 2)
 
     local final_name = GetCleanEntityName(entity, prefab_name)
     local is_blueprint_type = false
-    if entity.prefab and (
-        string.find(entity.prefab, "certificate")
-        or string.find(entity.prefab, "blueprint")
-        or string.find(entity.prefab, "sketch")
-        or entity.prefab == "cookingrecipecard"
-    ) and display_name ~= prefab_name then
+    if entity.prefab and (string.find(entity.prefab, "certificate") or string.find(entity.prefab, "blueprint") or string.find(entity.prefab, "sketch") or entity.prefab == "cookingrecipecard") and display_name ~= prefab_name then
         final_name = display_name
         is_blueprint_type = true
     end
 
-    -- 针对不同特殊实体的不同宣告
+    -- 距离计算
+    local dist_str = ""
+    local show_dist = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
+    if show_dist > 0 then
+        local raw_dist = math.sqrt(ThePlayer:GetDistanceSqToInst(entity)) / 4
+        if raw_dist >= 1 then
+            local dist_val = (show_dist == 2) and string.format("%.1f", raw_dist) or math.floor(raw_dist)
+            local word_key = is_on_water and 'DISTANCE_FAR_WATER' or 'DISTANCE_FAR'
+            dist_str = subfmt(GetMapping(qa, 'WORDS', word_key) or GetMapping(qa, 'WORDS', 'DISTANCE_FAR'), { DIST = dist_val })
+        else
+            local word_key = is_on_water and 'DISTANCE_CLOSE_WATER' or 'DISTANCE_CLOSE'
+            dist_str = GetMapping(qa, 'WORDS', word_key) or GetMapping(qa, 'WORDS', 'DISTANCE_CLOSE')
+        end
+    end
+
+    -- 特殊机制打断处理
     if entity.prefab == "icefishing_hole" then
-        return Announce(subfmt(qa.FORMATS.SINGLE, {
-            NAME = GLOBAL.STRINGS.NOMU_QA.ICEFISHING_HOLE,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        return Announce(subfmt(qa.FORMATS.SINGLE, { NAME = GLOBAL.STRINGS.NOMU_QA.ICEFISHING_HOLE, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
     end
-
     if entity.prefab == "townportal" then
-        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop") and "PORTAL_ON" or "PORTAL_OFF"], {
-            NAME = display_name
-        }), entity:HasTag('player'), debug_str)
+        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop") and "PORTAL_ON" or "PORTAL_OFF"], { NAME = display_name }), entity:HasTag('player'), debug_str)
     end
-
     if entity:HasTag("oceanfishable") and entity:HasTag("oceanfishinghookable") and not string.find(entity.prefab or "", "flotsam") then
         local adj = GLOBAL.STRINGS.UI.CUSTOMIZATIONSCREEN.OCEAN_SHOAL or GLOBAL.STRINGS.NOMU_QA.OCEAN_SHOAL
         local shoal_name, fish_name = adj, "鱼"
-
         if entity.name and type(entity.name) == "string" and entity.name ~= "" and entity.name ~= adj then
             fish_name = GLOBAL.STRINGS.NOMU_QA[string.upper(entity.name)] or GLOBAL.STRINGS.NAMES[string.upper(entity.name)] or entity.name
             shoal_name = GLOBAL.STRINGS.UI.OBJECTOWNERSHIP and subfmt(GLOBAL.STRINGS.UI.OBJECTOWNERSHIP, {owner = fish_name, object = adj}) or shoal_name
         end
-
         local f_c = 0
-        for _, v in ipairs(entities) do
-            if (v:HasTag("oceanfish") or v:HasTag("oceanfishable")) and v.prefab == entity.prefab then
-                f_c = f_c + 1
-            end
-        end
-        return Announce(subfmt(qa.FORMATS.FISH_SHOAL, {
-            NAME = shoal_name,
-            NUM = f_c,
-            FISH = fish_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        for _, v in ipairs(entities) do if (v:HasTag("oceanfish") or v:HasTag("oceanfishable")) and v.prefab == entity.prefab then f_c = f_c + 1 end end
+        return Announce(subfmt(qa.FORMATS.FISH_SHOAL, { NAME = shoal_name, NUM = f_c, FISH = fish_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
     end
 
+    -- 应用特殊状态排版
     local use_special = GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE
-
-    -- 统一处理所有具有特殊状态的实体
-    local use_special = GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE
-
-    if use_special then
-        local target_stat = nil
-        local stat_count = count_prefab -- 默认按照预制物总数作为对比基数
+    if use_special and target_state then
+        local is_specific_only = (entity.prefab == "heatrock" or entity.prefab == "birdcage" or entity.prefab == "oasislake" or entity.prefab == "toadstool_cap")
         local force_display_name = final_name or display_name
-        local is_specific_only = false -- 只宣告这一个的特殊物品
+        
+        if entity.prefab == "houndfire" then force_display_name = prefab_name or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE end
+        if target_state == "WITHERED" or target_state == "BARREN" then force_display_name = prefab_name end
 
-        if entity:HasTag("fire") and not entity:HasTag("campfire") and not entity:HasTag("tree") then
-            target_stat = "FIRE"
-            stat_count = count_fire
-            if entity.prefab == "houndfire" then force_display_name = prefab_name or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE end
-        elseif count_burnt > 0 then
-            target_stat = "BURNT"
-            stat_count = count_burnt
-        elseif target_smolder then
-            target_stat = "SMOLDER"
-            stat_count = count_smolder
-        elseif is_lightninggoat and target_is_charged_goat then
-            target_stat = "GOAT_CHARGED"
-            stat_count = count_charged_goat
-        elseif entity:HasTag("withered") then
-            target_stat = "WITHERED"
-            stat_count = count_withered
-            force_display_name = prefab_name
-        elseif target_barren then
-            target_stat = "BARREN"
-            stat_count = count_barren
-            force_display_name = prefab_name
-        elseif target_is_crop and target_crop_stat then
-            target_stat = target_crop_stat
-            stat_count = count_crop_stat
-        elseif target_is_tree and target_tree_stat then
-            target_stat = target_tree_stat
-            stat_count = count_tree_stat
-        elseif target_is_spiderden and target_spiderden_stat then
-            target_stat = target_spiderden_stat
-            stat_count = count_spiderden_stat
-        elseif target_is_hotspring and target_hotspring_stat then
-            target_stat = "HOTSPRING_" .. target_hotspring_stat
-            stat_count = count_hotspring_stat
-        elseif is_fruitdragon then
-            target_stat = target_is_ripe_fruitdragon and "FRUITDRAGON_RIPE" 
-            stat_count = target_is_ripe_fruitdragon and count_ripe_fruitdragon 
-        elseif is_beefalo and target_is_shaved_beefalo then
-            target_stat = "BEEFALO_SHAVED"
-            stat_count = count_shaved_beefalo
-        elseif is_archive_switch then
-            target_stat = target_is_full_archive_switch and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY"
-            stat_count = target_is_full_archive_switch and count_archive_switch_full or count_archive_switch_empty
-
-        elseif entity.prefab == "heatrock" then
-            local heat_stat = GetHeatrockStat(entity)
-            if heat_stat then
-                target_stat = "HEATROCK_" .. heat_stat
-            end
-            is_specific_only = true
-
-        elseif entity.prefab == "birdcage" then
-            target_stat = "BIRDCAGE_FULL"
-            if entity.AnimState then
-                if entity.AnimState:IsCurrentAnimation("idle_empty") then target_stat = "BIRDCAGE_EMPTY"
-                elseif CheckAnims(entity.AnimState, {"idle_sick", "idle_sick2", "idle_sick3", "fall_sick"}) then target_stat = "BIRDCAGE_SICK"
-                elseif CheckAnims(entity.AnimState, {"death", "idle_death", "idle_skeleton"}) then target_stat = "BIRDCAGE_DEAD"
-                end
-            end
-            is_specific_only = true
-        elseif entity.prefab == "oasislake" then
-            target_stat = entity:HasTag("NOCLICK") and "OASISLAKE_EMPTY" or "OASISLAKE_FULL"
-            is_specific_only = true
-        elseif entity.prefab == "toadstool_cap" then
-            target_stat = "TOADSTOOL_EMPTY"
-            if entity._state and entity._state:value() > 0 then
-                target_stat = entity._dark and entity._dark:value() and "TOADSTOOL_DARK" or "TOADSTOOL_NORMAL"
-            end
-            is_specific_only = true
-        end
-
-        if target_stat then
-            if is_specific_only or count_prefab == 1 then
-                local fmt = count_prefab > 1 and qa.FORMATS.STATE_THIS or qa.FORMATS.STATE_THIS_SINGLE
-                return Announce(subfmt(fmt, {
-                    TOTAL = count_prefab,
-                    NAME = force_display_name,
-                    ADJ = GetMapping(qa, 'ADJ', target_stat) or target_stat,
-                    SHOW_ME = show_me,
-                    DISTANCE = dist_str
-                }), entity:HasTag('player'), debug_str)
-            else
-                local is_equal = (stat_count == count_prefab)
-                return Announce(subfmt(is_equal and qa.FORMATS.STATE_EQUAL or qa.FORMATS.STATE_DESCRIBE, {
-                    TOTAL = count_prefab,
-                    NUM = stat_count,
-                    NAME = force_display_name,
-                    ADJ = GetMapping(qa, 'ADJ', target_stat) or target_stat,
-                    SHOW_ME = show_me,
-                    DISTANCE = dist_str
-                }), entity:HasTag('player'), debug_str)
-            end
+        if is_specific_only or count_prefab == 1 then
+            local fmt = count_prefab > 1 and qa.FORMATS.STATE_THIS or qa.FORMATS.STATE_THIS_SINGLE
+            return Announce(subfmt(fmt, {
+                TOTAL = count_prefab, NAME = force_display_name,
+                ADJ = GetMapping(qa, 'ADJ', target_state) or target_state, SHOW_ME = show_me, DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str)
+        else
+            local is_equal = (stat_count == count_prefab)
+            return Announce(subfmt(is_equal and qa.FORMATS.STATE_EQUAL or qa.FORMATS.STATE_DESCRIBE, {
+                TOTAL = count_prefab, NUM = stat_count, NAME = force_display_name,
+                ADJ = GetMapping(qa, 'ADJ', target_state) or target_state, SHOW_ME = show_me, DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str)
         end
     end
 
+    -- 常规普通宣告 fallback 处理
     local final_count = is_blueprint_type and count_name or (final_name and count_prefab or count_name)
-
     local basic_name = ""
     pcall(function() basic_name = entity:GetBasicDisplayName() end)
     local default_name = entity.prefab and GLOBAL.STRINGS.NAMES[entity.prefab:upper()] or ""
 
-    local is_qa_item = entity.prefab and STRINGS.NOMU_QA[entity.prefab:upper()] ~= nil
-    local hardcoded_name = entity.prefab and STRINGS.NOMU_QA[entity.prefab:upper()]
-
-    local is_custom_named = false
-    local is_qa_hardcoded_diff = false
+    local is_qa_item = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] ~= nil
+    local hardcoded_name = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()]
+    local is_custom_named, is_qa_hardcoded_diff = false, false
 
     if not is_qa_item then
-        is_custom_named = basic_name ~= ""
-                         and prefab_name ~= nil
-                         and basic_name ~= default_name
-                         and basic_name ~= prefab_name
-                         and not string.find(string.upper(basic_name), "MISSING")
-                         and not is_blueprint_type
+        is_custom_named = basic_name ~= "" and prefab_name ~= nil and basic_name ~= default_name and basic_name ~= prefab_name and not string.find(string.upper(basic_name), "MISSING") and not is_blueprint_type
     else
         local orig_name = default_name ~= "" and default_name or basic_name
-        if orig_name ~= "" 
-           and not string.find(string.upper(orig_name), "MISSING") 
-           and orig_name ~= hardcoded_name then
+        if orig_name ~= "" and not string.find(string.upper(orig_name), "MISSING") and orig_name ~= hardcoded_name then
             is_qa_hardcoded_diff = true
         end
     end
@@ -2897,38 +2588,19 @@ TheInput:AddMouseButtonHandler(function(button, down)
     if is_qa_hardcoded_diff and qa.FORMATS.NAMED then
         local orig_name = default_name ~= "" and default_name or basic_name
         return Announce(subfmt(qa.FORMATS.NAMED, {
-            NUM_PREFAB = count_prefab,
-            PREFAB_NAME = orig_name, -- 游戏内的原本名称
-            NUM = count_name,
-            NAME = prefab_name, -- 此时 prefab_name 就是 qa_default 里的硬编码名称
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
+            NUM_PREFAB = count_prefab, PREFAB_NAME = orig_name, NUM = count_name, NAME = prefab_name, SHOW_ME = show_me, DISTANCE = dist_str
         }), entity:HasTag('player'), debug_str)
     elseif is_custom_named and qa.FORMATS.NAMED then
         return Announce(subfmt(qa.FORMATS.NAMED, {
-            NUM_PREFAB = count_prefab,
-            PREFAB_NAME = prefab_name or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME,
-            NUM = count_name,
-            NAME = display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
+            NUM_PREFAB = count_prefab, PREFAB_NAME = prefab_name or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME, NUM = count_name, NAME = display_name, SHOW_ME = show_me, DISTANCE = dist_str
         }), entity:HasTag('player'), debug_str)
     end
 
     if final_count <= 1 then
-        return Announce(subfmt(qa.FORMATS.SINGLE, {
-            NAME = final_name or display_name,
-            SHOW_ME = show_me,
-            DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        return Announce(subfmt(qa.FORMATS.SINGLE, { NAME = final_name or display_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
     end
 
-    return Announce(subfmt(qa.FORMATS.DEFAULT, {
-        NUM = final_count,
-        NAME = final_name or display_name,
-        SHOW_ME = show_me,
-        DISTANCE = dist_str
-    }), entity:HasTag('player'), debug_str)
+    return Announce(subfmt(qa.FORMATS.DEFAULT, { NUM = final_count, NAME = final_name or display_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
 end)
 
 
@@ -3040,48 +2712,32 @@ AddClassPostConstruct('screens/playerhud', function(PlayerHud)
     end
 end)
 
+-- 拦截各种制作栏
+local CRAFTING_HOOKS = {
+    { class = 'widgets/redux/craftingmenu_pinslot',     fn = AnnounceRecipePinSlot },
+    { class = 'widgets/redux/craftingmenu_widget',      fn = function(self) return AnnounceRecipeGrid(self.recipe_grid, self.owner) end },
+    { class = 'widgets/redux/craftingmenu_ingredients', fn = AnnounceRecipeCMIngredients },
+    { class = 'widgets/redux/craftingmenu_skinselector',fn = AnnounceSkin }
+}
 
--- 拦截各种制作栏和槽位的按键
-AddClassPostConstruct('widgets/redux/craftingmenu_pinslot', function(PinSlot)
-    local oldOnControl = PinSlot.OnControl
-    function PinSlot:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
-            return AnnounceRecipePinSlot(self)
+for _, hook in ipairs(CRAFTING_HOOKS) do
+    AddClassPostConstruct(hook.class, function(self)
+        local target = self.recipe_grid or self
+        
+        local oldOnControl = target.OnControl
+        target.OnControl = function(ctrl_self, control, down, ...)
+            if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                if hook.fn(self) then 
+                    return true 
+                end
+            end
+            -- 回调原始事件
+            if oldOnControl then
+                return oldOnControl(ctrl_self, control, down, ...)
+            end
         end
-        return oldOnControl(self, control, down, ...)
-    end
-end)
-
-AddClassPostConstruct('widgets/redux/craftingmenu_widget', function(CMWidget)
-    local grid = CMWidget.recipe_grid
-    local oldOnControl = grid.OnControl
-    function grid:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
-            return AnnounceRecipeGrid(self, CMWidget.owner)
-        end
-        return oldOnControl(self, control, down, ...)
-    end
-end)
-
-AddClassPostConstruct('widgets/redux/craftingmenu_ingredients', function(CMIngredients)
-    local oldOnControl = CMIngredients.OnControl
-    function CMIngredients:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
-            return AnnounceRecipeCMIngredients(self)
-        end
-        return oldOnControl(self, control, down, ...)
-    end
-end)
-
-AddClassPostConstruct('widgets/redux/craftingmenu_skinselector', function(CMSkinSelector)
-    local oldOnControl = CMSkinSelector.OnControl
-    function CMSkinSelector:OnControl(control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
-            return AnnounceSkin(self)
-        end
-        return oldOnControl(self, control, down, ...)
-    end
-end)
+    end)
+end
 
 for _, classname in pairs({ 'invslot', 'equipslot' }) do
     AddClassPostConstruct('widgets/' .. classname, function(SlotClass)
