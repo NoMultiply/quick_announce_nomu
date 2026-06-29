@@ -198,7 +198,10 @@ local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     local keys_to_remove = {}
     for k, _ in pairs(user_data) do
         if source_data[k] == nil then
-            table.insert(keys_to_remove, k)
+            -- 那么允许存在源模板中没有的自定义键（即玩家自己添加的角色名），跳过删除。
+            if type(source_data) == "table" and source_data.DEFAULT == nil then
+                table.insert(keys_to_remove, k)
+            end
         end
     end
     
@@ -944,95 +947,69 @@ end
 
 -- 处理皮弗娄牛 UI (BeefaloHUD)
 local function HandleBeefaloStats(HUD, status, widget)
-    if HUD.controls and HUD.controls.BeefaloStatusBar and HUD.controls.BeefaloStatusBar:IsVisible() and not HUD.controls.BeefaloStatusBar.isHidden then
-        local b_hud = HUD.controls.BeefaloStatusBar
-        local w = widget and widget.widget
-        local target_badge = nil
+    local b_hud = HUD.controls and HUD.controls.BeefaloStatusBar
 
-        while w do
-            if w == b_hud.healthBadge or w == b_hud.domesticationBadge or w == b_hud.obedienceBadge or w == b_hud.timerBadge or w == b_hud.hungerBadge then
-                target_badge = w
-                break
-            end
-            w = w.parent
+    if not (b_hud and b_hud:IsVisible() and not b_hud.isHidden) then
+        return false
+    end
+
+    local w = widget and widget.widget
+    local target_badge = nil
+
+    -- 查找目标徽章
+    while w do
+        if w == b_hud.healthBadge or w == b_hud.domesticationBadge or w == b_hud.obedienceBadge or w == b_hud.timerBadge or w == b_hud.hungerBadge then
+            target_badge = w
+            break
         end
+        w = w.parent
+    end
 
-        if target_badge then
-            local qa = GLOBAL.NOMU_QA.SCHEME.BEEFALO
-            if not qa then return false end
+    if not target_badge then return false end
 
-            local BEEFALO_CONFIG = {
-                {
-                    badge = b_hud.healthBadge,
-                    fmt = qa.FORMATS.HEALTH,
-                    fn = function(tb)
-                        local pct = tb.percent or 0
-                        local state = pct < 0.25 and 'HEALTH_LOW' or (pct > 0.8 and 'HEALTH_HIGH' or 'HEALTH_NORMAL')
-                        return { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = math.floor(pct * 100 + 0.5) }) }
-                    end
-                },
-                {
-                    badge = b_hud.hungerBadge,
-                    condition = b_hud.isHungerVisible,
-                    fmt = qa.FORMATS.HUNGER,
-                    fn = function(tb)
-                        local val = tonumber(tb.num and tb.num:GetString() or "0") or 0
-                        local state = val < 50 and 'HUNGER_STARVING' or (val < 150 and 'HUNGER_HUNGRY' or (val > 300 and 'HUNGER_FULL' or 'HUNGER_NORMAL'))
-                        return { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { VAL = val }) }
-                    end
-                },
-                {
-                    badge = b_hud.obedienceBadge,
-                    fmt = qa.FORMATS.OBEDIENCE,
-                    fn = function(tb)
-                        local pct = (tb.percent or 0) * 100
-                        local state = pct < 40 and 'OBEDIENCE_LOW' or (pct > 80 and 'OBEDIENCE_HIGH' or 'OBEDIENCE_NORMAL')
-                        return { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = math.floor(pct + 0.5) }) }
-                    end
-                },
-                {
-                    badge = b_hud.domesticationBadge,
-                    fmt = qa.FORMATS.DOMESTICATION,
-                    fn = function(tb)
-                        local pct = (tb.percent or 0) * 100
-                        local state = pct >= 100 and 'DOMESTICATION_FULL' or (pct > 90 and 'DOMESTICATION_HIGH' or (pct < 10 and 'DOMESTICATION_LOW' or 'DOMESTICATION_NORMAL'))
-                        local tendency_str = ""
-                        if b_hud.tendency then
-                            local t_name = GetMapping(qa, 'TENDENCY_NAME', b_hud.tendency) or b_hud.tendency
-                            tendency_str = " (趋势: " .. t_name .. ")"
-                        end
-                        return {
-                            MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = string.format("%.1f", pct) }),
-                            TENDENCY = tendency_str
-                        }
-                    end
-                },
-                {
-                    badge = b_hud.timerBadge,
-                    fmt = qa.FORMATS.TIMER,
-                    fn = function(tb)
-                        local timeStr = tb.num and tb.num:GetString() or "0:00"
-                        local timeLeft = 999
-                        if b_hud.bucktime and b_hud.bucktime_start then
-                            timeLeft = math.floor(b_hud.bucktime_start + b_hud.bucktime - GLOBAL.GetTime())
-                        end
-                        local state = timeLeft < 30 and 'TIMER_LOW' or 'TIMER_RIDING'
-                        return { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { TIME = timeStr }) }
-                    end
-                }
-            }
+    local qa = GLOBAL.NOMU_QA.SCHEME.BEEFALO
+    if not qa then return false end
 
-            for _, cfg in ipairs(BEEFALO_CONFIG) do
-                if target_badge == cfg.badge and (cfg.condition == nil or cfg.condition == true) then
-                    return Announce(subfmt(cfg.fmt, cfg.fn(target_badge)))
-                end
-            end
+    if target_badge == b_hud.healthBadge then
+        local pct = target_badge.percent or 0
+        local state = pct < 0.25 and 'HEALTH_LOW' or (pct > 0.8 and 'HEALTH_HIGH' or 'HEALTH_NORMAL')
+        return Announce(subfmt(qa.FORMATS.HEALTH, { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = math.floor(pct * 100 + 0.5) }) }))
+
+    elseif target_badge == b_hud.hungerBadge and b_hud.isHungerVisible then
+        local val = tonumber(target_badge.num and target_badge.num:GetString() or "0") or 0
+        local state = val < 50 and 'HUNGER_STARVING' or (val < 150 and 'HUNGER_HUNGRY' or (val > 300 and 'HUNGER_FULL' or 'HUNGER_NORMAL'))
+        return Announce(subfmt(qa.FORMATS.HUNGER, { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { VAL = val }) }))
+
+    elseif target_badge == b_hud.obedienceBadge then
+        local pct = (target_badge.percent or 0) * 100
+        local state = pct < 40 and 'OBEDIENCE_LOW' or (pct > 80 and 'OBEDIENCE_HIGH' or 'OBEDIENCE_NORMAL')
+        return Announce(subfmt(qa.FORMATS.OBEDIENCE, { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = math.floor(pct + 0.5) }) }))
+
+    elseif target_badge == b_hud.domesticationBadge then
+        local pct = (target_badge.percent or 0) * 100
+        local state = pct >= 100 and 'DOMESTICATION_FULL' or (pct > 90 and 'DOMESTICATION_HIGH' or (pct < 10 and 'DOMESTICATION_LOW' or 'DOMESTICATION_NORMAL'))
+        local tendency_str = ""
+        if b_hud.tendency then
+            local t_name = GetMapping(qa, 'TENDENCY_NAME', b_hud.tendency) or b_hud.tendency
+            tendency_str = " (趋势: " .. t_name .. ")"
         end
+        return Announce(subfmt(qa.FORMATS.DOMESTICATION, {
+            MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { PCT = string.format("%.1f", pct) }),
+            TENDENCY = tendency_str
+        }))
+
+    elseif target_badge == b_hud.timerBadge then
+        local timeStr = target_badge.num and target_badge.num:GetString() or "0:00"
+        local timeLeft = 999
+        if b_hud.bucktime and b_hud.bucktime_start then
+            timeLeft = math.floor(b_hud.bucktime_start + b_hud.bucktime - GLOBAL.GetTime())
+        end
+        local state = timeLeft < 30 and 'TIMER_LOW' or 'TIMER_RIDING'
+        return Announce(subfmt(qa.FORMATS.TIMER, { MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { TIME = timeStr }) }))
     end
 
     return false
 end
-
 -- 处理玩家状态徽章 (三维、湿度、沃比等)
 local function HandlePlayerStats(HUD, status, widget)
     -- 绽放值
@@ -1351,7 +1328,7 @@ local function HandleSpecificMechanics(HUD, status, widget)
         local is_circuit_area = false
 
         if min_x < max_x then
-            if mx < min_x + (max_x - min_x) * 0.70 then is_circuit_area = true end
+            if mx < min_x + (max_x - min_x) * 0.90 then is_circuit_area = true end
         else
             if mx < module_display:GetWorldPosition().x - 20 then is_circuit_area = true end
         end
@@ -1638,6 +1615,7 @@ local ITEM_PREFAB_ALIAS = {
     deer_antler3 = "deer_antler"
 }
 local RECHARGEABLE_PREFABS = {
+    shadow_beef_bell = TUNING.SHADOW_BEEF_BELL_REVIVE_COOLDOWN,
     pocketwatch_heal = TUNING.POCKETWATCH_HEAL_COOLDOWN,
     pocketwatch_revive = TUNING.POCKETWATCH_REVIVE_COOLDOWN,
     pocketwatch_warp = TUNING.POCKETWATCH_WARP_COOLDOWN,
@@ -2215,7 +2193,10 @@ local function GetEntitySpecialState(entity, is_target)
     local spiderden_stat = GetSpiderDenStat(entity)
     if spiderden_stat then return spiderden_stat end
 
-    if entity.prefab == "hotspring" then return "HOTSPRING_" .. (GetHotspringStat(entity) or "NORMAL") end
+    if entity.prefab == "hotspring" then
+    local stat = GetHotspringStat(entity)
+    return stat and ("HOTSPRING_" .. stat) or nil
+end
     
     if entity.prefab == "fruitdragon" then
         local ripe = (entity.AnimState and entity.AnimState:GetBuild() == "fruit_dragon_ripe_build") or string.find(entity:GetDisplayName() or "", "Ripe")
@@ -2474,7 +2455,9 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     -- 物品名称处理
-    local prefab_name = entity.prefab and (GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] or GLOBAL.STRINGS.NAMES[entity.prefab:upper()])
+    -- 优先获取官方的重写名称，如果没有重写，再使用真实的 prefab 代码
+    local actual_prefab = entity.prefabnameoverride or entity.nameoverride or entity.prefab
+    local prefab_name = actual_prefab and (GLOBAL.STRINGS.NOMU_QA[actual_prefab:upper()] or GLOBAL.STRINGS.NAMES[actual_prefab:upper()])
     prefab_name = ApplyCustomName(entity.prefab, prefab_name)
 
     local display_name = ""
