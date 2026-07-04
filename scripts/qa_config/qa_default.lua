@@ -68,7 +68,7 @@ GLOBAL.STRINGS.NOMU_QA = {
     TITLE_TEXT_SURE_TO_DELETE = '确认删除该项？',
     TITLE_TEXT_SCHEMES = '宣告方案',
     TITLE_TEXT_CHOOSE_TEMPLATE = '选择模板方案',
-    DEFAULT_SCHEME_RESET_HINT = '默认方案会自动重置，建议新建方案进行修改',
+    DEFAULT_SCHEME_RESET_HINT = '自带方案会自动重置，建议新建方案进行修改',
     TITLE_TEXT_DEFAULT_SCHEME = '默认方案',
     TITLE_TEXT_EDITING = '正在编辑：',
     --TITLE_TEXT_SURE_TO_RESET_SCHEME = '确认重置方案：{NAME}？',
@@ -765,10 +765,11 @@ MEDAL_BUFF = {
                 },
                 RECHARGE = {
                     CHARGING = '，还需充能 {TIME}',
-                    FULL = '，已充能完毕'
+                    FULL = '，已充能完毕',
+                    PERCENT = '，还需 {PERCENT}% 冷却时间'
                 },
                 PERCENT_TYPE = { DURABILITY = '耐久度', FRESHNESS = '新鲜度' },
-                TIME = { MINUTES = '分', SECONDS = '秒' },
+                TIME = { MINUTES = '分钟', SECONDS = '秒' },
                 WORDS = {
                     THIS_ONE = '这个',
                     ITEM_NAME = ' (有 {NUM}个 名为 {NAME})',

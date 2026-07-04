@@ -1615,6 +1615,8 @@ local ITEM_PREFAB_ALIAS = {
     deer_antler3 = "deer_antler"
 }
 local RECHARGEABLE_PREFABS = {
+    wurt_swampitem_shadow = TUNING.WURT_TERRAFORMING_RECHARGE_TIME,
+    wurt_swampitem_lunar = TUNING.WURT_TERRAFORMING_RECHARGE_TIME,
     shadow_beef_bell = TUNING.SHADOW_BEEF_BELL_REVIVE_COOLDOWN,
     pocketwatch_heal = TUNING.POCKETWATCH_HEAL_COOLDOWN,
     pocketwatch_revive = TUNING.POCKETWATCH_REVIVE_COOLDOWN,
@@ -1836,15 +1838,32 @@ local function AnnounceItem(slot, classname)
         end
     end
 
-    if RECHARGEABLE_PREFABS[item.prefab] and item.replica.inventoryitem.classified then
-        local seconds = (180 - item.replica.inventoryitem.classified.recharge:value()) / 180 * RECHARGEABLE_PREFABS[item.prefab]
-        if seconds == 0 then
-            fmts.POST_STATE = GetMapping(qa, 'RECHARGE', 'FULL')
+    -- 获取物品的充能网络变量
+    local recharge_netvar = item.replica.inventoryitem and item.replica.inventoryitem.classified and item.replica.inventoryitem.classified.recharge
+    local recharge_val = recharge_netvar and recharge_netvar:value()
+    local is_rechargeable = item:HasTag("rechargeable") or (recharge_val and recharge_val < 180)
+
+    if is_rechargeable and recharge_val then
+        if RECHARGEABLE_PREFABS[item.prefab] then
+            local seconds = (180 - recharge_val) / 180 * RECHARGEABLE_PREFABS[item.prefab]
+            
+            if seconds <= 0 then
+                fmts.POST_STATE = GetMapping(qa, 'RECHARGE', 'FULL')
+            else
+                fmts.POST_STATE = subfmt(GetMapping(qa, 'RECHARGE', 'CHARGING'), {
+                    TIME = (math.modf(seconds / 60) > 0 and math.modf(seconds / 60) .. GetMapping(qa, 'TIME', 'MINUTES') or '')
+                        .. math.modf(math.fmod(seconds, 60)) .. GetMapping(qa, 'TIME', 'SECONDS')
+                })
+            end
         else
-            fmts.POST_STATE = subfmt(GetMapping(qa, 'RECHARGE', 'CHARGING'), {
-                TIME = (math.modf(seconds / 60) > 0 and math.modf(seconds / 60) .. GetMapping(qa, 'TIME', 'MINUTES') or '')
-                    .. math.modf(math.fmod(seconds, 60)) .. GetMapping(qa, 'TIME', 'SECONDS')
-            })
+            if recharge_val == 180 then
+                fmts.POST_STATE = GetMapping(qa, 'RECHARGE', 'FULL')
+            else
+                local left_percent = math.floor((180 - recharge_val) / 180 * 100)
+                fmts.POST_STATE = subfmt(GetMapping(qa, 'RECHARGE', 'PERCENT'), { 
+                    PERCENT = left_percent 
+                })
+            end
         end
     end
 
