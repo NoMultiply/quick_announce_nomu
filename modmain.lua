@@ -3198,6 +3198,7 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
     local old_MakeScrollList = self.MakeScrollList
     function self:MakeScrollList(...)
         local res = old_MakeScrollList(self, ...)
+        if GLOBAL.TheWorld == nil then return res end
         if self.scroll_list and self.scroll_list.widgets_to_update then
             for _, widget in ipairs(self.scroll_list.widgets_to_update) do
                 local targets = {}
@@ -3252,6 +3253,7 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
 end)
 
 AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
+    if GLOBAL.TheWorld == nil then return end
     if self.options_scroll_list and self.options_scroll_list.widgets_to_update then
         for _, widget in ipairs(self.options_scroll_list.widgets_to_update) do
             if widget.opt and widget.opt.label then
