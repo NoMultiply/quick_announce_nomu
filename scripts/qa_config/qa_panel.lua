@@ -163,6 +163,9 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         elseif mode == "input_string" then
             self.EM_bg:SetPosition(400, 0, 0) 
             self.EM_bg:MoveToFront()
+        elseif mode == "lobby_chat" then
+            self.EM_bg:SetPosition(390, 310, 0) 
+            self.EM_bg:MoveToFront()
         else
             self.EM_bg:SetPosition(0, -150, 0)
         end
@@ -202,6 +205,11 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 local old = self.config_input.textbox:GetString()
                 self.config_input.textbox:SetString(old .. str)
                 self.config_input.textbox:SetEditing(true)
+            elseif mode == "lobby_chat" and self.chatbox and self.chatbox.textbox then
+                -- 将文字插入大厅聊天框
+                local old = self.chatbox.textbox:GetString()
+                self.chatbox.textbox:SetString(old .. str)
+                self.chatbox.textbox:SetEditing(true)
             elseif mode == "writeable" then
                 local old = self:GetText()
                 if old then
@@ -332,7 +340,9 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         local x = pos and pos.x - 20 or -520
         menu:SetPosition(x, 0, 0)
     elseif mode == "input_string" then
-        menu:SetPosition(0, -40, 0) -- 放在应用和取消的中间
+        menu:SetPosition(0, -40, 0) 
+    elseif mode == "lobby_chat" then
+        menu:SetPosition(340, 75, 0)
     else
         menu:SetPosition(0, 60, 0)
         if self.SM_menu then menu:Hide() else menu:Show() end
@@ -344,6 +354,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     menu:SetOnClick(function()
         if mode == "chat" then self.chat_edit:SetEditing(true) end
         if mode == "input_string" then self.config_input.textbox:SetEditing(true) end
+        if mode == "lobby_chat" then self.chatbox.textbox:SetEditing(true) end
         
         if self.EM_bg then
             if self.EM_bg.shown then self.EM_bg:Hide() else self.EM_bg:Show() end
@@ -369,16 +380,19 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                             self.chat_edit:SetEditing(true) 
                         elseif mode == "input_string" and self.config_input then
                             self.config_input.textbox:SetEditing(true)
+                        elseif mode == "lobby_chat" and self.chatbox then
+                            self.chatbox.textbox:SetEditing(true)
                         end
                         return true 
                     end
                 end
             elseif button == GLOBAL.MOUSEBUTTON_RIGHT then
-                if (mode == "chat" or mode == "input_string") and self.EM_menu and self.EM_menu.focus then
+                if (mode == "chat" or mode == "input_string" or mode == "lobby_chat") and self.EM_menu and self.EM_menu.focus then
                     if self.EM_bg and self.EM_bg.shown then
                         self.EM_bg:Hide()
                         if mode == "chat" and self.chat_edit then self.chat_edit:SetEditing(true) end
                         if mode == "input_string" and self.config_input then self.config_input.textbox:SetEditing(true) end
+                        if mode == "lobby_chat" and self.chatbox then self.chatbox.textbox:SetEditing(true) end
                     else
                         if not self.EM_bg then build_bg() else self.EM_bg:Show() end
                     end
@@ -392,6 +406,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                             self.chat_edit:SetEditing(true) 
                         elseif mode == "input_string" and self.config_input then
                             self.config_input.textbox:SetEditing(true)
+                        elseif mode == "lobby_chat" and self.chatbox then
+                            self.chatbox.textbox:SetEditing(true)
                         end
                         return true 
                     end
@@ -1301,6 +1317,55 @@ AddClassPostConstruct("screens/chatinputscreen", function(self)
             if not down then
                 self.EM_bg:Hide()
                 if self.chat_edit then self.chat_edit:SetEditing(true) end
+            end
+            return true 
+        end
+        
+        if old_OnControl then 
+            return old_OnControl(self, control, down) 
+        end
+        return false
+    end
+end)
+
+
+AddClassPostConstruct("widgets/redux/chatsidebar", function(self)
+    -- 实例化大厅模式的表情菜单
+    CreateEmojiAndPhraseMenu(self, "lobby_chat")
+
+    local old_Kill = self.Kill
+    function self:Kill(...)
+        for _, v in ipairs(self.EM_all_widgets or {}) do
+            if v and v.Kill then v:Kill() end
+        end
+        if self.EM_input then
+            self.EM_input:Remove()
+            self.EM_input = nil
+        end
+        if old_Kill then return old_Kill(self, ...) end
+    end
+
+    if self.chatbox and self.chatbox.textbox then
+        local old_OnStopForceEdit = self.chatbox.textbox.OnStopForceEdit
+        self.chatbox.textbox.OnStopForceEdit = function(...)
+            if self.EM_bg and self.EM_bg.shown then return end
+            if self.EM_menu and self.EM_menu.focus then return end
+            if old_OnStopForceEdit then return old_OnStopForceEdit(...) end
+        end
+    end
+
+    local old_OnControl = self.OnControl
+    function self:OnControl(control, down)
+        if self.EM_bg and self.EM_bg.shown and control == GLOBAL.CONTROL_CANCEL then
+            if self.EM_menu and self.EM_menu.focus then
+                return true
+            end
+            
+            if not down then
+                self.EM_bg:Hide()
+                if self.chatbox and self.chatbox.textbox then 
+                    self.chatbox.textbox:SetEditing(true) 
+                end
             end
             return true 
         end

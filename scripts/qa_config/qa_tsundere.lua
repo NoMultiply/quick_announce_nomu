@@ -192,9 +192,13 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             DEFAULT = '{NAME}在我这边。别误会，我没特意找他！',
             ADMIN = '啧，{NAME}是管理员。别以为管理员就能命令我！',
             NAME = '{NAME}是{CHARACTER}。',
+            CHOOSING = '真是的，{NAME} 选个角色也要磨蹭这么久！',
+            CONNECTING = '{NAME} 这家伙的破网络还在连接中！快点啊笨蛋！',
+            ME_RIDING = '看什么看！我正在骑着 {MOUNT} 兜风，羡慕吧笨蛋！',
+            ME_CARRYING = '喂！我正在搬运这重死人的 {ITEM}！走得慢点怎么了，快来帮忙啊笨蛋！',
             AGE = '{NAME}居然活了{AGE}这么久。',
             AGE_SHORT = '{NAME}存活{AGE}。',
-            PERF = '{NAME} 的{PERF}。{PING}',
+            PERF = '{NAME} 的网络 {STATUS}哼。{PING}',
             GREET = '哟，{NAME}。才、才不是在等你呢！',
             PING = '延迟：{PING}',
             BADGE = '{NAME}戴着{BADGE}的头像。眼光真差。',
@@ -217,13 +221,24 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
             PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！'
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '还算绿的',
+                    OK = '凑合黄的',
+                    BAD = '卡死红的',
+                    UNKNOWN = '鬼知道啊'
+                }
+            }
+        }
     },
     SERVER = {
         FORMATS = {
             NAME = '这破房间叫：{NAME}。',
             AGE = '服务器运行了：{AGE}天。居然还没塌。',
-            NUM_PLAYER = '现在有：{NUM}个人。人多眼杂的。'
+            NUM_PLAYER = '现在有：{NUM}个人。人多眼杂的。',
+            WORLD_SETTING = '这破房间的【{SETTING}】世界设置被调成了【{VALUE}】，别搞砸了！',
+            MOD_SETTING = '模组【{MOD}】的【{SETTING}】竟然变成了【{VALUE}】，真是不让人省心！'
         },
         MAPPINGS = {}
     },
@@ -233,6 +248,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             CAN_ACTIVATE = '{NAME}可以去点『{SKILL}』了，别磨蹭！',
             NOT_ACTIVATED = '{NAME}还没点『{SKILL}』，真是个笨蛋。',
             XP = '{NAME}还有{XP}点洞察没用。',
+            DESC = '听好了，{NAME} 的『{SKILL}』技能可以<{DESC}>，别忘了啊笨蛋！',
         },
         MAPPINGS = {}
     },
@@ -288,7 +304,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             DEFAULT = '听好了，这里总共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
             NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}{SHOW_ME}{DISTANCE}。',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
-
             FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
 
             STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
@@ -377,6 +392,12 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     L1_BEDAZZLED = "被无聊装饰过的一级",
                     L2_BEDAZZLED = "被无聊装饰过的二级",
                     L3_BEDAZZLED = "被无聊装饰过的三级",
+
+                    HEATROCK_COLD = '冻成冰块的没用状态',
+                    HEATROCK_COOL = '凉飕飕的有点冷',
+                    HEATROCK_NORMAL = '普普通通的常温',
+                    HEATROCK_WARM = '算是有点热度的',
+                    HEATROCK_HOT = '烫得要死滚烫的',
                 }
             }
         }
@@ -488,7 +509,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             INV_SLOT = '听好了，{PRONOUN}有{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。别打它的主意！',
             EQUIP_SLOT = '{PRONOUN}穿戴了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。还挺好看的对吧！',
             EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，什么都没穿！'
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，什么都没穿！',
+            EQUIP_SLOT_HEAVY = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
+            EQUIP_SLOT_HEAVY_POS = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
         },
         MAPPINGS = {
             DEFAULT = {

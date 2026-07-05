@@ -441,9 +441,11 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             DEFAULT = '{NAME} 在我这。',
             ADMIN = '{NAME} 是管理员耶！',
             NAME = '{NAME} 正在扮演 {CHARACTER}。',
+            CHOOSING = '{NAME} 正在选择角色。',
+            CONNECTING = '{NAME} 正在连接中。',
             AGE = '{NAME} 生存了 {AGE}。',
             AGE_SHORT = '{NAME} {AGE}。',
-            PERF = '{NAME} 的{PERF}。{PING}',
+            PERF = '{NAME} 的网络连接 {STATUS}。{PING}',
             GREET = '你好呀，{NAME}。',
             PING = 'Ping: {PING}',
             BADGE = '{NAME} 的头像是 {BADGE}。',
@@ -461,20 +463,34 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             ME_GHOST = "{NAME} 救救我，我需要一颗告密的心！",
             THEY_GHOST = "{NAME} 撑住！我这就来救你！",
             I_AM_HERE = "{NAME} 在这里！",
+            I_AM_GHOST = "救命啊，我变成鬼魂了！谁来救救我！",
             ME_FISHING = '嘘——{NAME} 正在施展钓鱼魔法，小鱼小鱼快快咬钩吧！',
             THEY_FISHING = '哇喔！{NAME} 正在全神贯注地钓鱼呢，祝你钓到超大号胖鱼！',
             ME_RIDING = '{NAME} 正在骑着 {MOUNT} 兜风！',
             ME_CARRYING = '{NAME} 正在搬运着沉重的 {ITEM}，走得好慢啊！',
             PORTAL_ON = '我已经在摸 {NAME} 了！',
-            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。'
+            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。',
+            ME_FROZEN = '救命啊！{NAME} 被冻成冰雕了！',
+            THEY_FROZEN = '大家快来烤火帮忙！{NAME} 被冻住了！'
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '绿油油',
+                    OK = '金灿灿',
+                    BAD = '红彤彤',
+                    UNKNOWN = '未知'
+                }
+            }
+        }
     },
     SERVER = {
         FORMATS = {
             NAME = '房间名：{NAME}',
             AGE = '服务器已运行：{AGE} 天',
-            NUM_PLAYER = '服务器当前人数：{NUM}'
+            NUM_PLAYER = '服务器当前人数：{NUM}',
+            WORLD_SETTING = '该房间的【{SETTING}】世界设置为【{VALUE}】。',
+            MOD_SETTING = '该房间模组【{MOD}】的【{SETTING}】设置为【{VALUE}】。'
         },
         MAPPINGS = {}
     },
@@ -484,6 +500,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             CAN_ACTIVATE = '{NAME} 可点亮技能：{SKILL}。',
             NOT_ACTIVATED = '{NAME} 还没有点亮技能：{SKILL}。',
             XP = '{NAME} 还有 {XP} 点洞察。',
+            DESC = '{NAME} 的 {SKILL} 技能可以<{DESC}>',
         },
         MAPPINGS = {}
     },
