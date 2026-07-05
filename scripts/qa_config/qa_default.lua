@@ -463,12 +463,15 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             ME_GHOST = "{NAME} 救救我，我需要一颗告密的心！",
             THEY_GHOST = "{NAME} 撑住！我这就来救你！",
             I_AM_HERE = "{NAME} 在这里！",
+            I_AM_GHOST = "救命啊，我变成鬼魂了！谁来救救我！",
             ME_FISHING = '嘘——{NAME} 正在施展钓鱼魔法，小鱼小鱼快快咬钩吧！',
             THEY_FISHING = '哇喔！{NAME} 正在全神贯注地钓鱼呢，祝你钓到超大号胖鱼！',
             ME_RIDING = '{NAME} 正在骑着 {MOUNT} 兜风！',
             ME_CARRYING = '{NAME} 正在搬运着沉重的 {ITEM}，走得好慢啊！',
             PORTAL_ON = '我已经在摸 {NAME} 了！',
-            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。'
+            PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。',
+            ME_FROZEN = '救命啊！{NAME} 被冻成冰雕了！',
+            THEY_FROZEN = '大家快来烤火帮忙！{NAME} 被冻住了！'
         },
         MAPPINGS = {
             DEFAULT = {

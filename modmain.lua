@@ -2266,11 +2266,43 @@ local function IsPlayerFishing(player)
     return false
 end
 
+local function IsPlayerFrozenOrThawing(entity)
+    if not entity or not entity:IsValid() then return false end
+
+    if entity.sg ~= nil then
+        if entity.sg:HasStateTag("frozen") then
+            return true
+        end
+    end
+
+    if entity.AnimState ~= nil then
+        return entity.AnimState:IsCurrentAnimation("frozen") 
+            or entity.AnimState:IsCurrentAnimation("frozen_loop_pst") 
+            or entity.AnimState:IsCurrentAnimation("frozen_hit")     
+            or entity.AnimState:IsCurrentAnimation("frozen_pst")      
+            or entity.AnimState:IsCurrentAnimation("frozen_loop")    
+    end
+
+    return false
+end
+
 local function HandlePlayerClick(entity)
     local is_fishing = IsPlayerFishing(entity)
+    local is_frozen = IsPlayerFrozenOrThawing(entity)
+    local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
+    local is_ent_ghost = entity:HasTag("playerghost")
     local qa_formats = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS
     
     if entity == GLOBAL.ThePlayer then
+
+    if is_me_ghost and qa_formats.I_AM_GHOST then
+            return Announce(subfmt(qa_formats.I_AM_GHOST, { NAME = entity:GetDisplayName() }))
+        end
+
+    if is_frozen and qa_formats.ME_FROZEN then
+            return Announce(subfmt(qa_formats.ME_FROZEN, { NAME = entity:GetDisplayName() }))
+        end
+
         if is_fishing and qa_formats.ME_FISHING then
             return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }))
         end
@@ -2280,19 +2312,44 @@ local function HandlePlayerClick(entity)
             local mount = rider:GetMount()
             local mount_name = "坐骑"
             if mount then
-                local prefab = mount.prefab or ""
+                local actual_prefab = mount.prefabnameoverride or mount.nameoverride or mount.prefab
+                local prefab_name = actual_prefab and (GLOBAL.STRINGS.NOMU_QA[actual_prefab:upper()] or GLOBAL.STRINGS.NAMES[actual_prefab:upper()])
+                prefab_name = ApplyCustomName(mount.prefab, prefab_name)
+
                 local basic_name = ""
                 pcall(function() basic_name = mount:GetBasicDisplayName() end)
-                basic_name = (basic_name == "" and mount.name) or basic_name or ""
-                local default_name = prefab ~= "" and GLOBAL.STRINGS.NAMES[string.upper(prefab)] or ""
-                
-                if basic_name ~= "" and basic_name ~= default_name and not string.find(string.upper(basic_name), "MISSING") then
-                    mount_name = basic_name
-                else
-                    mount_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[string.upper(prefab)]) or (default_name ~= "" and default_name or basic_name) or "坐骑"
+                local default_name = mount.prefab and GLOBAL.STRINGS.NAMES[mount.prefab:upper()] or ""
+
+                local display_name = ""
+                pcall(function()
+                    local raw_name = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and mount:GetDisplayName() or mount:GetBasicDisplayName()
+                    local lines = string.split(raw_name, '\n')
+                    display_name = lines[1] or raw_name
+                    if prefab_name and prefab_name ~= "" then
+                        for _, line in ipairs(lines) do
+                            if string.find(line, prefab_name, 1, true) then
+                                display_name = line
+                                break
+                            end
+                        end
+                    end
+                end)
+
+                display_name = display_name == "" and (prefab_name or "坐骑") or display_name
+
+                local is_custom_named = false
+                if basic_name ~= "" and prefab_name ~= nil and basic_name ~= default_name and basic_name ~= prefab_name and not string.find(string.upper(basic_name), "MISSING") then
+                    is_custom_named = true
                 end
-                mount_name = ApplyCustomName(prefab, mount_name)
+
+                if is_custom_named then
+                    mount_name = display_name
+                else
+                    local final_name = GetCleanEntityName(mount, prefab_name)
+                    mount_name = final_name or display_name
+                end
             end
+            
             if qa_formats.ME_RIDING then
                 return Announce(subfmt(qa_formats.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
             end
@@ -2327,12 +2384,14 @@ local function HandlePlayerClick(entity)
         }))
     end
 
-    local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
-    local is_ent_ghost = entity:HasTag("playerghost")
     if is_me_ghost or is_ent_ghost then
         local player_fmt = (is_me_ghost and is_ent_ghost) and qa_formats.BOTH_GHOST
                         or (is_me_ghost and qa_formats.ME_GHOST or qa_formats.THEY_GHOST)
         return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
+    end
+
+    if is_frozen and qa_formats.THEY_FROZEN then
+        return Announce(subfmt(qa_formats.THEY_FROZEN, { NAME = entity:GetDisplayName() }))
     end
 
     if is_fishing and qa_formats.THEY_FISHING then
