@@ -210,9 +210,13 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             NAME = '{NAME} 是 {CHARACTER} 喵。',
             AGE = '{NAME} 在这里生存了 {AGE} 喵。',
             AGE_SHORT = '{NAME} {AGE} 喵。',
-            PERF = '{NAME} 的{PERF}喵～{PING}',
+            PERF = '{NAME} 的网络 {STATUS}～{PING}',
             GREET = '主人的脚步声最好认了喵󰀍～你好吖，{NAME}。',
             PING = '喵呜通道延迟：{PING}',
+            CHOOSING = '{NAME} 正在挑选漂亮的绒毛角色喵󰀍～',
+            CONNECTING = '{NAME} 的猫爪信号正在连接中喵󰀍～',
+            ME_RIDING = '喵󰀍～人家正在骑着 {MOUNT} 兜风喵！',
+            ME_CARRYING = '呼哧呼哧～人家正在搬运着沉重的 {ITEM}，走得像小乌龟一样慢喵！',
             BADGE = '{NAME} 戴着 {BADGE} 的头牌喵。',
             BACKGROUND = '{NAME} 的背景是 {BACKGROUND}。',
             BODY = '{NAME} 的绒毛穿着 {BODY}。',
@@ -239,9 +243,20 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
         FORMATS = {
             NAME = '我们的猫窝叫：{NAME} 喵～',
             AGE = '猫窝已经运转：{AGE} 次打盹周期喵。',
-            NUM_PLAYER = '现在有：{NUM} 只猫猫喵。'
+            NUM_PLAYER = '现在有：{NUM} 只猫猫喵。',
+            WORLD_SETTING = '猫窝的【{SETTING}】世界规则变成了【{VALUE}】喵󰀍～',
+            MOD_SETTING = '猫窝模组【{MOD}】的【{SETTING}】被设定成了【{VALUE}】喵󰀍～'
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '绿油油喵',
+                    OK = '金灿灿喵',
+                    BAD = '红彤彤喵',
+                    UNKNOWN = '未知喵'
+                }
+            }
+        }
     },
     SKILL_TREE = {
         FORMATS = {
@@ -249,6 +264,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             CAN_ACTIVATE = '{NAME} 快用爪爪戳亮『{SKILL}』喵呜󰀍～',
             NOT_ACTIVATED = '{NAME} 的绒毛蓬松度不足，还没解锁『{SKILL}』喵󰀍～',
             XP = '{NAME} 的洞察还有 {XP} 点喵󰀍～',
+            DESC = '{NAME} 的『{SKILL}』喵力可以<{DESC}> 喵󰀍～',
         },
         MAPPINGS = {}
     },
@@ -398,6 +414,12 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     L1_BEDAZZLED = "被亮晶晶装饰过的一级巢喵",
                     L2_BEDAZZLED = "被亮晶晶装饰过的二级巢喵",
                     L3_BEDAZZLED = "被亮晶晶装饰过的三级巢喵",
+
+                    HEATROCK_COLD = '冻得肉垫发抖的冰冷状态喵',
+                    HEATROCK_COOL = '凉丝丝的有点冷喵',
+                    HEATROCK_NORMAL = '不冷不热的常温状态喵',
+                    HEATROCK_WARM = '像晒过太阳一样热乎乎的喵',
+                    HEATROCK_HOT = '烫得肉垫冒烟的滚烫状态喵',
                 }
             }
         }
@@ -416,6 +438,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             WILL_MAKE = '材料像毛线球一样到位啦～人家随时可以开爪制作 {ITEM} 喵！',
             WE_NEED = '人家的耳朵接收到需求～我们需要制造个 {ITEM} 喵！',
             CAN_SOMEONE = '有人能帮人家做一个 {ITEM} 喵？人家需要 {PROTOTYPE} 才能造出它喵！',
+            EQUIP_SLOT_HEAVY = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            EQUIP_SLOT_HEAVY_POS = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
         },
         MAPPINGS = {
             DEFAULT = {

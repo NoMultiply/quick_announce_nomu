@@ -197,9 +197,13 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             DEFAULT = '{NAME} 正在人家身边陪着人家呢～',
             ADMIN = '哇哦，{NAME} 是超级厉害的管理员吖！',
             NAME = '{NAME} 选的是 {CHARACTER} 吖。',
+            CHOOSING = '{NAME} 正在纠结选哪个可爱的小角色呢吖～',
+            CONNECTING = '{NAME} 正在努力连接中哦，等一等吖～',
+            ME_RIDING = '哇哦！人家正在骑着 {MOUNT} 开心地兜风吖！',
+            ME_CARRYING = '哎呀呀～人家正在搬运好沉好沉的 {ITEM}，走得好慢好慢吖！',
             AGE = '{NAME} 在这里度过了 {AGE} 的时光呢。',
             AGE_SHORT = '{NAME} 活了 {AGE} 啦。',
-            PERF = '{NAME} 的{PERF}吖。{PING}',
+            PERF = '{NAME} 的网络 {STATUS}吖,{PING}',
             GREET = '好开心见到你吖，{NAME}～',
             PING = '小信号延迟：{PING}',
             BADGE = '{NAME} 带着 {BADGE} 的可爱头牌吖。',
@@ -222,13 +226,24 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             PORTAL_ON = '人家的小手已经摸到 {NAME} 啦！',
             PORTAL_OFF = '{NAME} 就在人家这里哦，大家快来准备传送吖！'
         },
-        MAPPINGS = {}
+     MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '绿油油的',
+                    OK = '金灿灿的',
+                    BAD = '红彤彤的',
+                    UNKNOWN = '不知道呀'
+                }
+            }
+        }
     },
     SERVER = {
         FORMATS = {
             NAME = '我们温馨的家叫做：{NAME} 吖～',
             AGE = '这个世界已经度过了：{AGE} 个日夜啦。',
-            NUM_PLAYER = '现在家里有：{NUM} 个小伙伴在玩耍呢。'
+            NUM_PLAYER = '现在家里有：{NUM} 个小伙伴在玩耍呢。',
+            WORLD_SETTING = '我们温馨小家的【{SETTING}】世界设置变成了【{VALUE}】吖～',
+            MOD_SETTING = '这个家里的【{MOD}】模组把【{SETTING}】变成了【{VALUE}】吖～'
         },
         MAPPINGS = {}
     },
@@ -238,6 +253,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             CAN_ACTIVATE = '{NAME} 可以去学习『{SKILL}』了吖，快去快去～',
             NOT_ACTIVATED = '{NAME} 还没有学会『{SKILL}』呢，要继续加油哦！',
             XP = '{NAME} 的小脑袋里还有 {XP} 点洞察吖～',
+            DESC = '{NAME} 学会『{SKILL}』技能可以<{DESC}> 吖～',
         },
         MAPPINGS = {}
     },
@@ -387,6 +403,12 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     L1_BEDAZZLED = "被装点得漂亮亮的一级巢",
                     L2_BEDAZZLED = "被装点得漂亮亮的二级巢",
                     L3_BEDAZZLED = "被装点得漂亮三级巢",
+
+                    HEATROCK_COLD = '冻得像小冰块一样冷的',
+                    HEATROCK_COOL = '摸起来凉丝丝有点冷的',
+                    HEATROCK_NORMAL = '温度刚刚好的常温状态',
+                    HEATROCK_WARM = '暖呼呼的有点热的',
+                    HEATROCK_HOT = '烫呼呼超级滚烫的',
                 }
             }
         }
@@ -498,7 +520,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             INV_SLOT = '{PRONOUN}的小包包里偷偷藏了 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
             EQUIP_SLOT = '{PRONOUN}穿戴了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
             EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有穿戴任何东西呢吖～'
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有穿戴任何东西呢吖～',
+            EQUIP_SLOT_HEAVY = '哎呀呀～{PRONOUN}正在吃力地搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+            EQUIP_SLOT_HEAVY_POS = '哎呀呀～{PRONOUN}正在吃力地搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+                    
         },
         MAPPINGS = {
             DEFAULT = {

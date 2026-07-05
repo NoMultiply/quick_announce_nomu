@@ -441,9 +441,11 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             DEFAULT = '{NAME} 在我这。',
             ADMIN = '{NAME} 是管理员耶！',
             NAME = '{NAME} 正在扮演 {CHARACTER}。',
+            CHOOSING = '{NAME} 正在选择角色。',
+            CONNECTING = '{NAME} 正在连接中。',
             AGE = '{NAME} 生存了 {AGE}。',
             AGE_SHORT = '{NAME} {AGE}。',
-            PERF = '{NAME} 的{PERF}。{PING}',
+            PERF = '{NAME} 的网络连接 {STATUS}。{PING}',
             GREET = '你好呀，{NAME}。',
             PING = 'Ping: {PING}',
             BADGE = '{NAME} 的头像是 {BADGE}。',
@@ -468,13 +470,24 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             PORTAL_ON = '我已经在摸 {NAME} 了！',
             PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。'
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '绿油油',
+                    OK = '金灿灿',
+                    BAD = '红彤彤',
+                    UNKNOWN = '未知'
+                }
+            }
+        }
     },
     SERVER = {
         FORMATS = {
             NAME = '房间名：{NAME}',
             AGE = '服务器已运行：{AGE} 天',
-            NUM_PLAYER = '服务器当前人数：{NUM}'
+            NUM_PLAYER = '服务器当前人数：{NUM}',
+            WORLD_SETTING = '该房间的【{SETTING}】世界设置为【{VALUE}】。',
+            MOD_SETTING = '该房间模组【{MOD}】的【{SETTING}】设置为【{VALUE}】。'
         },
         MAPPINGS = {}
     },
@@ -484,6 +497,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             CAN_ACTIVATE = '{NAME} 可点亮技能：{SKILL}。',
             NOT_ACTIVATED = '{NAME} 还没有点亮技能：{SKILL}。',
             XP = '{NAME} 还有 {XP} 点洞察。',
+            DESC = '{NAME} 的 {SKILL} 技能可以<{DESC}>',
         },
         MAPPINGS = {}
     },

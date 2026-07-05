@@ -2849,19 +2849,48 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                     if w.adminBadge and w.adminBadge.shown and w.adminBadge.focus then
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ADMIN, { NAME = w.displayName }))
                     end
-                    if w.perf and w.perf.shown and w.perf.focus and w.perf.hovertext then 
-                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PERF, { 
+
+                    if w.perf and w.perf.shown and w.perf.focus then 
+                        local client = GLOBAL.TheNet:GetClientTableForUser(w.userid)
+                        local status_key = 'UNKNOWN'
+                        if client then
+                            local score = client.performance ~= nil and client.performance or client.netscore
+                            if score ~= nil then
+                                if score <= 0 then status_key = 'GOOD'
+                                elseif score == 1 then status_key = 'OK'
+                                else status_key = 'BAD' end
+                            end
+                        end
+                        local qa = GLOBAL.NOMU_QA.SCHEME.PLAYER
+                        local status_str = qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key] or '未知'
+                        
+                        return Announce(subfmt(qa.FORMATS.PERF, { 
                             NAME = w.displayName, 
-                            PERF = w.perf.hovertext:GetString(), 
-                            PING = (w.userid == ThePlayer.userid and subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, { PING = TheNet:GetAveragePing() }) or '') 
+                            STATUS = status_str, 
+                            PING = (w.userid == GLOBAL.ThePlayer.userid and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '') 
                         })) 
                     end
-                    if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge and w.characterBadge.prefabname then
-                        return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
-                            NAME = w.displayName,
-                            CHARACTER = STRINGS.NAMES[w.characterBadge.prefabname:upper()] or w.characterBadge.prefabname
-                        }))
+
+                    if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
+                        local prefab = w.characterBadge.prefabname
+
+                        if not prefab or prefab == "" then
+
+                            local is_connecting = type(w.characterBadge.IsLoading) == "function" and w.characterBadge:IsLoading()
+
+                            if is_connecting then
+                                return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING, { NAME = w.displayName }))
+                            else
+                                return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING, { NAME = w.displayName }))
+                            end
+                        else
+                            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
+                                NAME = w.displayName,
+                                CHARACTER = GLOBAL.STRINGS.NAMES[prefab:upper()] or prefab
+                            }))
+                        end
                     end
+                   
                     if w.age and w.age.shown and w.age.focus and #w.age:GetString() > 0 then
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.AGE, {
                             NAME = w.displayName,
@@ -2874,6 +2903,117 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
         return oldOnControl(self, control, down, ...)
     end
 end)
+
+
+AddClassPostConstruct("widgets/redux/playerlist", function(self)
+    local old_BuildPlayerList = self.BuildPlayerList
+    function self:BuildPlayerList(players, nextWidgets)
+        if old_BuildPlayerList then
+            old_BuildPlayerList(self, players, nextWidgets)
+        end
+
+        if self.players_number and not self.players_number._qa_hooked then
+            self.players_number._qa_hooked = true
+            self.players_number:SetClickable(true)
+            self.players_number:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+            
+            local old_pn_OnControl = self.players_number.OnControl
+            self.players_number.OnControl = function(w, control, down, ...)
+                if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                    local ClientObjs = GLOBAL.TheNet:GetClientTable() or {}
+                    local actual_players = 0
+                    for _, v in ipairs(ClientObjs) do
+                        if v.performance == nil then actual_players = actual_players + 1 end
+                    end
+                    if GLOBAL.TheNet:GetServerIsClientHosted() then actual_players = #ClientObjs end
+
+                    local max_players = GLOBAL.TheNet:GetServerMaxPlayers() or "?"
+                    local num_str = tostring(actual_players) .. "/" .. tostring(max_players)
+                    
+                    Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NUM_PLAYER, { NUM = num_str }))
+                    return true
+                end
+                if old_pn_OnControl then return old_pn_OnControl(w, control, down, ...) end
+                return false
+            end
+        end
+
+        if self.scroll_list and self.scroll_list.widgets_to_update then
+            for _, w in ipairs(self.scroll_list.widgets_to_update) do
+                if not w._qa_hooked then
+                    w._qa_hooked = true
+
+                    local function HookChild(child, action_type, widget_row)
+                        if not child then return end
+                        child:SetClickable(true)
+                        child:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+                        
+                        local old_child_OnControl = child.OnControl
+                        child.OnControl = function(ui, control, down, ...)
+                            if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                                local qa = GLOBAL.NOMU_QA.SCHEME.PLAYER
+                                local client = GLOBAL.TheNet:GetClientTableForUser(widget_row.userid)
+                                local target_name = client and client.name or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME
+
+                                if action_type == "netscore" then
+                                    local status_key = 'UNKNOWN'
+                                    if client then
+                                        local score = client.performance ~= nil and client.performance or client.netscore
+                                        if score ~= nil then
+                                            if score <= 0 then status_key = 'GOOD'
+                                            elseif score == 1 then status_key = 'OK'
+                                            else status_key = 'BAD' end
+                                        end
+                                    end
+                                    local status_str = qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key] or '未知'
+                                    
+                                    Announce(subfmt(qa.FORMATS.PERF, { 
+                                        NAME = target_name, 
+                                        STATUS = status_str, 
+                                        PING = (widget_row.userid == GLOBAL.TheNet:GetUserID() and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '') 
+                                    }))
+
+                                elseif action_type == "characterBadge" then
+
+                                    local badge = widget_row.characterBadge
+                                    local prefab = badge and badge.prefabname or ""
+                                    local is_loading = badge and type(badge.IsLoading) == "function" and badge:IsLoading()
+                                    
+                                    if is_loading then
+                                        Announce(subfmt(qa.FORMATS.CONNECTING, { NAME = target_name }))
+                                    elseif prefab == "" then
+                                        Announce(subfmt(qa.FORMATS.CHOOSING, { NAME = target_name }))
+                                    else
+                                        Announce(subfmt(qa.FORMATS.NAME, {
+                                            NAME = target_name,
+                                            CHARACTER = GLOBAL.STRINGS.NAMES[prefab:upper()] or prefab
+                                        }))
+                                    end
+
+                                elseif action_type == "adminBadge" then
+                                    Announce(subfmt(qa.FORMATS.ADMIN, { NAME = target_name }))
+
+                                elseif action_type == "name" then
+                                    Announce(subfmt(qa.FORMATS.GREET, { NAME = target_name }))
+                                end
+                                
+                                return true
+                            end
+                            if old_child_OnControl then return old_child_OnControl(ui, control, down, ...) end
+                            return false
+                        end
+                    end
+
+                    HookChild(w.netscore, "netscore", w)
+                    HookChild(w.characterBadge, "characterBadge", w)
+                    HookChild(w.adminBadge, "adminBadge", w)
+                    HookChild(w.name, "name", w)
+                end
+            end
+        end
+    end
+end)
+
 
 AddClassPostConstruct('widgets/playeravatarpopup', function(PlayerAvatarPopup)
     local items = { 'body', 'hand', 'legs', 'feet', 'base', 'head_equip', 'hand_equip', 'body_equip' }
@@ -2929,6 +3069,38 @@ AddClassPostConstruct('widgets/playeravatarpopup', function(PlayerAvatarPopup)
 end)
 
 AddClassPostConstruct('widgets/redux/skilltreebuilder', function(SkillTreeBuilder)
+    if SkillTreeBuilder.infopanel and SkillTreeBuilder.infopanel.desc and not SkillTreeBuilder.infopanel.desc.hovertext then
+        SkillTreeBuilder.infopanel.desc:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+
+        local old_desc_OnControl = SkillTreeBuilder.infopanel.desc.OnControl
+        SkillTreeBuilder.infopanel.desc.OnControl = function(desc_self, control, down, ...)
+            if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                local name = (type(SkillTreeBuilder.fromfrontend) == "table" and SkillTreeBuilder.fromfrontend.data and SkillTreeBuilder.fromfrontend.data.name and SkillTreeBuilder.fromfrontend.data.name ~= "")
+                          and SkillTreeBuilder.fromfrontend.data.name
+                          or (SkillTreeBuilder.player_name and SkillTreeBuilder.player_name ~= "" and SkillTreeBuilder.player_name
+                          or (GLOBAL.TheFrontEnd:GetActiveScreen() and GLOBAL.TheFrontEnd:GetActiveScreen().player_name or "该玩家"))
+
+                local desc_str = desc_self:GetString()
+                local title_str = SkillTreeBuilder.infopanel.title and SkillTreeBuilder.infopanel.title:GetString() or "未知技能"
+                
+                if desc_str and desc_str ~= "" then
+                    desc_str = desc_str:gsub("\n", ""):gsub("\t", "")
+
+                    Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.DESC, {
+                        NAME = name,
+                        SKILL = title_str,
+                        DESC = desc_str
+                    }))
+                    return true
+                end
+            end
+
+            if old_desc_OnControl then
+                return old_desc_OnControl(desc_self, control, down, ...)
+            end
+        end
+    end
+
     local oldOnControl = SkillTreeBuilder.OnControl
     function SkillTreeBuilder:OnControl(control, down, ...)
         if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
@@ -2962,6 +3134,112 @@ AddClassPostConstruct('widgets/redux/skilltreebuilder', function(SkillTreeBuilde
         return oldOnControl(self, control, down, ...)
     end
 end)
+
+AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
+    local old_MakeScrollList = self.MakeScrollList
+    function self:MakeScrollList(...)
+        local res = old_MakeScrollList(self, ...)
+        if self.scroll_list and self.scroll_list.widgets_to_update then
+            for _, widget in ipairs(self.scroll_list.widgets_to_update) do
+                local targets = {}
+                if widget.opt_spinner then
+                    table.insert(targets, widget.opt_spinner.image)
+                    if widget.opt_spinner.spinner and widget.opt_spinner.spinner.label then
+                        table.insert(targets, widget.opt_spinner.spinner.label)
+                    end
+                end
+                if widget.opt_textentry then
+                    table.insert(targets, widget.opt_textentry.image)
+                end
+
+                for _, w in ipairs(targets) do
+                    if w then
+                        w.focus_forward = nil 
+                        if type(w.SetRegionSize) == "function" then
+                            w:SetRegionSize(w == widget.opt_spinner and 50 or 200, w == widget.opt_spinner and 50 or 30)
+                        end
+                        w:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+                        
+                        local old_OnControl = w.OnControl
+                        w.OnControl = function(self_w, control, down, ...)
+                            if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                                local data = widget.data
+                                if data and data.option then
+                                    local val_str = "未知"
+                                    if widget.opt_spinner and widget.opt_spinner.spinner and type(widget.opt_spinner.spinner.GetSelectedText) == "function" then
+                                        val_str = widget.opt_spinner.spinner:GetSelectedText()
+                                    elseif widget.opt_textentry and widget.opt_textentry.textbox then
+                                        val_str = widget.opt_textentry.textbox:GetString()
+                                    end
+                                    
+                                    local name_str = GLOBAL.STRINGS.UI.CUSTOMIZATIONSCREEN[string.upper(data.option.name)] or data.option.name
+                                    
+                                    Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.WORLD_SETTING, {
+                                        SETTING = name_str,
+                                        VALUE = val_str
+                                    }))
+                                    return true 
+                                end
+                            end
+                            if old_OnControl then return old_OnControl(self_w, control, down, ...) end
+                            return false
+                        end
+                    end
+                end
+            end
+        end
+        return res
+    end
+end)
+
+AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
+    if self.options_scroll_list and self.options_scroll_list.widgets_to_update then
+        for _, widget in ipairs(self.options_scroll_list.widgets_to_update) do
+            if widget.opt and widget.opt.label then
+                local lbl = widget.opt.label
+                
+                lbl.focus_forward = nil 
+                if type(lbl.SetRegionSize) == "function" then
+                    lbl:SetRegionSize(300, 40)
+                end
+                lbl:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+                
+                local old_OnControl = lbl.OnControl
+                lbl.OnControl = function(self_w, control, down, ...)
+                    if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                        local data = widget.opt.data
+                        if data and data.option then
+                            local val = data.initial_value
+                            local val_str = tostring(val)
+                            if data.spin_options then
+                                for _, opt in ipairs(data.spin_options) do
+                                    if opt.data == val then
+                                        val_str = opt.text
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            local modinfo = GLOBAL.KnownModIndex:GetModInfo(self.modname)
+                            local mod_name = modinfo and modinfo.name or self.modname
+                            local setting_name = data.option.label or data.option.name
+                            
+                            Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_SETTING, {
+                                MOD = mod_name,
+                                SETTING = setting_name,
+                                VALUE = val_str
+                            }))
+                            return true 
+                        end
+                    end
+                    if old_OnControl then return old_OnControl(self_w, control, down, ...) end
+                    return false
+                end
+            end
+        end
+    end
+end)
+
 
 AddClassPostConstruct('widgets/redux/cookbookpage_crockpot', function(CookbookPageCrockPot)
     local oldPopulateRecipeDetailPanel = CookbookPageCrockPot.PopulateRecipeDetailPanel

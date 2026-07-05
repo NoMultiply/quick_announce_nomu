@@ -5,8 +5,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = { DEFAULT = '听好了笨蛋，{SEASON}只剩下{DAYS_LEFT}天了。给、给我好好准备，别到时候哭着求我！' },
         MAPPINGS = {
             DEFAULT = {
-                SEASON_NAMES = {
-                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季'
+                SEASON_NAMES = { 
+                    AUTUMN = '秋季', WINTER = '冬季', SPRING = '春季', SUMMER = '夏季' 
                 }
             }
         }
@@ -192,9 +192,13 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             DEFAULT = '{NAME}在我这边。别误会，我没特意找他！',
             ADMIN = '啧，{NAME}是管理员。别以为管理员就能命令我！',
             NAME = '{NAME}是{CHARACTER}。',
+            CHOOSING = '真是的，{NAME} 选个角色也要磨蹭这么久！',
+            CONNECTING = '{NAME} 这家伙的破网络还在连接中！快点啊笨蛋！',
+            ME_RIDING = '看什么看！我正在骑着 {MOUNT} 兜风，羡慕吧笨蛋！',
+            ME_CARRYING = '喂！我正在搬运这重死人的 {ITEM}！走得慢点怎么了，快来帮忙啊笨蛋！',
             AGE = '{NAME}居然活了{AGE}这么久。',
             AGE_SHORT = '{NAME}存活{AGE}。',
-            PERF = '{NAME} 的{PERF}。{PING}',
+            PERF = '{NAME} 的网络 {STATUS}哼。{PING}',
             GREET = '哟，{NAME}。才、才不是在等你呢！',
             PING = '延迟：{PING}',
             BADGE = '{NAME}戴着{BADGE}的头像。眼光真差。',
@@ -217,13 +221,24 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
             PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！'
         },
-        MAPPINGS = {}
+        MAPPINGS = {
+            DEFAULT = {
+                PERF_STATUS = {
+                    GOOD = '还算绿的',
+                    OK = '凑合黄的',
+                    BAD = '卡死红的',
+                    UNKNOWN = '鬼知道啊'
+                }
+            }
+        }
     },
     SERVER = {
         FORMATS = {
             NAME = '这破房间叫：{NAME}。',
             AGE = '服务器运行了：{AGE}天。居然还没塌。',
-            NUM_PLAYER = '现在有：{NUM}个人。人多眼杂的。'
+            NUM_PLAYER = '现在有：{NUM}个人。人多眼杂的。',
+            WORLD_SETTING = '这破房间的【{SETTING}】世界设置被调成了【{VALUE}】，别搞砸了！',
+            MOD_SETTING = '模组【{MOD}】的【{SETTING}】竟然变成了【{VALUE}】，真是不让人省心！'
         },
         MAPPINGS = {}
     },
@@ -233,6 +248,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             CAN_ACTIVATE = '{NAME}可以去点『{SKILL}』了，别磨蹭！',
             NOT_ACTIVATED = '{NAME}还没点『{SKILL}』，真是个笨蛋。',
             XP = '{NAME}还有{XP}点洞察没用。',
+            DESC = '听好了，{NAME} 的『{SKILL}』技能可以<{DESC}>，别忘了啊笨蛋！',
         },
         MAPPINGS = {}
     },
@@ -258,21 +274,21 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     HEALTH_HIGH = "这头笨牛结实得很！（生命：{PCT}%）",
                     HEALTH_NORMAL = "牛的状态还凑合。（生命：{PCT}%）",
                     HEALTH_LOW = "喂！牛快死了你瞎了吗！快给它加血！（生命：{PCT}%）",
-
+                    
                     HUNGER_FULL = "它吃撑了，别再喂了浪费食物！（饥饿：{VAL}）",
                     HUNGER_NORMAL = "这笨牛现在不饿。（饥饿：{VAL}）",
                     HUNGER_HUNGRY = "喂，牛肚子叫了，还不快点拿草来！（饥饿：{VAL}）",
                     HUNGER_STARVING = "牛饿得都要咬我了，你这白痴主子还不喂它！（饥饿：{VAL}）",
-
+                    
                     OBEDIENCE_HIGH = "哼，这头笨牛总算乖乖听话了。（顺从：{PCT}%）",
                     OBEDIENCE_NORMAL = "勉强算听话吧。（顺从：{PCT}%）",
                     OBEDIENCE_LOW = "这笨牛要发脾气了！快安抚它啊！（顺从：{PCT}%）",
-
+                    
                     DOMESTICATION_FULL = "哼，我可是驯牛大师，它敢不听话？（已驯服）",
                     DOMESTICATION_HIGH = "马上就要被完全驯化了，算你有功劳。（驯化：{PCT}%）",
                     DOMESTICATION_NORMAL = "还在驯化中，别半途而废了！（驯化：{PCT}%）",
                     DOMESTICATION_LOW = "野性这么大，你到底会不会驯牛啊笨蛋！（驯化：{PCT}%）",
-
+                    
                     TIMER_RIDING = "还能骑{TIME}。抓紧了别掉下去！",
                     TIMER_LOW = "喂！它要甩人了，快点准备下来笨蛋！（剩余：{TIME}）"
                 },
@@ -286,12 +302,12 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             SINGLE = '喂！这里有 1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
             DEFAULT = '听好了，这里总共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
-            NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}的家伙{SHOW_ME}{DISTANCE}。',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
-
+            
             FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
 
-            STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
+            STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}了{SHOW_ME}{DISTANCE}，真是不想说你！',
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
             STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
             STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}呢，看什么看！',
@@ -365,7 +381,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     SAPLING = "还是个弱小的小树苗",
                     SHORT = "才刚刚冒出个头来",
                     NORMAL = "长得正茂盛呢",
-                    TALL = "长得高高大大的",
+                    TALL = "长得高高大大的，挡住视线了",
                     BOULDER = "已经硬化变成矿床了",
                     ANCIENT_READY = "上面挂满了诱人的果实",
                     ANCIENT_EMPTY = "光秃秃的连个果子都没有",
@@ -377,6 +393,12 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     L1_BEDAZZLED = "被无聊装饰过的一级",
                     L2_BEDAZZLED = "被无聊装饰过的二级",
                     L3_BEDAZZLED = "被无聊装饰过的三级",
+
+                    HEATROCK_COLD = '冻成冰块的没用状态',
+                    HEATROCK_COOL = '凉飕飕的有点冷',
+                    HEATROCK_NORMAL = '普普通通的常温',
+                    HEATROCK_WARM = '算是有点热度的',
+                    HEATROCK_HOT = '烫得要死滚烫的',
                 }
             }
         }
@@ -485,10 +507,12 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     ITEM = {
         FORMATS = {
-            INV_SLOT = '听好了，{PRONOUN}有{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。别打它的主意！',
+            INV_SLOT = '{PRONOUN}的包里有{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。别打这些的主意！',
             EQUIP_SLOT = '{PRONOUN}穿戴了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。还挺好看的对吧！',
             EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，什么都没穿！'
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，什么都没穿！',
+            EQUIP_SLOT_HEAVY = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
+            EQUIP_SLOT_HEAVY_POS = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -534,11 +558,11 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
 
             CONS_NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建完，快点去干活！",
             CONS_HAVE = "材料都齐了，{RECIPE}随时可以动工，还不快点！",
-            CONS_HAVE_ITEM = "我已经拿好{INGREDIENT}准备建{RECIPE}了，还不快夸我！",
+            CONS_HAVE_ITEM = "我已经拿好{INGREDIENT}准备建{RECIPE}了，还不快夸我！", 
 
             TRADE_NEED = "想要和{RECIPE}交易，兜里还缺{INGREDIENT}。穷鬼！",
             TRADE_HAVE = "有足够的{INGREDIENT}可以和{RECIPE}交易了。快去啊，愣着干嘛！",
-            TRADE_HAVE_ITEM = "我有足够的{INGREDIENT}去和{RECIPE}换东西了，还不快跟上！",
+            TRADE_HAVE_ITEM = "我有足够的{INGREDIENT}去和{RECIPE}换东西了，还不快跟上！", 
         },
         MAPPINGS = {
             DEFAULT = {
@@ -746,9 +770,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         }
     },
     NAUGHTINESS = {
-        FORMATS = {
+        FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
-            LUCK = '听着，我现在的幸运值是：{CURRENT}！别扯我后腿！'
+            LUCK = '听着，我现在的幸运值是：{CURRENT}！别扯我后腿！' 
         },
         MAPPINGS = {
             DEFAULT = {
@@ -925,7 +949,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         }
     },
     HEALTH = {
-        FORMATS = {
+        FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
             WITH_SHIELD = '({SYMBOL}：{CURRENT}/{MAX}，破护盾：{SHIELD_CUR}/{SHIELD_MAX}) {MESSAGE}'
         },
