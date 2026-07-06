@@ -2910,7 +2910,15 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                     end
 
                     if w.perf and w.perf.shown and w.perf.focus then 
-                        local client = GLOBAL.TheNet:GetClientTableForUser(w.userid)
+                        local ClientObjs = GLOBAL.TheNet:GetClientTable() or {}
+                        local client = nil
+                        for _, c in ipairs(ClientObjs) do
+                            if c.userid == w.userid then
+                                client = c
+                                break
+                            end
+                        end
+
                         local status_key = 'UNKNOWN'
                         if client then
                             local score = client.performance ~= nil and client.performance or client.netscore
@@ -2920,8 +2928,10 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                                 else status_key = 'BAD' end
                             end
                         end
+                        
                         local qa = GLOBAL.NOMU_QA.SCHEME.PLAYER
-                        local status_str = qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key] or '未知'
+                        local status_str = (qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key]) 
+                                        or (GLOBAL.STRINGS.DEFAULT_NOMU_QA.PLAYER.MAPPINGS.DEFAULT.PERF_STATUS[status_key])
                         
                         return Announce(subfmt(qa.FORMATS.PERF, { 
                             NAME = w.displayName, 
@@ -2962,7 +2972,6 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
         return oldOnControl(self, control, down, ...)
     end
 end)
-
 
 AddClassPostConstruct("widgets/redux/playerlist", function(self)
     local old_BuildPlayerList = self.BuildPlayerList
@@ -3202,13 +3211,10 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
         if self.scroll_list and self.scroll_list.widgets_to_update then
             for _, widget in ipairs(self.scroll_list.widgets_to_update) do
                 local targets = {}
-                if widget.opt_spinner then
+                if widget.opt_spinner and widget.opt_spinner.image then
                     table.insert(targets, widget.opt_spinner.image)
-                    if widget.opt_spinner.spinner and widget.opt_spinner.spinner.label then
-                        table.insert(targets, widget.opt_spinner.spinner.label)
-                    end
                 end
-                if widget.opt_textentry then
+                if widget.opt_textentry and widget.opt_textentry.image then
                     table.insert(targets, widget.opt_textentry.image)
                 end
 
@@ -3216,7 +3222,7 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
                     if w then
                         w.focus_forward = nil 
                         if type(w.SetRegionSize) == "function" then
-                            w:SetRegionSize(w == widget.opt_spinner and 50 or 200, w == widget.opt_spinner and 50 or 30)
+                            w:SetRegionSize(50, 50)
                         end
                         w:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
                         
@@ -3226,10 +3232,33 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
                                 local data = widget.data
                                 if data and data.option then
                                     local val_str = "未知"
-                                    if widget.opt_spinner and widget.opt_spinner.spinner and type(widget.opt_spinner.spinner.GetSelectedText) == "function" then
-                                        val_str = widget.opt_spinner.spinner:GetSelectedText()
+
+                                    local real_value = nil
+                                    if GLOBAL.TheWorld and GLOBAL.TheWorld.topology and GLOBAL.TheWorld.topology.overrides then
+                                        real_value = GLOBAL.TheWorld.topology.overrides[data.option.name]
+                                    end
+
+                                    if real_value == nil then
+                                        real_value = data.saved_value or data.initial_value or data.value
+                                    end
+                                    
+                                    if widget.opt_spinner and widget.opt_spinner.spinner then
+                                        local spinner = widget.opt_spinner.spinner
+                                        if real_value ~= nil and spinner.options then
+                                            for _, opt in ipairs(spinner.options) do
+                                                if opt.data == real_value then
+                                                    val_str = opt.text
+                                                    break
+                                                end
+                                            end
+                                        end
+
+                                        if val_str == "未知" and type(spinner.GetSelectedText) == "function" then
+                                            val_str = spinner:GetSelectedText()
+                                        end
+                                        
                                     elseif widget.opt_textentry and widget.opt_textentry.textbox then
-                                        val_str = widget.opt_textentry.textbox:GetString()
+                                        val_str = real_value ~= nil and tostring(real_value) or widget.opt_textentry.textbox:GetString()
                                     end
                                     
                                     local name_str = GLOBAL.STRINGS.UI.CUSTOMIZATIONSCREEN[string.upper(data.option.name)] or data.option.name
@@ -3247,10 +3276,11 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
                     end
                 end
             end
+            return res
         end
-        return res
     end
 end)
+
 
 AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
     if GLOBAL.TheWorld == nil then return end
@@ -3270,13 +3300,54 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
                     if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
                         local data = widget.opt.data
                         if data and data.option then
-                            local val = data.initial_value
-                            local val_str = tostring(val)
-                            if data.spin_options then
-                                for _, opt in ipairs(data.spin_options) do
-                                    if opt.data == val then
-                                        val_str = opt.text
-                                        break
+                            local val_str = "未知"
+                            local real_value = nil
+
+                            local server_listing = GLOBAL.TheNet:GetServerListing()
+                            if server_listing and type(server_listing.mods_config_data) == "string" then
+                                local mod_config_data = server_listing._processed_mods_config_data
+                                if mod_config_data == nil and GLOBAL.RunInSandboxSafe then
+                                    local success, parsed = GLOBAL.RunInSandboxSafe(server_listing.mods_config_data)
+                                    if success and type(parsed) == "table" then
+                                        server_listing._processed_mods_config_data = parsed
+                                        mod_config_data = parsed
+                                    end
+                                end
+                                if type(mod_config_data) == "table" and mod_config_data[self.modname] ~= nil then
+                                    real_value = mod_config_data[self.modname][data.option.name]
+                                end
+                            end
+
+                            if real_value ~= nil then
+                                if data.spin_options then
+                                    for _, opt in ipairs(data.spin_options) do
+                                        if opt.data == real_value then
+                                            val_str = tostring(opt.text)
+                                            break
+                                        end
+                                    end
+                                end
+                                if val_str == "未知" then
+                                    val_str = tostring(real_value)
+                                end
+                            else
+                                if widget.opt.spinner and type(widget.opt.spinner.GetSelectedText) == "function" then
+                                    val_str = widget.opt.spinner:GetSelectedText()
+                                else
+                                    local val = data.selected_value
+                                    if widget.opt.spinner and type(widget.opt.spinner.GetSelected) == "function" then
+                                        val = widget.opt.spinner:GetSelected()
+                                    end
+                                    if data.spin_options then
+                                        for _, opt in ipairs(data.spin_options) do
+                                            if opt.data == val then
+                                                val_str = tostring(opt.text)
+                                                break
+                                            end
+                                        end
+                                    end
+                                    if val_str == "未知" then
+                                        val_str = tostring(val)
                                     end
                                 end
                             end
@@ -3284,8 +3355,9 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
                             local modinfo = GLOBAL.KnownModIndex:GetModInfo(self.modname)
                             local mod_name = modinfo and modinfo.name or self.modname
                             local setting_name = data.option.label or data.option.name
-                            
-                            Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_SETTING, {
+
+                            local qa_fmt = GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_SETTING
+                            Announce(subfmt(qa_fmt, {
                                 MOD = mod_name,
                                 SETTING = setting_name,
                                 VALUE = val_str
@@ -3301,6 +3373,47 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
     end
 end)
 
+AddClassPostConstruct("screens/redux/textlistpopup", function(self)
+    if GLOBAL.TheWorld == nil then return end
+    if self.scroll_list and self.scroll_list.widgets_to_update then
+        for _, widget in ipairs(self.scroll_list.widgets_to_update) do
+            
+            widget:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
+            
+            local old_OnControl = widget.OnControl
+            widget.OnControl = function(w, control, down, ...)
+                if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                    local mod_name = ""
+                    
+                    if type(w.GetText) == "function" then
+                        mod_name = w:GetText()
+                    elseif w.text and type(w.text.GetString) == "function" then
+                        mod_name = w.text:GetString()
+                    end
+                    
+                    if mod_name and mod_name ~= "" then
+
+                        local qa_fmt = GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_ENABLED
+                        local announce_msg = subfmt(qa_fmt, { MOD = mod_name })
+                        
+                        if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.Announce then
+                            GLOBAL.NOMU_QA.Announce(announce_msg)
+                        else
+                            Announce(announce_msg)
+                        end
+                        
+                        return true 
+                    end
+                end
+                
+                if old_OnControl then 
+                    return old_OnControl(w, control, down, ...) 
+                end
+                return false
+            end
+        end
+    end
+end)
 
 AddClassPostConstruct('widgets/redux/cookbookpage_crockpot', function(CookbookPageCrockPot)
     local oldPopulateRecipeDetailPanel = CookbookPageCrockPot.PopulateRecipeDetailPanel
