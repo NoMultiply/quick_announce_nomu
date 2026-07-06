@@ -490,7 +490,8 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             AGE = '服务器已运行：{AGE} 天',
             NUM_PLAYER = '服务器当前人数：{NUM}',
             WORLD_SETTING = '该房间的【{SETTING}】世界设置为【{VALUE}】。',
-            MOD_SETTING = '该房间模组【{MOD}】的【{SETTING}】设置为【{VALUE}】。'
+            MOD_SETTING = '该房间模组【{MOD}】的【{SETTING}】设置为【{VALUE}】。',
+            MOD_ENABLED = '该房间开启了模组：{MOD}。'
         },
         MAPPINGS = {}
     },
