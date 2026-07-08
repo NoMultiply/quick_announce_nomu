@@ -15,7 +15,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             START_RAIN = '喂！{WORLD}气温{TEMPERATURE}，{WEATHER}将在第{DAYS}天到来（还剩：{MINUTES}分{SECONDS}秒）。自己记得撑伞，我才不管你！',
             NO_RAIN = '哼，{WORLD}气温{TEMPERATURE}，{WEATHER}暂时还没来。稍微放松一下也可以……就一下！',
-            STOP_RAIN = '喂！{WORLD}气温{TEMPERATURE}，{WEATHER}将在第{DAYS}天到来（还剩：{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
+            STOP_RAIN = '喂！{WORLD}气温{TEMPERATURE}，将在第{DAYS}天放晴（还剩：{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
         },
         MAPPINGS = {
             DEFAULT = {

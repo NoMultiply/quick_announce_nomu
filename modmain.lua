@@ -1485,23 +1485,36 @@ local function GetAllMissingIngredients(recipe, builder, inventory)
 
     if recipe.ingredients then
         for _, v in pairs(recipe.ingredients) do
-            local actual_needed = RoundBiasedUp(v.amount * builder:IngredientMod())
+            local is_catalyst = (v.amount == 0)
+            local actual_needed = is_catalyst and 1 or RoundBiasedUp(v.amount * builder:IngredientMod())
+            
             local _, num_found = inventory:Has(v.type, actual_needed)
             if num_found < actual_needed then
                 local diff = actual_needed - num_found
                 local item_name = STRINGS.NOMU_QA[string.upper(v.type)] or STRINGS.NAMES[string.upper(v.type)] or v.type
-                table.insert(missing, diff .. "个" .. item_name)
+                if is_catalyst then
+                    table.insert(missing, item_name)
+                else
+                    table.insert(missing, diff .. "个" .. item_name)
+                end
             end
         end
     end
 
     if recipe.character_ingredients then
         for _, v in pairs(recipe.character_ingredients) do
+            local is_catalyst = (v.amount == 0)
+            local actual_needed = is_catalyst and 1 or v.amount
+            
             local _, num_found = builder:HasCharacterIngredient(v)
-            if num_found < v.amount then
-                local diff = v.amount - num_found
+            if num_found < actual_needed then
+                local diff = actual_needed - num_found
                 local item_name = STRINGS.NOMU_QA[string.upper(v.type)] or STRINGS.NAMES[string.upper(v.type)] or v.type
-                table.insert(missing, diff .. "个" .. item_name)
+                if is_catalyst then
+                    table.insert(missing, item_name)
+                else
+                    table.insert(missing, diff .. "个" .. item_name)
+                end
             end
         end
     end
@@ -1544,28 +1557,44 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     -- 处理点击特定材料的情况
     if specific_ingredient_type then
         local amount_needed, num_found = 1, 0
+        local is_catalyst = false
 
         for _, v in pairs(recipe.ingredients) do
             if specific_ingredient_type == v.type then
                 amount_needed = v.amount
+                if v.amount == 0 then is_catalyst = true end
             end
         end
 
-        _, num_found = inventory:Has(specific_ingredient_type, RoundBiasedUp(amount_needed * builder:IngredientMod()))
+        local actual_needed = is_catalyst and 1 or RoundBiasedUp(amount_needed * builder:IngredientMod())
+        _, num_found = inventory:Has(specific_ingredient_type, actual_needed)
 
         if recipe.character_ingredients then
             for _, v in pairs(recipe.character_ingredients) do
                 if specific_ingredient_type == v.type then
                     amount_needed = v.amount
+                    is_catalyst = (v.amount == 0)
+                    actual_needed = is_catalyst and 1 or v.amount
                     _, num_found = builder:HasCharacterIngredient(v)
                 end
             end
         end
 
-        local num_missing = amount_needed - num_found
+        if specific_ingredient_type:sub(-9) == "_material" then
+            is_catalyst = true
+            actual_needed = 1
+            local is_unlocked = builder:KnowsRecipe(recipe.name) or CanPrototypeRecipe(recipe.level, builder:GetTechTrees())
+            num_found = is_unlocked and 1 or 0
+        end
+
+        local num_missing = actual_needed - num_found
         local ingredient_name = STRINGS.NOMU_QA[specific_ingredient_type:upper()]
                              or STRINGS.NAMES[specific_ingredient_type:upper()]
                              or specific_ingredient_type
+
+        if specific_ingredient_type:sub(-9) == "_material" and qa_recipe.MAPPINGS and qa_recipe.MAPPINGS.DEFAULT and qa_recipe.MAPPINGS.DEFAULT.PROTOTYPER then
+            ingredient_name = qa_recipe.MAPPINGS.DEFAULT.PROTOTYPER[specific_ingredient_type:upper()] or ingredient_name
+        end
 
         local fmts = {
             RECIPE = name,
@@ -1573,12 +1602,22 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
             BUT_PROTOTYPE = prototype ~= "" and subfmt(GetMapping(qa_const, 'WORDS', 'BUT_PROTOTYPE'), { PROTOTYPE = prototype }) or ""
         }
 
+        local amount_fmt = GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT')
+
         if num_missing <= 0 then
-            fmts.INGREDIENT = subfmt(GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT'), { NUM = amount_needed, ITEM = ingredient_name })
+            if is_catalyst then
+                fmts.INGREDIENT = ingredient_name
+            else
+                fmts.INGREDIENT = subfmt(amount_fmt, { NUM = actual_needed, ITEM = ingredient_name })
+            end
             return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str)
         else
             if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
-                fmts.INGREDIENT = subfmt(GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT'), { NUM = num_missing, ITEM = ingredient_name })
+                if is_catalyst then
+                    fmts.INGREDIENT = ingredient_name
+                else
+                    fmts.INGREDIENT = subfmt(amount_fmt, { NUM = num_missing, ITEM = ingredient_name })
+                end
                 return Announce(subfmt(qa_const.FORMATS.CRAFT_NEED, fmts), nil, debug_str)
             end
         end
@@ -1609,7 +1648,6 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         }), nil, debug_str)
     end
 end
-
 
 local ITEM_PREFAB_ALIAS = {
     driftwood_small1 = "driftwood_small1",
