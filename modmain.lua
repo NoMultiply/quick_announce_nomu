@@ -86,6 +86,7 @@ local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:
 
 GLOBAL.NOMU_QA = {
     DATA = {
+        CUSTOM_PREFIX = "",
         ALT_MODE = 1,    
         SHIFT_MODE = 1,
         DEFAULT_WHISPER = false,
@@ -286,6 +287,8 @@ end
 
 -- 通用的数据类型纠正函数
 local function EnsureDataType(template_val, saved_val)
+    if template_val == nil then return saved_val end 
+
     local t_type = type(template_val)
     local s_type = type(saved_val)
 
@@ -450,8 +453,12 @@ local function Announce(message, no_whisper, debug_info)
         whisper = false
     end
 
-    if message ~= "" then
-        GLOBAL.TheNet:Say(GLOBAL.STRINGS.LMB .. ' ' .. message, whisper)
+   if message ~= "" then
+        -- 获取自定义前缀
+        local prefix = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
+        if prefix == nil or prefix == "" then prefix = GLOBAL.STRINGS.LMB end
+        
+        GLOBAL.TheNet:Say(prefix .. ' ' .. message, whisper)
         return true
     end
     return false
@@ -1602,6 +1609,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         }), nil, debug_str)
     end
 end
+
 
 local ITEM_PREFAB_ALIAS = {
     driftwood_small1 = "driftwood_small1",
@@ -2799,6 +2807,36 @@ for _, hook in ipairs(CRAFTING_HOOKS) do
         end
     end)
 end
+
+AddClassPostConstruct("widgets/redux/craftingmenu_widget", function(self)
+    if self.filter_buttons then
+        for name, w in pairs(self.filter_buttons) do
+            if w and w.button and w.filter_def then
+                local filter_def = w.filter_def
+                local old_OnControl = w.button.OnControl
+                
+                w.button.OnControl = function(btn_self, control, down, ...)
+                    if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+                        local raw_name = string.upper(filter_def.name)
+                        local loc_name = GLOBAL.STRINGS.UI.CRAFTING_FILTERS[raw_name] or filter_def.name
+                        loc_name = GLOBAL.STRINGS.NOMU_QA[raw_name] or loc_name
+
+                        local qa = GLOBAL.NOMU_QA.SCHEME.RECIPE
+                        local fmt = qa.FORMATS.FILTER_TAB
+                        local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format("[分类代码: %s]", tostring(raw_name)) or nil
+                        
+                        Announce(subfmt(fmt, { TAB = loc_name }), nil, debug_str)
+                        return true
+                    end
+                    if old_OnControl then
+                        return old_OnControl(btn_self, control, down, ...)
+                    end
+                    return false
+                end
+            end
+        end
+    end
+end)
 
 for _, classname in pairs({ 'invslot', 'equipslot' }) do
     AddClassPostConstruct('widgets/' .. classname, function(SlotClass)
