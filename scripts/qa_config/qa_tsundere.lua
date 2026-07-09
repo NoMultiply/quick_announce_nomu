@@ -551,7 +551,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     CONSTRUCTION_AND_TRADE = {
         FORMATS = {
-            CRAFT_NEED = "喂！要造{RECIPE}还差{INGREDIENT}{AND_PROTOTYPE}，你自己去找啊笨蛋！",
+            CRAFT_NEED = "喂！要造{RECIPE}还差{INGREDIENT}{AND_PROTOTYPE}，快给我去找啊笨蛋！",
             CRAFT_HAVE = "我已经准备好{INGREDIENT}来造{RECIPE}了{BUT_PROTOTYPE}，快点夸我！",
             CRAFT_HAVE_ALL = "材料刚好凑齐了……顺便帮你造个{RECIPE}吧{BUT_PROTOTYPE}，感恩戴德吧！",
 
