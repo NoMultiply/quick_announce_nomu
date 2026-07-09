@@ -138,6 +138,9 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_PREFIX_ON = '动态前缀（开）',
     BUTTON_TEXT_PREFIX_OFF = '动态前缀（关）',
 
+    BUTTON_TEXT_CUSTOM_PREFIX = '宣告前缀：',
+    TITLE_CUSTOM_PREFIX = '设置宣告前缀',
+
     BUTTON_TEXT_DISTANCE_ON = '距离显示（开）',
     BUTTON_TEXT_DISTANCE_OFF = '距离显示（关）',
     BUTTON_TEXT_DISTANCE_PRECISE = '距离显示（精确）',  
@@ -674,6 +677,7 @@ ENV = {
             WILL_MAKE = '我可以制作一个 {ITEM}。',
             WE_NEED = '我需要制作个 {ITEM}。',
             CAN_SOMEONE = '有人可以帮我做一个 {ITEM} 吗？我需要 {PROTOTYPE} 才能制造它。',
+            FILTER_TAB = '你可以在 {TAB} 栏内找找看。',
         },
         MAPPINGS = {
             DEFAULT = {

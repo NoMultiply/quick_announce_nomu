@@ -138,8 +138,7 @@ function NoMuList:Refresh(list_data, override)
 end
 
 
--- 表情和常用语菜单核心逻辑 (前置声明以供 GetInputString 使用)
-local xbox_emojis = {
+local controller_emojis = {
     "\238\128\143", "\238\128\140", "\238\128\141", "\238\128\142",
     "\238\128\132", "\238\128\133", "\238\128\134", "\238\128\137",
     "\238\128\135", "\238\128\138", "\238\128\128", "\238\128\129",
@@ -147,7 +146,9 @@ local xbox_emojis = {
     "\238\128\145", "\238\128\144", "\238\128\150", "\238\128\151",
     "\238\128\149", "\238\128\148", "\238\128\136", "\238\128\136",
     "\238\128\139", "\238\128\139", "\238\128\152", "\238\128\153",
-    "\238\132\128", "\238\132\129",
+    "\238\132\128", "\238\132\129","\238\136\130", "\238\136\131",
+    "\238\136\129", "\238\136\128","\238\129\136","\238\129\139",
+    "\238\129\135", "\238\129\138","\238\129\132","\238\129\133",
 }
 
 local function CreateEmojiAndPhraseMenu(self, mode)
@@ -187,11 +188,11 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             return btn
         end
 
-        self.EM_btn_1 = AddTabBtn(-70, 140, "emoji", function()
+        self.EM_btn_1 = AddTabBtn(-70, 160, "emoji", function()
             self.EM_page_1:Show()
             self.EM_page_2:Hide()
         end)
-        self.EM_btn_2 = AddTabBtn(70, 140, "常用语", function()
+        self.EM_btn_2 = AddTabBtn(70, 160, "常用语", function()
             self.EM_page_1:Hide()
             self.EM_page_2:Show()
         end)
@@ -233,7 +234,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                     table.insert(self.EM_emojis, textbtn)
                 end
             end
-            for _, v in ipairs(xbox_emojis) do
+           for _, v in ipairs(controller_emojis) do
                 local textbtn = self.EM_page_1:AddChild(TextButton())
                 textbtn:SetTextSize(30)
                 textbtn:SetText(v)
@@ -243,7 +244,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 table.insert(self.EM_emojis, textbtn)
             end
 
-            local space_x, space_y, row_buttons, y_offset = 35, 35, 10, 105
+            local space_x, space_y, row_buttons, y_offset = 35, 35, 10, 125
             for k, v in ipairs(self.EM_emojis) do
                 local row = math.floor((k - 1) / row_buttons)
                 local col = (k - 1) % row_buttons
@@ -1161,8 +1162,9 @@ local QAPanel = Class(Widget, function(self)
         TheFrontEnd:PushScreen(QAWordManagementPanel(self)) 
     end)
 
-    local s = STRINGS.NOMU_QA
+   local s = STRINGS.NOMU_QA
 
+    -- Row 1: 按键判断
     AddBtn(120, sy - dy, 200, dy, function() 
         local m = GLOBAL.NOMU_QA.DATA.ALT_MODE or 1
         return m == 1 and s.BUTTON_TEXT_ALT_MODE_1 or (m == 2 and s.BUTTON_TEXT_ALT_MODE_2 or s.BUTTON_TEXT_ALT_MODE_3) 
@@ -1179,29 +1181,48 @@ local QAPanel = Class(Widget, function(self)
         GLOBAL.NOMU_QA.SaveData() 
     end)
 
-    AddToggleBtn(120, sy - 2*dy, 200, dy, "BLOCK_ACTION", s.BUTTON_TEXT_BLOCK_ACTION_ON, s.BUTTON_TEXT_BLOCK_ACTION_OFF)
-    AddToggleBtn(320, sy - 2*dy, 200, dy, "ANNOUNCE_ALL_MISSING_INGREDIENTS", s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF)
+   local prefix_btn
+    prefix_btn = AddBtn(220, sy - 2*dy, 400, dy, function()
+        local p = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
+        if p == nil or p == "" then p = GLOBAL.STRINGS.LMB end
+        return (s.BUTTON_TEXT_CUSTOM_PREFIX ) .. tostring(p)
+    end, function()
+        local default_val = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
+        if default_val == nil or default_val == "" then default_val = GLOBAL.STRINGS.LMB end
+        
+        TheFrontEnd:PushScreen(GetInputString(self, s.TITLE_CUSTOM_PREFIX, default_val, function(val)
+            GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX = val
+            GLOBAL.NOMU_QA.SaveData()
+            if prefix_btn then
+                if val == "" then val = GLOBAL.STRINGS.LMB end
+                prefix_btn:SetText((s.BUTTON_TEXT_CUSTOM_PREFIX) .. tostring(val))
+            end
+        end, 30, 300))
+    end)
+
+    AddToggleBtn(120, sy - 3*dy, 200, dy, "BLOCK_ACTION", s.BUTTON_TEXT_BLOCK_ACTION_ON, s.BUTTON_TEXT_BLOCK_ACTION_OFF)
+    AddToggleBtn(320, sy - 3*dy, 200, dy, "ANNOUNCE_ALL_MISSING_INGREDIENTS", s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF)
     
-    AddToggleBtn(120, sy - 3*dy, 200, dy, "DEFAULT_WHISPER", s.BUTTON_TEXT_DEFAULT_WHISPER_ON, s.BUTTON_TEXT_DEFAULT_WHISPER_OFF)
-    AddToggleBtn(320, sy - 3*dy, 200, dy, "CHARACTER_SPECIFIC", s.BUTTON_TEXT_CHARACTER_SPECIFIC_ON, s.BUTTON_TEXT_CHARACTER_SPECIFIC_OFF)
+    AddToggleBtn(120, sy - 4*dy, 200, dy, "DEFAULT_WHISPER", s.BUTTON_TEXT_DEFAULT_WHISPER_ON, s.BUTTON_TEXT_DEFAULT_WHISPER_OFF)
+    AddToggleBtn(320, sy - 4*dy, 200, dy, "CHARACTER_SPECIFIC", s.BUTTON_TEXT_CHARACTER_SPECIFIC_ON, s.BUTTON_TEXT_CHARACTER_SPECIFIC_OFF)
     
-    AddToggleBtn(120, sy - 4*dy, 200, dy, "FREQ_AUTO_CLOSE", s.BUTTON_TEXT_FREQ_AUTO_CLOSE_ON, s.BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF)
-    AddBtn(320, sy - 4*dy, 200, dy, function() 
+    AddToggleBtn(120, sy - 5*dy, 200, dy, "FREQ_AUTO_CLOSE", s.BUTTON_TEXT_FREQ_AUTO_CLOSE_ON, s.BUTTON_TEXT_FREQ_AUTO_CLOSE_OFF)
+    AddBtn(320, sy - 5*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.SHOW_ME == 1 and s.BUTTON_TEXT_SHOW_ME_ON or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and s.BUTTON_TEXT_SHOW_ME_GIFT or s.BUTTON_TEXT_SHOW_ME_OFF) 
     end, function() 
         GLOBAL.NOMU_QA.DATA.SHOW_ME = (GLOBAL.NOMU_QA.DATA.SHOW_ME + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
     
-    AddBtn(120, sy - 5*dy, 200, dy, function() 
+    AddBtn(120, sy - 6*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 60 and s.BUTTON_TEXT_ANNOUNCE_RANGE_LARGE or s.BUTTON_TEXT_ANNOUNCE_RANGE_DEFAULT 
     end, function() 
         GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE = GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE == 40 and 60 or 40 
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 5*dy, 200, dy, "FUZZY_ANNOUNCE", s.BUTTON_TEXT_FUZZY_ON, s.BUTTON_TEXT_FUZZY_OFF)
+    AddToggleBtn(320, sy - 6*dy, 200, dy, "FUZZY_ANNOUNCE", s.BUTTON_TEXT_FUZZY_ON, s.BUTTON_TEXT_FUZZY_OFF)
     
-    AddBtn(120, sy - 6*dy, 200, dy, function() 
+    AddBtn(120, sy - 7*dy, 200, dy, function() 
         local v = GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE
         if type(v) == "boolean" then v = v and 1 or 0 end
         return v == 1 and s.BUTTON_TEXT_DISTANCE_ON or (v == 2 and s.BUTTON_TEXT_DISTANCE_PRECISE or s.BUTTON_TEXT_DISTANCE_OFF) 
@@ -1211,18 +1232,18 @@ local QAPanel = Class(Widget, function(self)
         GLOBAL.NOMU_QA.DATA.SHOW_DISTANCE = (v + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 6*dy, 200, dy, "SHOW_PREFIX", s.BUTTON_TEXT_PREFIX_ON, s.BUTTON_TEXT_PREFIX_OFF)
+    AddToggleBtn(320, sy - 7*dy, 200, dy, "SHOW_PREFIX", s.BUTTON_TEXT_PREFIX_ON, s.BUTTON_TEXT_PREFIX_OFF)
     
-    AddToggleBtn(120, sy - 7*dy, 200, dy, "SHOW_MOD_NAME", s.BUTTON_TEXT_SHOW_MOD_NAME_ON, s.BUTTON_TEXT_SHOW_MOD_NAME_OFF)
-    AddToggleBtn(320, sy - 7*dy, 200, dy, "ENABLE_SPECIAL_STATE", s.BUTTON_TEXT_SPECIAL_STATE_ON, s.BUTTON_TEXT_SPECIAL_STATE_OFF)
+    AddToggleBtn(120, sy - 8*dy, 200, dy, "SHOW_MOD_NAME", s.BUTTON_TEXT_SHOW_MOD_NAME_ON, s.BUTTON_TEXT_SHOW_MOD_NAME_OFF)
+    AddToggleBtn(320, sy - 8*dy, 200, dy, "ENABLE_SPECIAL_STATE", s.BUTTON_TEXT_SPECIAL_STATE_ON, s.BUTTON_TEXT_SPECIAL_STATE_OFF)
     
-    AddBtn(120, sy - 8*dy, 200, dy, function() 
+    AddBtn(120, sy - 9*dy, 200, dy, function() 
         return GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 1 and s.BUTTON_TEXT_SHOW_ASSET_CODE or (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO == 2 and s.BUTTON_TEXT_SHOW_ASSET_ALL or s.BUTTON_TEXT_SHOW_ASSET_OFF) 
     end, function() 
         GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO = (GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO + 1) % 3
         GLOBAL.NOMU_QA.SaveData() 
     end)
-    AddToggleBtn(320, sy - 8*dy, 200, dy, "DEBUG_MODE", s.BUTTON_TEXT_DEBUG_ON, s.BUTTON_TEXT_DEBUG_OFF)
+    AddToggleBtn(320, sy - 9*dy, 200, dy, "DEBUG_MODE", s.BUTTON_TEXT_DEBUG_ON, s.BUTTON_TEXT_DEBUG_OFF)
     
     AddBtn(0, -sy, 200, dy, s.BUTTON_TEXT_CLOSE, function() self:Hide() end)
     self:Refresh()
