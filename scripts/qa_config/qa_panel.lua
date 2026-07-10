@@ -349,7 +349,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     elseif mode == "input_string" then
         menu:SetPosition(0, -40, 0) 
     elseif mode == "rename_position" then
-        menu:SetPosition(250, -185, 0)
+        menu:SetPosition(300, -185, 0) 
     elseif mode == "lobby_chat" then
         menu:SetPosition(340, 75, 0)
     else
@@ -1095,6 +1095,13 @@ local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
 
     self.AddButton(0, -270, 200, 50, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CLOSE, function() self:Close() end)
 
+    self.AddButton(200, -270, 200, 50, function()
+        return GLOBAL.PositionSystem.DATA.ShowTargetRing ~= false and STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_TARGET_RING_OPEN or STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_TARGET_RING_CLOSE
+    end, function()
+        GLOBAL.PositionSystem.DATA.ShowTargetRing = (GLOBAL.PositionSystem.DATA.ShowTargetRing == false)
+        GLOBAL.PositionSystem.SaveData()
+    end)
+
     local chasing_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHASING_TITLE_TEXT))
     chasing_text:SetPosition(-225, 190, 0)
     local chat_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHAT_TITLE_TEXT))
@@ -1210,6 +1217,7 @@ local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
                 self.rename.textbox:Enable()
                 self.rename_ok_btn:Enable()
                 self.rename_cancel_btn:Enable()
+                self.announce_btn:Enable()
                 if self.EM_menu then self.EM_menu:Show() end
             end)
         end
@@ -1250,6 +1258,7 @@ local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
             self.rename.textbox:Disable()
             self.rename_ok_btn:Disable()
             self.rename_cancel_btn:Disable()
+            self.announce_btn:Disable() 
 
             if self.EM_bg and self.EM_bg.shown then self.EM_bg:Hide() end
             if self.EM_menu then self.EM_menu:Hide() end
@@ -1264,11 +1273,25 @@ local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
         self.rename.textbox:Disable()
         self.rename_ok_btn:Disable()
         self.rename_cancel_btn:Disable()
+        self.announce_btn:Disable() 
 
         if self.EM_bg and self.EM_bg.shown then self.EM_bg:Hide() end
         if self.EM_menu then self.EM_menu:Hide() end
     end)
     self.rename_cancel_btn:Disable()
+
+    self.announce_btn = self.AddButton(255, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_ANNOUNCE, function()
+        if self.rename_data then
+            GLOBAL.PositionSystem.AnnouncePosition(
+                self.rename_data.name, 
+                self.rename_data.x, 
+                self.rename_data.y, 
+                self.rename_data.z, 
+                self.rename_data.world
+            )
+        end
+    end)
+    self.announce_btn:Disable()
 
     CreateEmojiAndPhraseMenu(self, "rename_position")
     if self.EM_menu then self.EM_menu:Hide() end

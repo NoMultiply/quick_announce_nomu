@@ -140,6 +140,7 @@ GLOBAL.PositionSystem = {
         PositionSystemButtonPos = { 0, -50, 0 },
         QuickAnnounce = true,
         DetectTips = true,
+        ShowTargetRing = true, 
     },
     POSITION = { chasing = {}, chat = {}, saved = {} }
 }

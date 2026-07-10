@@ -135,8 +135,16 @@ function PositionIndicator:OnUpdate()
         self.colour = { 240 / 255, 70 / 255, 70 / 255 }
     end
     local alpha = self:GetPositionIndicatorAlpha(dist)
+
+    if PositionSystem and PositionSystem.DATA.ShowTargetRing == false then
+        self.marker.AnimState:SetMultColour(1, 1, 1, 0)
+    else
+        self.marker.AnimState:SetMultColour(1, 1, 1, 1)
+    end
+    
     self.marker.AnimState:SetAddColour(self.colour[1], self.colour[2], self.colour[3], alpha)
     self.marker.label:SetColour(self.colour[1], self.colour[2], self.colour[3])
+    
     self.head:SetTint(1, 1, 1, alpha)
     self.arrow:SetTint(self.colour[1], self.colour[2], self.colour[3], alpha)
     self.name_label:SetColour(self.colour[1], self.colour[2], self.colour[3], alpha)
