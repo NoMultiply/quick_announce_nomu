@@ -137,7 +137,6 @@ function NoMuList:Refresh(list_data, override)
     self.scroll_lists:SetPosition(override.x or self.x, override.y or self.y)
 end
 
-
 local controller_emojis = {
     "\238\128\143", "\238\128\140", "\238\128\141", "\238\128\142",
     "\238\128\132", "\238\128\133", "\238\128\134", "\238\128\137",
@@ -156,7 +155,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     self.EM_emojis = {}
 
     local function build_bg()
-        self.EM_bg = (mode == "chat" and self.screen_root or (mode == "input_string" and self.root or self)):AddChild(TEMPLATES.RectangleWindow(320, 360, "", nil, nil, ""))
+        local bg_parent = (mode == "chat" and self.screen_root) or ((mode == "input_string" or mode == "rename_position") and self.root) or self
+        self.EM_bg = bg_parent:AddChild(TEMPLATES.RectangleWindow(320, 360, "", nil, nil, ""))
         
         if mode == "chat" then
             self.EM_bg:SetPosition(-320, 320, 0)
@@ -167,8 +167,11 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         elseif mode == "lobby_chat" then
             self.EM_bg:SetPosition(390, 310, 0) 
             self.EM_bg:MoveToFront()
+        elseif mode == "lobby_chat" then
+            self.EM_bg:SetPosition(390, 310, 0) 
+            self.EM_bg:MoveToFront()
         else
-            self.EM_bg:SetPosition(0, -150, 0)
+            self.EM_bg:SetPosition(400, 20, 0)
         end
         self.EM_bg:SetBackgroundTint(80/255, 61/255, 39/255, 0.9)
         table.insert(self.EM_all_widgets, self.EM_bg)
@@ -206,8 +209,11 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 local old = self.config_input.textbox:GetString()
                 self.config_input.textbox:SetString(old .. str)
                 self.config_input.textbox:SetEditing(true)
+            elseif mode == "rename_position" and self.rename and self.rename.textbox then
+                local old = self.rename.textbox:GetString()
+                self.rename.textbox:SetString(old .. str)
+                self.rename.textbox:SetEditing(true)
             elseif mode == "lobby_chat" and self.chatbox and self.chatbox.textbox then
-                -- 将文字插入大厅聊天框
                 local old = self.chatbox.textbox:GetString()
                 self.chatbox.textbox:SetString(old .. str)
                 self.chatbox.textbox:SetEditing(true)
@@ -333,7 +339,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         RefreshPhraseList()
     end
 
-    local menu = (mode == "chat" and self.root or (mode == "input_string" and self.root or self)):AddChild(ImageButton("images/hud.xml", "self_inspect_mod.tex", "self_inspect_mod.tex", "self_inspect_mod.tex", nil, nil, {1,1}, {0,0}))
+    local menu = (mode == "chat" and self.root or ((mode == "input_string" or mode == "rename_position") and self.root or self)):AddChild(ImageButton("images/hud.xml", "self_inspect_mod.tex", "self_inspect_mod.tex", "self_inspect_mod.tex", nil, nil, {1,1}, {0,0}))
     menu.image:SetScale(0.6, 0.6, 1)
     
     if mode == "chat" then
@@ -342,6 +348,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         menu:SetPosition(x, 0, 0)
     elseif mode == "input_string" then
         menu:SetPosition(0, -40, 0) 
+    elseif mode == "rename_position" then
+        menu:SetPosition(250, -185, 0)
     elseif mode == "lobby_chat" then
         menu:SetPosition(340, 75, 0)
     else
@@ -355,6 +363,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     menu:SetOnClick(function()
         if mode == "chat" then self.chat_edit:SetEditing(true) end
         if mode == "input_string" then self.config_input.textbox:SetEditing(true) end
+        if mode == "rename_position" then self.rename.textbox:SetEditing(true) end
         if mode == "lobby_chat" then self.chatbox.textbox:SetEditing(true) end
         
         if self.EM_bg then
@@ -381,6 +390,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                             self.chat_edit:SetEditing(true) 
                         elseif mode == "input_string" and self.config_input then
                             self.config_input.textbox:SetEditing(true)
+                        elseif mode == "rename_position" and self.rename then
+                            self.rename.textbox:SetEditing(true)
                         elseif mode == "lobby_chat" and self.chatbox then
                             self.chatbox.textbox:SetEditing(true)
                         end
@@ -388,11 +399,12 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                     end
                 end
             elseif button == GLOBAL.MOUSEBUTTON_RIGHT then
-                if (mode == "chat" or mode == "input_string" or mode == "lobby_chat") and self.EM_menu and self.EM_menu.focus then
+                if (mode == "chat" or mode == "input_string" or mode == "rename_position" or mode == "lobby_chat") and self.EM_menu and self.EM_menu.focus then
                     if self.EM_bg and self.EM_bg.shown then
                         self.EM_bg:Hide()
                         if mode == "chat" and self.chat_edit then self.chat_edit:SetEditing(true) end
                         if mode == "input_string" and self.config_input then self.config_input.textbox:SetEditing(true) end
+                        if mode == "rename_position" and self.rename then self.rename.textbox:SetEditing(true) end
                         if mode == "lobby_chat" and self.chatbox then self.chatbox.textbox:SetEditing(true) end
                     else
                         if not self.EM_bg then build_bg() else self.EM_bg:Show() end
@@ -407,6 +419,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                             self.chat_edit:SetEditing(true) 
                         elseif mode == "input_string" and self.config_input then
                             self.config_input.textbox:SetEditing(true)
+                        elseif mode == "rename_position" and self.rename then
+                            self.rename.textbox:SetEditing(true)
                         elseif mode == "lobby_chat" and self.chatbox then
                             self.chatbox.textbox:SetEditing(true)
                         end
@@ -684,7 +698,6 @@ function QAWordManagementPanel:RefreshForbiddenList()
     end
     self.forbidden_list:Refresh(list)
 end
-
 function QAWordManagementPanel:RefreshShowMeList()
     local list = {}
     if GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then 
@@ -692,7 +705,6 @@ function QAWordManagementPanel:RefreshShowMeList()
     end
     self.showme_list:Refresh(list)
 end
-
 function QAWordManagementPanel:RefreshReplaceList()
     local list = {}
     if GLOBAL.NOMU_QA.DATA.REPLACEMENTS then 
@@ -700,7 +712,6 @@ function QAWordManagementPanel:RefreshReplaceList()
     end
     self.replace_list:Refresh(list)
 end
-
 function QAWordManagementPanel:RefreshCustomPrefabList()
     local list = {}
     if GLOBAL.NOMU_QA.DATA.CUSTOM_PREFAB_NAMES then 
@@ -717,7 +728,7 @@ local SchemeTemplatePicker = Class(NoMuScreen, function(self, nomu_parent, callb
     NoMuScreen._ctor(self, "SchemeTemplatePicker", nomu_parent, width, height + 10)
     
     self.title = self.root:AddChild(Text(BODYTEXTFONT, 28))
-    self.title:SetString(STRINGS.NOMU_QA.TITLE_TEXT_CHOOSE_TEMPLATE or "选择模板方案")
+    self.title:SetString(STRINGS.NOMU_QA.TITLE_TEXT_CHOOSE_TEMPLATE)
     self.title:SetPosition(0, height / 2 - 25)
     
     self.scheme_list = self.root:AddChild(NoMuList(function()
@@ -1013,59 +1024,271 @@ function QACustomizePanel:RefreshSchemeList()
     end
     self.scheme_list:Refresh(sl)
 end
-
 function QACustomizePanel:RefreshScheme(idx)
     self.scheme_idx = idx or self.scheme_idx
     self.scheme = DeepCopy(GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx])
     self.title_text_editing:SetString(STRINGS.NOMU_QA.TITLE_TEXT_EDITING .. self.scheme.name)
     local fl = {}
-    
-    -- 防止坏档
-    if not self.scheme.data then
-        self.scheme.data = {}
-    end
-
-    for func in pairs(self.scheme.data) do 
-        table.insert(fl, func) 
-    end
+    if not self.scheme.data then self.scheme.data = {} end
+    for func in pairs(self.scheme.data) do table.insert(fl, func) end
     self.func_list:Refresh(fl)
     self:RefreshFunc(fl[1], 'DEFAULT')
 end
-
 function QACustomizePanel:RefreshFunc(func, mapping)
     self.scheme_func = func or self.scheme_func
-    self.title_text_format:SetString(subfmt(STRINGS.NOMU_QA.TITLE_TEXT_FORMAT, { NAME = STRINGS.NOMU_QA.FUNC[self.scheme_func] }))
+    self.title_text_format:SetString(GLOBAL.subfmt(STRINGS.NOMU_QA.TITLE_TEXT_FORMAT, { NAME = STRINGS.NOMU_QA.FUNC[self.scheme_func] }))
     local fl, ml = {}, {}
-    for name, format in pairs(self.scheme.data[self.scheme_func].FORMATS) do 
-        table.insert(fl, { name = name, value = format }) 
-    end
-
+    for name, format in pairs(self.scheme.data[self.scheme_func].FORMATS) do table.insert(fl, { name = name, value = format }) end
     if self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT then
         self.scheme_mapping = mapping or self.scheme_mapping
-        if not self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping] then 
-            self.scheme_mapping = 'DEFAULT' 
-        end
+        if not self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping] then self.scheme_mapping = 'DEFAULT' end
         self.mapping_list:Show()
         self.btn_mapping:Show()
-        self.btn_mapping:SetText(subfmt(STRINGS.NOMU_QA.BUTTON_TEXT_MAPPING, { NAME = (self.scheme_mapping == 'DEFAULT' and STRINGS.NOMU_QA.TITLE_TEXT_MAPPING_DEFAULT or STRINGS.NAMES[self.scheme_mapping] or self.scheme_mapping) }))
-        
+        self.btn_mapping:SetText(GLOBAL.subfmt(STRINGS.NOMU_QA.BUTTON_TEXT_MAPPING, { NAME = (self.scheme_mapping == 'DEFAULT' and STRINGS.NOMU_QA.TITLE_TEXT_MAPPING_DEFAULT or STRINGS.NAMES[self.scheme_mapping] or self.scheme_mapping) }))
         for cat, items in pairs(self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping]) do 
-            for name, value in pairs(items) do 
-                table.insert(ml, { category = cat, name = name, value = value }) 
-            end 
+            for name, value in pairs(items) do table.insert(ml, { category = cat, name = name, value = value }) end 
         end
     else 
         self.mapping_list:Hide()
         self.btn_mapping:Hide() 
     end
-
     local n_format = math.min(8 - math.min(#ml, 4), #fl)
     self.format_list:Refresh(fl, { rows = n_format, y = self.sy - self.dy * (1.5 + 0.5 * n_format) })
     self.btn_mapping:SetPosition(self.sx + 630, self.sy - (2 + n_format) * self.dy)
     self.mapping_list:Refresh(ml, { rows = 8 - n_format, y = self.sy - (2.5 + 0.5 * (8 - n_format) + n_format) * self.dy })
 end
 
--- 快捷宣告主面板
+-- 坐标系统界面
+local ITEM_WIDTH = 190
+local ITEM_HEIGHT = 80
+local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
+    NoMuScreen._ctor(self, "PositionSystemScreen", nomu_parent, 660, 600, "")
+
+    self.title_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT))
+    self.title_text:SetPosition(0, 280, 0)
+
+    self.AddButton(-180, 240, 250, 50, function()
+        return GLOBAL.PositionSystem.DATA.QuickAnnounce and STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_QUICK_ANNOUNCE_OPEN or STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_QUICK_ANNOUNCE_CLOSE
+    end, function()
+        GLOBAL.PositionSystem.DATA.QuickAnnounce = not GLOBAL.PositionSystem.DATA.QuickAnnounce
+        GLOBAL.PositionSystem.SaveData()
+    end)
+
+    self.AddButton(180, 240, 250, 50, function()
+        return GLOBAL.PositionSystem.DATA.DetectTips and STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DETECT_TIPS_OPEN or STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DETECT_TIPS_CLOSE
+    end, function()
+        GLOBAL.PositionSystem.DATA.DetectTips = not GLOBAL.PositionSystem.DATA.DetectTips
+        GLOBAL.PositionSystem.SaveData()
+        if not GLOBAL.PositionSystem.DATA.DetectTips and GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton then
+            GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:DetectPosition()
+        end
+    end)
+
+    self.AddButton(-200, -270, 200, 50, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_RESET_ICON, function() 
+        GLOBAL.PositionSystem.DATA.PositionSystemButtonPos = { 0, -50, 0 }
+        GLOBAL.PositionSystem.SaveData()
+
+        if GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton then
+            GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton.root:SetPosition(0, -50, 0)
+        end
+    end)
+
+    self.AddButton(0, -270, 200, 50, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CLOSE, function() self:Close() end)
+
+    local chasing_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHASING_TITLE_TEXT))
+    chasing_text:SetPosition(-225, 190, 0)
+    local chat_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHAT_TITLE_TEXT))
+    chat_text:SetPosition(0, 190, 0)
+    local saved_text = self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.SAVED_TITLE_TEXT))
+    saved_text:SetPosition(225, 190, 0)
+
+    local function PositionListItem()
+        local item = Widget('position-list-item')
+        item.backing = item:AddChild(TEMPLATES.ListItemBackground(ITEM_WIDTH, ITEM_HEIGHT, function() end))
+        item.backing.move_on_click = true
+
+        item.name = item:AddChild(Text(BODYTEXTFONT, 24))
+        item.name:SetVAlign(ANCHOR_TOP)
+        item.name:SetHAlign(ANCHOR_MIDDLE)
+        item.name:SetPosition(0, -15, 0)
+        item.name:SetRegionSize(ITEM_WIDTH, ITEM_HEIGHT)
+
+        item.pos = item:AddChild(Text(UIFONT, 20))
+        item.pos:SetVAlign(ANCHOR_BOTTOM)
+        item.pos:SetHAlign(ANCHOR_LEFT)
+        item.pos:SetPosition(20, 15, 0)
+        item.pos:SetRegionSize(ITEM_WIDTH, ITEM_HEIGHT)
+
+        item.btn1 = item:AddChild(TextButton())
+        item.btn1:SetFont(CHATFONT)
+        item.btn1:SetTextSize(20)
+        item.btn1:SetPosition(35, -15, 0)
+        item.btn1:SetTextFocusColour({ 1, 1, 1, 1 })
+
+        item.btn2 = item:AddChild(TextButton())
+        item.btn2:SetFont(CHATFONT)
+        item.btn2:SetTextSize(20)
+        item.btn2:SetPosition(70, -15, 0)
+        item.btn2:SetTextFocusColour({ 1, 1, 1, 1 })
+
+        item.SetInfo = function(_, data)
+            item.name:SetString(data.name)
+            item.name:SetColour(1, 1, 1, 1)
+            
+            local world_str = data.world and ("["..data.world.."] ") or ""
+            item.pos:SetString(string.format('%s(%.2f, %.2f, %.2f)', world_str, data.x, data.y, data.z))
+
+            if data.type == 'chasing' then
+                item.btn1:SetTextColour({ 0 / 255, 220 / 255, 60 / 255, 1 })
+                item.btn1:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_SAVE)
+                item.btn1:SetOnClick(function()
+                    -- 保存时存入 data.world
+                    table.insert(GLOBAL.PositionSystem.POSITION.saved, { name = data.name, x = data.x, y = data.y, z = data.z, world = data.world, type = 'saved' })
+                    GLOBAL.PositionSystem.SavePosition()
+                    self:RefreshPositions()
+                end)
+                item.btn1:Show()
+
+                item.btn2:SetTextColour({ 240 / 255, 70 / 255, 70 / 255, 1 })
+                item.btn2:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DELETE)
+                item.btn2:SetOnClick(function()
+                    data.indicator:OnControl(GLOBAL.CONTROL_SECONDARY, true)
+                    self:RefreshPositions()
+                end)
+                item.btn2:Show()
+            elseif data.type == 'chat' then
+                item.btn1:SetTextColour({ 0 / 255, 220 / 255, 60 / 255, 1 })
+                item.btn1:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_SAVE)
+                item.btn1:SetOnClick(function()
+                    -- 保存时存入 data.world
+                    table.insert(GLOBAL.PositionSystem.POSITION.saved, { name = data.name, x = data.x, y = data.y, z = data.z, world = data.world, type = 'saved' })
+                    GLOBAL.PositionSystem.SavePosition()
+                    self:RefreshPositions()
+                end)
+                item.btn1:Show()
+
+                item.btn2:SetTextColour({ 0.9, 0.8, 0.6, 1 })
+                item.btn2:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CHASE)
+                item.btn2:SetOnClick(function()
+                    -- 追踪时传入 data.world
+                    GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:ChasePosition(data.name, data.x, data.y, data.z, data.world)
+                    self:RefreshPositions()
+                end)
+                item.btn2:Show()
+            elseif data.type == 'saved' then
+                item.btn1:SetTextColour({ 240 / 255, 70 / 255, 70 / 255, 1 })
+                item.btn1:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DELETE)
+                item.btn1:SetOnClick(function()
+                    for i, d in ipairs(GLOBAL.PositionSystem.POSITION.saved) do
+                        if d.name == data.name and d.x == data.x and d.y == data.y and d.z == data.z then
+                            table.remove(GLOBAL.PositionSystem.POSITION.saved, i)
+                            break
+                        end
+                    end
+                    GLOBAL.PositionSystem.SavePosition()
+                    self:RefreshPositions()
+                end)
+                item.btn1:Show()
+
+                item.btn2:SetTextColour({ 0.9, 0.8, 0.6, 1 })
+                item.btn2:SetText(STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CHASE)
+                item.btn2:SetOnClick(function()
+                    -- 追踪时传入 data.world
+                    GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:ChasePosition(data.name, data.x, data.y, data.z, data.world)
+                    self:RefreshPositions()
+                end)
+                item.btn2:Show()
+            else
+                item.btn1:Hide()
+                item.btn2:Hide()
+            end
+
+            item.backing:SetOnClick(function()
+                self.rename_data = data
+                self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT .. ' ' .. data.name)
+                self.rename.textbox:SetString(data.name)
+                self.rename.textbox:Enable()
+                self.rename_ok_btn:Enable()
+                self.rename_cancel_btn:Enable()
+                if self.EM_menu then self.EM_menu:Show() end
+            end)
+        end
+        item.focus_forward = item.backing
+        return item
+    end
+
+    self.chasing_list = self.root:AddChild(NoMuList(PositionListItem, -240, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
+    self.chat_list = self.root:AddChild(NoMuList(PositionListItem, 0, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
+    self.saved_list = self.root:AddChild(NoMuList(PositionListItem, 240, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
+
+    self.rename_label = self.root:AddChild(Text(CHATFONT, 25))
+    self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT)
+    self.rename_label:SetHAlign(ANCHOR_RIGHT)
+    self.rename_label:SetRegionSize(200, 40)
+    self.rename_label:SetPosition(-205, -185)
+    self.rename_label:SetColour(UICOLOURS.GOLD)
+
+    self.rename = self.root:AddChild(TEMPLATES.StandardSingleLineTextEntry("", 200, 40))
+    self.rename.textbox:SetTextLengthLimit(50)
+    self.rename.textbox:Disable()
+    self.rename:SetPosition(0, -185, 0)
+
+    self.rename_ok_btn = self.AddButton(135, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_OK, function()
+        local new_name = self.rename.textbox:GetLineEditString()
+        if self.rename_data and new_name then
+            for i, d in ipairs(GLOBAL.PositionSystem.POSITION[self.rename_data.type]) do
+                if d.name == self.rename_data.name and d.x == self.rename_data.x and d.y == self.rename_data.y and d.z == self.rename_data.z then
+                    GLOBAL.PositionSystem.POSITION[self.rename_data.type][i].name = new_name
+                    break
+                end
+            end
+            GLOBAL.PositionSystem.SavePosition()
+            self:RefreshPositions()
+            self.rename_data = nil
+            self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT)
+            self.rename.textbox:SetString()
+            self.rename.textbox:Disable()
+            self.rename_ok_btn:Disable()
+            self.rename_cancel_btn:Disable()
+
+            if self.EM_bg and self.EM_bg.shown then self.EM_bg:Hide() end
+            if self.EM_menu then self.EM_menu:Hide() end
+        end
+    end)
+    self.rename_ok_btn:Disable()
+
+    self.rename_cancel_btn = self.AddButton(195, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CANCEL, function()
+        self.rename_data = nil
+        self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT)
+        self.rename.textbox:SetString()
+        self.rename.textbox:Disable()
+        self.rename_ok_btn:Disable()
+        self.rename_cancel_btn:Disable()
+
+        if self.EM_bg and self.EM_bg.shown then self.EM_bg:Hide() end
+        if self.EM_menu then self.EM_menu:Hide() end
+    end)
+    self.rename_cancel_btn:Disable()
+
+    CreateEmojiAndPhraseMenu(self, "rename_position")
+    if self.EM_menu then self.EM_menu:Hide() end
+
+    self:RefreshPositions()
+end)
+
+function PositionSystemScreen:RefreshPositions()
+    self.chasing_list:Refresh(GLOBAL.PositionSystem.POSITION.chasing)
+    
+    local chat_reversed = {}
+    for i = #GLOBAL.PositionSystem.POSITION.chat, 1, -1 do
+        table.insert(chat_reversed, GLOBAL.PositionSystem.POSITION.chat[i])
+    end
+    self.chat_list:Refresh(chat_reversed)
+    
+    self.saved_list:Refresh(GLOBAL.PositionSystem.POSITION.saved)
+end
+
+-- 快捷宣告面板
 local QAPanel = Class(Widget, function(self)
     local width, height = 860, 480
     local sy, dy = height / 2 - 20, 40
@@ -1158,13 +1381,16 @@ local QAPanel = Class(Widget, function(self)
         return item
     end, -220, 0, 200, 40, 2, 7)) 
 
-    AddBtn(-220, -170, 400, dy, STRINGS.NOMU_QA.BUTTON_TEXT_WORD_MANAGE, function() 
+    -- 这里对词库管理按钮尺寸进行瘦身，并在一旁加入坐标系统入口
+    AddBtn(-330, -170, 195, dy, STRINGS.NOMU_QA.BUTTON_TEXT_WORD_MANAGE, function() 
         TheFrontEnd:PushScreen(QAWordManagementPanel(self)) 
     end)
+    AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT, function() 
+        TheFrontEnd:PushScreen(PositionSystemScreen(self)) 
+    end)
 
-   local s = STRINGS.NOMU_QA
+    local s = STRINGS.NOMU_QA
 
-    -- Row 1: 按键判断
     AddBtn(120, sy - dy, 200, dy, function() 
         local m = GLOBAL.NOMU_QA.DATA.ALT_MODE or 1
         return m == 1 and s.BUTTON_TEXT_ALT_MODE_1 or (m == 2 and s.BUTTON_TEXT_ALT_MODE_2 or s.BUTTON_TEXT_ALT_MODE_3) 
@@ -1181,7 +1407,7 @@ local QAPanel = Class(Widget, function(self)
         GLOBAL.NOMU_QA.SaveData() 
     end)
 
-   local prefix_btn
+    local prefix_btn
     prefix_btn = AddBtn(220, sy - 2*dy, 400, dy, function()
         local p = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
         if p == nil or p == "" then p = GLOBAL.STRINGS.LMB end
@@ -1251,9 +1477,7 @@ end)
 
 function QAPanel:Refresh()
     local fl = {}
-    for idx, freq in ipairs(GLOBAL.NOMU_QA.DATA.FREQ_LIST) do 
-        table.insert(fl, { idx = idx, freq = freq }) 
-    end
+    for idx, freq in ipairs(GLOBAL.NOMU_QA.DATA.FREQ_LIST) do table.insert(fl, { idx = idx, freq = freq }) end
     self.freq_list:Refresh(fl)
 end
 
@@ -1261,22 +1485,16 @@ function QAPanel:OnGainFocus()
     self.camera_controllable_reset = TheCamera:IsControllable()
     TheCamera:SetControllable(false) 
 end
-
-function QAPanel:OnLoseFocus() 
-    TheCamera:SetControllable(self.camera_controllable_reset) 
-end
-
+function QAPanel:OnLoseFocus() TheCamera:SetControllable(self.camera_controllable_reset) end
 function QAPanel:OnControl(control, down)
     if QAPanel._base.OnControl(self, control, down) then return true end
-    if not down and (control == CONTROL_PAUSE or control == CONTROL_CANCEL) then 
-        self:Hide() 
-    end
+    if not down and (control == CONTROL_PAUSE or control == CONTROL_CANCEL) then self:Hide() end
     return true
 end
 
 -- 导出给主文件使用
 GLOBAL.NOMU_QA.QAPanel = QAPanel
-
+GLOBAL.NOMU_QA.PositionSystemScreen = PositionSystemScreen
 
 -- 添加至写字板屏幕
 AddClassPostConstruct("widgets/writeablewidget", function(self)

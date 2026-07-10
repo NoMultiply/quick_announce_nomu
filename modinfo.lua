@@ -13,7 +13,7 @@ description = [[
 - 兼容了 macOS
 ]]
 
-version = "2026-07-08"
+version = "2026-07-10"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then

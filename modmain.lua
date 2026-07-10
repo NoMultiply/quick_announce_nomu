@@ -1,7 +1,12 @@
 -- [1] 初始化
 GLOBAL.setmetatable(env, { __index = function(_, k) return GLOBAL.rawget(GLOBAL, k) end })
 
-
+Assets = {
+    Asset("IMAGE", "images/PositionSystemIcon.tex"),
+    Asset("ATLAS", "images/PositionSystemIcon.xml"),
+    Asset("IMAGE", "images/PositionSystemMapIcon.tex"),
+    Asset("ATLAS", "images/PositionSystemMapIcon.xml"),
+}
 
 -- 导入其他 Lua 文件的辅助函数
 local function Import(modulename)
@@ -80,7 +85,7 @@ modimport('scripts/qa_config/qa_utils.lua')
 -- [2] 全局数据
 local DEFAULT_SCHEME = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
 local VERSION = 1
-
+local MAX_HISTORY_POSITION = 20
 -- 检查是否启用了 Show Me
 local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil or ModManager:GetMod("workshop-2189004162") ~= nil
 
@@ -130,6 +135,15 @@ GLOBAL.NOMU_QA = {
     SCHEME = DEFAULT_SCHEME
 }
 
+GLOBAL.PositionSystem = {
+    DATA = {
+        PositionSystemButtonPos = { 0, -50, 0 },
+        QuickAnnounce = true,
+        DetectTips = true,
+    },
+    POSITION = { chasing = {}, chat = {}, saved = {} }
+}
+--按键管理
 local function IsAltPressed()
     local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
     
@@ -154,7 +168,7 @@ local function IsShiftPressed()
     end
 end
 
--- 三方同步
+-- 数据同步系统
 local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     if not source_data or type(source_data) ~= "table" then return end
     
@@ -253,6 +267,83 @@ end
 
 -- 数据存储与预处理缓存
 local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
+local DATA_FILE_PS = "mod_config_data/position_system_data_save"
+local UNIFIED_POSITION_FILE_PS = "mod_config_data/nomu_ps_saved_positions_v1" 
+
+-- 坐标系统
+GLOBAL.PositionSystem.LoadData = function()
+    GLOBAL.TheSim:GetPersistentString(DATA_FILE_PS, function(load_success, str)
+        if load_success and #str > 0 then
+            local run_success, data = GLOBAL.RunInSandboxSafe(str)
+            if run_success then
+                for k, v in pairs(data) do if v ~= nil then GLOBAL.PositionSystem.DATA[k] = v end end
+            end
+        end
+    end)
+
+    GLOBAL.TheSim:GetPersistentString(UNIFIED_POSITION_FILE_PS, function(load_success, str)
+        local server_name = GLOBAL.TheNet:GetServerName() or "UnknownServer"
+        
+        if load_success and #str > 0 then
+            local run_success, data = GLOBAL.RunInSandboxSafe(str)
+            if run_success and type(data) == "table" then
+                GLOBAL.PositionSystem.ALL_SAVED_POSITIONS = data
+                GLOBAL.PositionSystem.POSITION.saved = data[server_name] or {}
+            end
+        else
+            GLOBAL.PositionSystem.ALL_SAVED_POSITIONS = {}
+            GLOBAL.PositionSystem.POSITION.saved = {}
+        end
+    end)
+end
+
+GLOBAL.PositionSystem.SaveData = function()
+    GLOBAL.SavePersistentString(DATA_FILE_PS, GLOBAL.DataDumper(GLOBAL.PositionSystem.DATA, nil, true), false, nil)
+end
+
+GLOBAL.PositionSystem.SavePosition = function()
+    local server_name = GLOBAL.TheNet:GetServerName() or "UnknownServer"
+    
+    if not GLOBAL.PositionSystem.ALL_SAVED_POSITIONS then
+        GLOBAL.PositionSystem.ALL_SAVED_POSITIONS = {}
+    end
+    
+    GLOBAL.PositionSystem.ALL_SAVED_POSITIONS[server_name] = GLOBAL.PositionSystem.POSITION.saved
+    
+    GLOBAL.SavePersistentString(UNIFIED_POSITION_FILE_PS, GLOBAL.DataDumper(GLOBAL.PositionSystem.ALL_SAVED_POSITIONS, nil, true), false, nil)
+end
+
+GLOBAL.PositionSystem.AnnouncePosition = function(name, x, y, z, world)
+    if not (name and x and y and z) then return end
+
+    world = world or (GLOBAL.QA_UTILS and GLOBAL.QA_UTILS.GetWorldLocalizedName and GLOBAL.QA_UTILS.GetWorldLocalizedName() or "未知")
+    
+    local msg = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.QUICK_ANNOUNCE_FORMAT, name, world, x, y, z)
+    
+    if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.Announce then
+        GLOBAL.NOMU_QA.Announce(msg)
+    else
+        GLOBAL.TheNet:Say(GLOBAL.STRINGS.RMB .. " " .. msg, false)
+    end
+end
+
+GLOBAL.PositionSystem.DetectPosition = function(name, x, y, z, force_detect, world)
+    if not (name and x and y and z) then return end
+
+    world = world or (GLOBAL.QA_UTILS and GLOBAL.QA_UTILS.GetWorldLocalizedName and GLOBAL.QA_UTILS.GetWorldLocalizedName() or "未知")
+    
+    table.insert(GLOBAL.PositionSystem.POSITION.chat, {
+        name = name, x = x, y = y, z = z, world = world, type = 'chat'
+    })
+    while #GLOBAL.PositionSystem.POSITION.chat > MAX_HISTORY_POSITION do
+        table.remove(GLOBAL.PositionSystem.POSITION.chat, 1)
+    end
+    if GLOBAL.PositionSystem.DATA.DetectTips or force_detect then
+        if GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton then
+            GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:DetectPosition(name, x, y, z, world)
+        end
+    end
+end
 
 -- 转义正则特殊字符
 local function escape_pattern(text)
@@ -368,42 +459,7 @@ local function CheckAnims(animState, anim_list)
     return false
 end
 
--- 通用字符串前缀清理工具
-local function CleanPrefixName(raw_display, base_name, current_name)
-    local final_name = current_name
-    if GLOBAL.NOMU_QA.DATA.SHOW_PREFIX then
-        local lines = string.split(raw_display, '\n')
-        local target_line = lines[1] or raw_display -- 取第一行保底
-
-        if base_name and base_name ~= "" then
-            for _, line in ipairs(lines) do
-                if string.find(line, base_name, 1, true) then
-                    target_line = line
-                    break
-                end
-            end
-
-            if target_line ~= base_name and string.find(target_line, base_name, 1, true) then
-                final_name = string.gsub(target_line, escape_pattern(base_name), final_name)
-            end
-        else
-            if final_name and final_name ~= "" then
-                for _, line in ipairs(lines) do
-                    if string.find(line, final_name, 1, true) then
-                        target_line = line
-                        break
-                    end
-                end
-            end
-            if final_name and target_line ~= final_name and string.find(target_line, final_name, 1, true) then
-                final_name = target_line
-            end
-        end
-    end
-    return final_name
-end
-
---  获取自定义预制物名称 
+-- 获取自定义预制物名称 
 local function ApplyCustomName(prefab, original_name)
     if not GLOBAL.NOMU_QA.DATA.ENABLE_CUSTOM_PREFAB_NAME
         or not GLOBAL.NOMU_QA.DATA.CUSTOM_PREFAB_NAMES
@@ -418,6 +474,99 @@ local function ApplyCustomName(prefab, original_name)
         end
     end
     return original_name
+end
+
+-- 统一实体名称获取逻辑
+local function GetEntityName(entity, force_basic)
+    if not entity then 
+        return STRINGS.NOMU_QA.UNKNOWN_NAME or "未知名称", nil, nil, false, false, false, ""
+    end
+
+    local actual_prefab = entity.prefabnameoverride or entity.nameoverride or entity.prefab
+    local base_game_name = actual_prefab and (GLOBAL.STRINGS.NOMU_QA[actual_prefab:upper()] or GLOBAL.STRINGS.NAMES[actual_prefab:upper()])
+    local prefab_name = ApplyCustomName(entity.prefab, base_game_name)
+
+    -- 是否获取动态前缀
+    local use_prefix = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and not force_basic
+    local raw_name = use_prefix and entity:GetDisplayName() or (entity:GetBasicDisplayName() or entity.name or "")
+    
+    local display_name = ""
+    pcall(function()
+        local lines = string.split(raw_name, '\n')
+        display_name = lines[1] or raw_name
+        
+        if prefab_name and prefab_name ~= "" then
+            for _, line in ipairs(lines) do
+                if string.find(line, prefab_name, 1, true) then
+                    display_name = line
+                    break
+                end
+            end
+        end
+    end)
+
+    display_name = display_name == "" and (prefab_name or "MISSING NAME") or display_name
+    
+    -- sinkhole的特殊修正
+    if entity.prefab and string.find(entity.prefab, "sinkhole") then
+        prefab_name = GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] or (display_name ~= entity.prefab and not string.find(display_name, "MISSING") and display_name or GLOBAL.STRINGS.NOMU_QA.SINKHOLE)
+    end
+
+    local final_name = prefab_name
+    if GLOBAL.NOMU_QA.DATA.SHOW_PREFIX or force_basic then
+        local target_line = display_name
+        if base_game_name and base_game_name ~= "" then
+            if target_line ~= base_game_name and string.find(target_line, base_game_name, 1, true) then
+                final_name = string.gsub(target_line, escape_pattern(base_game_name), final_name)
+            end
+        else
+            if final_name and final_name ~= "" and target_line ~= final_name and string.find(target_line, final_name, 1, true) then
+                final_name = target_line
+            end
+        end
+    end
+    
+    -- 蓝图等类型特殊判定
+    local is_blueprint = false
+    if entity.prefab and (string.find(entity.prefab, "certificate") or string.find(entity.prefab, "blueprint") or string.find(entity.prefab, "sketch") or entity.prefab == "cookingrecipecard") and display_name ~= prefab_name then
+        final_name = display_name
+        is_blueprint = true
+    end
+
+    local basic_name = ""
+    pcall(function() basic_name = entity:GetBasicDisplayName() or "" end)
+    local default_name = entity.prefab and GLOBAL.STRINGS.NAMES[entity.prefab:upper()] or ""
+
+    local is_qa_item = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] ~= nil
+    local hardcoded_name = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()]
+    
+    local is_custom_named = false
+    local is_qa_hardcoded_diff = false
+
+    if not is_qa_item then
+        is_custom_named = basic_name ~= "" and prefab_name ~= nil and basic_name ~= default_name and basic_name ~= prefab_name and not string.find(string.upper(basic_name), "MISSING") and not is_blueprint
+    else
+        local orig_n = default_name ~= "" and default_name or basic_name
+        if orig_n ~= "" and not string.find(string.upper(orig_n), "MISSING") and orig_n ~= hardcoded_name then
+            is_qa_hardcoded_diff = true
+        end
+    end
+
+    local definitive_name = final_name or display_name
+    local orig_name = default_name ~= "" and default_name or basic_name
+
+    if is_qa_hardcoded_diff then
+        if not use_prefix then
+            local stripped = ""
+            pcall(function() stripped = string.split(entity:GetBasicDisplayName(), '\n')[1] or entity:GetBasicDisplayName() end)
+            if stripped ~= "" then orig_name = stripped end
+        end
+        definitive_name = prefab_name
+    elseif is_custom_named then
+        definitive_name = display_name
+    end
+
+    return definitive_name, prefab_name, display_name, is_blueprint, is_custom_named, is_qa_hardcoded_diff, orig_name
 end
 
 -- 核心发送宣告消息的函数
@@ -1780,8 +1929,8 @@ local function AnnounceItem(slot, classname)
         end
     end
 
-    local name = item.prefab and (STRINGS.NOMU_QA[item.prefab:upper()] or STRINGS.NAMES[item.prefab:upper()]) or STRINGS.NOMU_QA.UNKNOWN_NAME
-    name = ApplyCustomName(item.prefab, name)
+    local final_name, prefab_name, display_name, is_blueprint, is_custom_named, is_qa_hardcoded_diff, orig_name = GetEntityName(item, false)
+    local name = prefab_name
 
     local num_found = container:Has(item.prefab, 1) and (
         ITEM_PREFAB_ALIAS[item.prefab] and CountItems(container, item:GetDisplayName(), ITEM_PREFAB_ALIAS[item.prefab], true)
@@ -1794,29 +1943,12 @@ local function AnnounceItem(slot, classname)
     ) + num_equipped_name
 
     num_found = num_found + num_equipped
-    local item_name = string.gsub(item:GetBasicDisplayName(), '\n', '')
 
-    -- 应用通用的字符串前缀清理优化
-    if name ~= STRINGS.NOMU_QA.UNKNOWN_NAME then
-        name = CleanPrefixName(item:GetDisplayName(), item.prefab and STRINGS.NAMES[item.prefab:upper()], name)
-    end
-
-    if name == STRINGS.NOMU_QA.UNKNOWN_NAME and num_found == num_found_name then
+    if name == (STRINGS.NOMU_QA.UNKNOWN_NAME or "未知名称") and num_found == num_found_name then
         name = item:GetDisplayName():gsub('\n', '')
     end
 
     local qa = GLOBAL.NOMU_QA.SCHEME.ITEM
-
-    local is_target_prefab = item.prefab and (
-        item.prefab:find("certificate")
-        or item.prefab:find("blueprint")
-        or item.prefab:find("sketch")
-        or item.prefab == "cookingrecipecard"
-    )
-    if is_target_prefab then
-        name = item_name
-    end
-
     local fmts = {
         PRONOUN = GetMapping(qa, 'PRONOUN', 'I'),
         NUM = num_found,
@@ -1829,37 +1961,16 @@ local function AnnounceItem(slot, classname)
         ITEM_NUM = num_equipped ~= num_found and subfmt(GetMapping(qa, 'WORDS', 'ITEM_NUM'), { NUM = num_found }) or ''
     }
 
-    local is_qa_item = item.prefab and STRINGS.NOMU_QA[item.prefab:upper()] ~= nil
     local hardcoded_name = item.prefab and STRINGS.NOMU_QA[item.prefab:upper()]
-    local orig_game_name = item.prefab and STRINGS.NAMES[item.prefab:upper()] or ""
-    local default_name = item.prefab and (STRINGS.NOMU_QA[item.prefab:upper()] or STRINGS.NAMES[item.prefab:upper()]) or ""
-    
-    local is_custom_named = false
-    local is_qa_hardcoded_diff = false
-
-    if not is_qa_item then
-        is_custom_named = item_name ~= ""
-                         and not string.find(string.upper(item_name), "MISSING")
-                         and item_name ~= default_name
-                         and item_name ~= name
-                         and not is_target_prefab
-    else
-        local display_orig = orig_game_name ~= "" and orig_game_name or item_name
-        if display_orig ~= "" 
-           and not string.find(string.upper(display_orig), "MISSING") 
-           and display_orig ~= hardcoded_name then
-            is_qa_hardcoded_diff = true
-        end
-    end
 
     if is_qa_hardcoded_diff then
-        local display_orig = orig_game_name ~= "" and orig_game_name or item_name
-        fmts.ITEM = display_orig 
-        fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = hardcoded_name }) -- 后缀改为宣告硬编码名字
+        fmts.ITEM = orig_name 
+        fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = hardcoded_name })
     elseif is_custom_named then
-        fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = item_name })
+        fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = display_name })
     else
         fmts.ITEM_NAME = ''
+        fmts.ITEM = final_name
     end
 
     if container_name then
@@ -1964,15 +2075,12 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
     if not plans then return false end
 
     local container_rep = container_widget and container_widget.inst and container_widget.inst.replica.container
-    local site_name = (site:GetDisplayName()
-                    or GLOBAL.STRINGS.NOMU_QA[site.prefab:upper()]
-                    or GLOBAL.STRINGS.NAMES[site.prefab:upper()]
-                    or site.prefab):gsub('\n', ' ')
-
-    site_name = ApplyCustomName(site.prefab, site_name)
+    
+    local site_name = GetEntityName(site, false)
 
     local is_trade = site:HasTag("offerconstructionsite") or (container_widget and container_widget.inst and container_widget.inst:HasTag("offerconstructionsite"))
     local qa_const = GLOBAL.NOMU_QA.SCHEME.CONSTRUCTION_AND_TRADE
+
     local prefix = is_trade and "TRADE_" or "CONS_"
 
     local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format(
@@ -2353,48 +2461,10 @@ local function HandlePlayerClick(entity)
             return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }))
         end
         
-        local rider = entity.replica.rider
+       local rider = entity.replica.rider
         if rider and rider:IsRiding() then
             local mount = rider:GetMount()
-            local mount_name = "坐骑"
-            if mount then
-                local actual_prefab = mount.prefabnameoverride or mount.nameoverride or mount.prefab
-                local prefab_name = actual_prefab and (GLOBAL.STRINGS.NOMU_QA[actual_prefab:upper()] or GLOBAL.STRINGS.NAMES[actual_prefab:upper()])
-                prefab_name = ApplyCustomName(mount.prefab, prefab_name)
-
-                local basic_name = ""
-                pcall(function() basic_name = mount:GetBasicDisplayName() end)
-                local default_name = mount.prefab and GLOBAL.STRINGS.NAMES[mount.prefab:upper()] or ""
-
-                local display_name = ""
-                pcall(function()
-                    local raw_name = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and mount:GetDisplayName() or mount:GetBasicDisplayName()
-                    local lines = string.split(raw_name, '\n')
-                    display_name = lines[1] or raw_name
-                    if prefab_name and prefab_name ~= "" then
-                        for _, line in ipairs(lines) do
-                            if string.find(line, prefab_name, 1, true) then
-                                display_name = line
-                                break
-                            end
-                        end
-                    end
-                end)
-
-                display_name = display_name == "" and (prefab_name or "坐骑") or display_name
-
-                local is_custom_named = false
-                if basic_name ~= "" and prefab_name ~= nil and basic_name ~= default_name and basic_name ~= prefab_name and not string.find(string.upper(basic_name), "MISSING") then
-                    is_custom_named = true
-                end
-
-                if is_custom_named then
-                    mount_name = display_name
-                else
-                    local final_name = GetCleanEntityName(mount, prefab_name)
-                    mount_name = final_name or display_name
-                end
-            end
+            local mount_name = GetEntityName(mount, false)
             
             if qa_formats.ME_RIDING then
                 return Announce(subfmt(qa_formats.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
@@ -2405,12 +2475,7 @@ local function HandlePlayerClick(entity)
         if inventory then
             local equip_body = inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
             if equip_body and equip_body:HasTag("heavy") then
-                local prefab = equip_body.prefab or ""
-                local heavy_name = (prefab ~= "" and GLOBAL.STRINGS.NOMU_QA[string.upper(prefab)]) or (prefab ~= "" and GLOBAL.STRINGS.NAMES[string.upper(prefab)] or equip_body.name)
-                if not heavy_name or heavy_name == "" then
-                    pcall(function() heavy_name = equip_body:GetDisplayName() end)
-                end
-                heavy_name = ApplyCustomName(prefab, heavy_name or "未知重物")
+                local heavy_name = GetEntityName(equip_body, false)
                 if qa_formats.ME_CARRYING then
                     return Announce(subfmt(qa_formats.ME_CARRYING, { NAME = entity:GetDisplayName(), ITEM = heavy_name }))
                 end
@@ -2485,16 +2550,6 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         entity = nil
     end
 
-    local qa = GLOBAL.NOMU_QA.SCHEME.ENV
-
-    if button == GLOBAL.MOUSEBUTTON_MIDDLE then
-        if entity then HandleEnvMiddleClick(entity) end
-        return
-    end
-
-    if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
-
-    -- 模糊匹配保底逻辑
     if not entity then
         local pos = TheInput:GetWorldPosition()
         local ents = GLOBAL.TheSim:FindEntities(pos.x, pos.y, pos.z, GLOBAL.NOMU_QA.DATA.FUZZY_ANNOUNCE and 4 or 2, nil, { "INLIMBO", "player" })
@@ -2513,6 +2568,32 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         entity = entity or fuzzy_entity
     end
 
+    local qa = GLOBAL.NOMU_QA.SCHEME.ENV
+
+    if button == GLOBAL.MOUSEBUTTON_MIDDLE then
+        if entity then HandleEnvMiddleClick(entity) end
+        return
+    end
+
+    -- 右键宣告并获取坐标
+    if button == GLOBAL.MOUSEBUTTON_RIGHT then
+        local name, px, py, pz
+        if entity and entity.Transform then
+            name = GetEntityName(entity, true)
+            px, py, pz = entity:GetPosition():Get()
+        else
+            px, py, pz = GLOBAL.TheInput:GetWorldPosition():Get()
+            name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
+        end
+        GLOBAL.PositionSystem.DetectPosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz, true)
+        if GLOBAL.PositionSystem.DATA.QuickAnnounce then
+            GLOBAL.PositionSystem.AnnouncePosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz)
+        end
+        return
+    end
+
+    if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
+
     if not entity then return end
 
     if not TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) and entity:HasTag('player') then
@@ -2528,6 +2609,8 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
 
     -- 优先评估目标实体状态
     local target_state = GetEntitySpecialState(entity, true)
+    
+    local final_name, prefab_name, display_name, is_blueprint, is_custom_named, is_qa_hardcoded_diff, orig_name = GetEntityName(entity, false)
     local target_name = ""
     pcall(function() target_name = entity:GetDisplayName() end)
 
@@ -2558,14 +2641,12 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             count_prefab = count_prefab + s
             if v_name == target_name then count_name = count_name + s end
             
-            -- 使用相同的判断逻辑检测当前实体的状态是否匹配目标状态
             if target_state and GetEntitySpecialState(v, false) == target_state then
                 stat_count = stat_count + 1
             end
         end
     end
 
-    -- Boss 部件逻辑修正
     if is_worm_boss_piece then
         local boss_count = 0
         for _, v in pairs(GLOBAL.Ents) do
@@ -2578,42 +2659,9 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         count_prefab, count_name = boss_count, boss_count
     end
 
-    -- 物品名称处理
-    -- 优先获取官方的重写名称，如果没有重写，再使用真实的 prefab 代码
-    local actual_prefab = entity.prefabnameoverride or entity.nameoverride or entity.prefab
-    local prefab_name = actual_prefab and (GLOBAL.STRINGS.NOMU_QA[actual_prefab:upper()] or GLOBAL.STRINGS.NAMES[actual_prefab:upper()])
-    prefab_name = ApplyCustomName(entity.prefab, prefab_name)
-
-    local display_name = ""
-    pcall(function()
-        local raw_name = GLOBAL.NOMU_QA.DATA.SHOW_PREFIX and entity:GetDisplayName() or entity:GetBasicDisplayName()
-        local lines = string.split(raw_name, '\n')
-        display_name = lines[1] or raw_name
-        if prefab_name and prefab_name ~= "" then
-            for _, line in ipairs(lines) do
-                if string.find(line, prefab_name, 1, true) then
-                    display_name = line
-                    break
-                end
-            end
-        end
-    end)
-
-    display_name = display_name == "" and (prefab_name or "MISSING NAME") or display_name
-    if entity.prefab and string.find(entity.prefab, "sinkhole") then
-        prefab_name = GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] or (display_name ~= entity.prefab and not string.find(display_name, "MISSING") and display_name or GLOBAL.STRINGS.NOMU_QA.SINKHOLE)
-    end
-
     local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
     local start_line = #(string.split(entity:GetBasicDisplayName(), '\n')) + 1
     local show_me = GetShowMeString(entity, qa, start_line, nil, nil, 2)
-
-    local final_name = GetCleanEntityName(entity, prefab_name)
-    local is_blueprint_type = false
-    if entity.prefab and (string.find(entity.prefab, "certificate") or string.find(entity.prefab, "blueprint") or string.find(entity.prefab, "sketch") or entity.prefab == "cookingrecipecard") and display_name ~= prefab_name then
-        final_name = display_name
-        is_blueprint_type = true
-    end
 
     -- 距离计算
     local dist_str = ""
@@ -2653,7 +2701,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     local use_special = GLOBAL.NOMU_QA.DATA.ENABLE_SPECIAL_STATE
     if use_special and target_state then
         local is_specific_only = (entity.prefab == "heatrock" or entity.prefab == "birdcage" or entity.prefab == "oasislake" or entity.prefab == "toadstool_cap")
-        local force_display_name = final_name or display_name
+        local force_display_name = final_name
         
         if entity.prefab == "houndfire" then force_display_name = prefab_name or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE end
         if target_state == "WITHERED" or target_state == "BARREN" then force_display_name = prefab_name end
@@ -2674,26 +2722,9 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     -- 常规普通宣告 fallback 处理
-    local final_count = is_blueprint_type and count_name or (final_name and count_prefab or count_name)
-    local basic_name = ""
-    pcall(function() basic_name = entity:GetBasicDisplayName() end)
-    local default_name = entity.prefab and GLOBAL.STRINGS.NAMES[entity.prefab:upper()] or ""
-
-    local is_qa_item = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()] ~= nil
-    local hardcoded_name = entity.prefab and GLOBAL.STRINGS.NOMU_QA[entity.prefab:upper()]
-    local is_custom_named, is_qa_hardcoded_diff = false, false
-
-    if not is_qa_item then
-        is_custom_named = basic_name ~= "" and prefab_name ~= nil and basic_name ~= default_name and basic_name ~= prefab_name and not string.find(string.upper(basic_name), "MISSING") and not is_blueprint_type
-    else
-        local orig_name = default_name ~= "" and default_name or basic_name
-        if orig_name ~= "" and not string.find(string.upper(orig_name), "MISSING") and orig_name ~= hardcoded_name then
-            is_qa_hardcoded_diff = true
-        end
-    end
-
+    local final_count = is_blueprint and count_name or (final_name and count_prefab or count_name)
+    
     if is_qa_hardcoded_diff and qa.FORMATS.NAMED then
-        local orig_name = default_name ~= "" and default_name or basic_name
         return Announce(subfmt(qa.FORMATS.NAMED, {
             NUM_PREFAB = count_prefab, PREFAB_NAME = orig_name, NUM = count_name, NAME = prefab_name, SHOW_ME = show_me, DISTANCE = dist_str
         }), entity:HasTag('player'), debug_str)
@@ -2704,10 +2735,10 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     if final_count <= 1 then
-        return Announce(subfmt(qa.FORMATS.SINGLE, { NAME = final_name or display_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
+        return Announce(subfmt(qa.FORMATS.SINGLE, { NAME = final_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
     end
 
-    return Announce(subfmt(qa.FORMATS.DEFAULT, { NUM = final_count, NAME = final_name or display_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
+    return Announce(subfmt(qa.FORMATS.DEFAULT, { NUM = final_count, NAME = final_name, SHOW_ME = show_me, DISTANCE = dist_str }), entity:HasTag('player'), debug_str)
 end)
 
 
@@ -2722,7 +2753,7 @@ modimport('scripts/qa_config/qa_panel.lua')
 AddSimPostInit(function()
 
     GLOBAL.NOMU_QA.LoadData()
-
+    GLOBAL.PositionSystem.LoadData()
     -- 动态拦截屏幕弹窗
     if GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd.PushScreen then
         local old_PushScreen = GLOBAL.TheFrontEnd.PushScreen
@@ -3638,5 +3669,77 @@ AddComponentPostInit("playercontroller", function(self)
         if old_OnControl then
             return old_OnControl(self, control, down, ...)
         end
+    end
+end)
+
+local PositionSystemButton = require "widgets/PositionSystemButton"
+AddClassPostConstruct("widgets/statusdisplays", function(self)
+    self.PositionSystemButton = self:AddChild(PositionSystemButton())
+end)
+
+local oldNetworking_Say = GLOBAL.Networking_Say
+GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+    if message and GLOBAL.ThePlayer and userid ~= GLOBAL.ThePlayer.userid then
+        local _, _, n, w, x, y, z = string.find(message, '%[Position System%]%s*"(.-)"%s*在%s*%[(.-)%]%s*坐标%s*%(([^,]-),%s*([^,]-),%s*([^)]-)%)')
+        if n and w and x and y and z then
+            GLOBAL.PositionSystem.DetectPosition(n, tonumber(x), tonumber(y), tonumber(z), false, w)
+        end
+    end
+    return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+end
+
+local Text = require "widgets/text"
+AddClassPostConstruct("widgets/mapwidget", function(self)
+    self.nomu_map_icons = {}
+
+    self.inst:DoPeriodicTask(0, function()
+
+        for _, v in pairs(self.nomu_map_icons) do 
+            v:Kill() 
+        end
+        self.nomu_map_icons = {}
+
+        if not self.shown or not self.bg then return end
+
+        if not GLOBAL.PositionSystem or not GLOBAL.PositionSystem.POSITION or not GLOBAL.PositionSystem.POSITION.chasing then 
+            return 
+        end
+
+        for _, v in pairs(GLOBAL.PositionSystem.POSITION.chasing) do
+            local colour = { 0 / 255, 220 / 255, 60 / 255, 1 }
+            if GLOBAL.ThePlayer then
+                local dist = GLOBAL.ThePlayer:GetPosition():Dist(GLOBAL.Vector3(v.x, v.y, v.z))
+                if dist >= 8 then colour = { 240 / 255, 70 / 255, 70 / 255, 1 } end
+            end
+
+            local x, y = self.minimap:WorldPosToMapPos(v.x, v.z, 0)
+            local map_pos = GLOBAL.Vector3(x * GLOBAL.RESOLUTION_X / 2, y * GLOBAL.RESOLUTION_Y / 2, 0)
+
+            local font_size = math.max(10, 24 - (self:GetZoom() or 0))
+            
+            local map_icon = self.bg:AddChild(Text(GLOBAL.NEWFONT_OUTLINE, font_size, v.name, colour))
+            map_icon:SetPosition(map_pos:Get())
+            
+            table.insert(self.nomu_map_icons, map_icon)
+        end
+    end)
+end)
+
+AddClassPostConstruct("screens/mapscreen", function(MapScreen)
+    local oldOnControl = MapScreen.OnControl
+    function MapScreen:OnControl(control, down)
+        if control == GLOBAL.CONTROL_SECONDARY and not down and IsAltPressed() and IsShiftPressed() then
+            local x, y, z = self:GetWorldPositionAtCursor()
+            local name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
+            GLOBAL.PositionSystem.DetectPosition(name, x, y, z, true)
+            if GLOBAL.PositionSystem.DATA.QuickAnnounce then
+                GLOBAL.PositionSystem.AnnouncePosition(name, x, y, z)
+            end
+            GLOBAL.ThePlayer:DoTaskInTime(0, function()
+                GLOBAL.TheInput:OnControl(GLOBAL.CONTROL_MAP, down)
+            end)
+            return true
+        end
+        if oldOnControl then return oldOnControl(self, control, down) end
     end
 end)
