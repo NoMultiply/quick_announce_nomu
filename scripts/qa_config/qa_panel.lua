@@ -1404,13 +1404,19 @@ local QAPanel = Class(Widget, function(self)
         return item
     end, -220, 0, 200, 40, 2, 7)) 
 
-    -- 这里对词库管理按钮尺寸进行瘦身，并在一旁加入坐标系统入口
     AddBtn(-330, -170, 195, dy, STRINGS.NOMU_QA.BUTTON_TEXT_WORD_MANAGE, function() 
         TheFrontEnd:PushScreen(QAWordManagementPanel(self)) 
     end)
-    AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT, function() 
-        TheFrontEnd:PushScreen(PositionSystemScreen(self)) 
-    end)
+
+    local is_ps_enabled = GetModConfigData("enable_position_system")
+    if is_ps_enabled then
+        AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT, function() 
+            TheFrontEnd:PushScreen(PositionSystemScreen(self)) 
+        end)
+    else
+        local ps_btn = AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT_OFF, function() end)
+        ps_btn:Disable()
+    end
 
     local s = STRINGS.NOMU_QA
 

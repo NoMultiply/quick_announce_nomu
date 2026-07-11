@@ -13,7 +13,7 @@ description = [[
 - 兼容了 macOS
 ]]
 
-version = "2026-07-10"
+version = "2026-07-11"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then
@@ -125,5 +125,15 @@ configuration_options = {
         label = "快捷键（Shortcut）",
         options = theBoardKeys,
 		default = 106,
-	}
+	},
+    {
+        name = "enable_position_system",
+        label = "坐标系统（Position System）",
+        hover = "是否开启右键标记坐标以及追踪等相关功能",
+        options = {
+            {description = "开启", data = true, hover = "启用坐标系统"},
+            {description = "关闭", data = false, hover = "禁用坐标系统"},
+        },
+        default = true,
+    }
 }

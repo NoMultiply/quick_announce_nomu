@@ -8,6 +8,7 @@ Assets = {
     Asset("ATLAS", "images/PositionSystemMapIcon.xml"),
 }
 
+local ENABLE_POSITION_SYSTEM = GetModConfigData("enable_position_system")
 -- 导入其他 Lua 文件的辅助函数
 local function Import(modulename)
     local f = GLOBAL.kleiloadlua(modulename)
@@ -2578,19 +2579,21 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
 
     -- 右键宣告并获取坐标
     if button == GLOBAL.MOUSEBUTTON_RIGHT then
-        local name, px, py, pz
-        if entity and entity.Transform then
-            name = GetEntityName(entity, true)
-            px, py, pz = entity:GetPosition():Get()
-        else
-            px, py, pz = GLOBAL.TheInput:GetWorldPosition():Get()
-            name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
+        if ENABLE_POSITION_SYSTEM then
+            local name, px, py, pz
+            if entity and entity.Transform then
+                name = GetEntityName(entity, true)
+                px, py, pz = entity:GetPosition():Get()
+            else
+                px, py, pz = GLOBAL.TheInput:GetWorldPosition():Get()
+                name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
+            end
+            GLOBAL.PositionSystem.DetectPosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz, true)
+            if GLOBAL.PositionSystem.DATA.QuickAnnounce then
+                GLOBAL.PositionSystem.AnnouncePosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz)
+            end
+            return
         end
-        GLOBAL.PositionSystem.DetectPosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz, true)
-        if GLOBAL.PositionSystem.DATA.QuickAnnounce then
-            GLOBAL.PositionSystem.AnnouncePosition(name or GLOBAL.STRINGS.NOMU_QA.POS_SYS.MISSING_NAME, px, py, pz)
-        end
-        return
     end
 
     if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
@@ -3673,74 +3676,78 @@ AddComponentPostInit("playercontroller", function(self)
     end
 end)
 
-local PositionSystemButton = require "widgets/PositionSystemButton"
-AddClassPostConstruct("widgets/statusdisplays", function(self)
-    self.PositionSystemButton = self:AddChild(PositionSystemButton())
-end)
+if ENABLE_POSITION_SYSTEM then
 
-local oldNetworking_Say = GLOBAL.Networking_Say
-GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-    if message and GLOBAL.ThePlayer and userid ~= GLOBAL.ThePlayer.userid then
-        local _, _, n, w, x, y, z = string.find(message, '%[Position System%]%s*"(.-)"%s*在%s*%[(.-)%]%s*坐标%s*%(([^,]-),%s*([^,]-),%s*([^)]-)%)')
-        if n and w and x and y and z then
-            GLOBAL.PositionSystem.DetectPosition(n, tonumber(x), tonumber(y), tonumber(z), false, w)
+    local PositionSystemButton = require "widgets/PositionSystemButton"
+    AddClassPostConstruct("widgets/statusdisplays", function(self)
+        self.PositionSystemButton = self:AddChild(PositionSystemButton())
+    end)
+
+    local oldNetworking_Say = GLOBAL.Networking_Say
+    GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+        if message and GLOBAL.ThePlayer and userid ~= GLOBAL.ThePlayer.userid then
+            local _, _, n, w, x, y, z = string.find(message, '%[Position System%]%s*"(.-)"%s*在%s*%[(.-)%]%s*坐标%s*%(([^,]-),%s*([^,]-),%s*([^)]-)%)')
+            if n and w and x and y and z then
+                GLOBAL.PositionSystem.DetectPosition(n, tonumber(x), tonumber(y), tonumber(z), false, w)
+            end
         end
+        return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
     end
-    return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-end
 
-local Text = require "widgets/text"
-AddClassPostConstruct("widgets/mapwidget", function(self)
-    self.nomu_map_icons = {}
-
-    self.inst:DoPeriodicTask(0, function()
-
-        for _, v in pairs(self.nomu_map_icons) do 
-            v:Kill() 
-        end
+    local Text = require "widgets/text"
+    AddClassPostConstruct("widgets/mapwidget", function(self)
         self.nomu_map_icons = {}
 
-        if not self.shown or not self.bg then return end
+        self.inst:DoPeriodicTask(0, function()
 
-        if not GLOBAL.PositionSystem or not GLOBAL.PositionSystem.POSITION or not GLOBAL.PositionSystem.POSITION.chasing then 
-            return 
-        end
+            for _, v in pairs(self.nomu_map_icons) do 
+                v:Kill() 
+            end
+            self.nomu_map_icons = {}
 
-        for _, v in pairs(GLOBAL.PositionSystem.POSITION.chasing) do
-            local colour = { 0 / 255, 220 / 255, 60 / 255, 1 }
-            if GLOBAL.ThePlayer then
-                local dist = GLOBAL.ThePlayer:GetPosition():Dist(GLOBAL.Vector3(v.x, v.y, v.z))
-                if dist >= 8 then colour = { 240 / 255, 70 / 255, 70 / 255, 1 } end
+            if not self.shown or not self.bg then return end
+
+            if not GLOBAL.PositionSystem or not GLOBAL.PositionSystem.POSITION or not GLOBAL.PositionSystem.POSITION.chasing then 
+                return 
             end
 
-            local x, y = self.minimap:WorldPosToMapPos(v.x, v.z, 0)
-            local map_pos = GLOBAL.Vector3(x * GLOBAL.RESOLUTION_X / 2, y * GLOBAL.RESOLUTION_Y / 2, 0)
+            for _, v in pairs(GLOBAL.PositionSystem.POSITION.chasing) do
+                local colour = { 0 / 255, 220 / 255, 60 / 255, 1 }
+                if GLOBAL.ThePlayer then
+                    local dist = GLOBAL.ThePlayer:GetPosition():Dist(GLOBAL.Vector3(v.x, v.y, v.z))
+                    if dist >= 8 then colour = { 240 / 255, 70 / 255, 70 / 255, 1 } end
+                end
 
-            local font_size = math.max(10, 24 - (self:GetZoom() or 0))
-            
-            local map_icon = self.bg:AddChild(Text(GLOBAL.NEWFONT_OUTLINE, font_size, v.name, colour))
-            map_icon:SetPosition(map_pos:Get())
-            
-            table.insert(self.nomu_map_icons, map_icon)
+                local x, y = self.minimap:WorldPosToMapPos(v.x, v.z, 0)
+                local map_pos = GLOBAL.Vector3(x * GLOBAL.RESOLUTION_X / 2, y * GLOBAL.RESOLUTION_Y / 2, 0)
+
+                local font_size = math.max(10, 24 - (self:GetZoom() or 0))
+                
+                local map_icon = self.bg:AddChild(Text(GLOBAL.NEWFONT_OUTLINE, font_size, v.name, colour))
+                map_icon:SetPosition(map_pos:Get())
+                
+                table.insert(self.nomu_map_icons, map_icon)
+            end
+        end)
+    end)
+
+    AddClassPostConstruct("screens/mapscreen", function(MapScreen)
+        local oldOnControl = MapScreen.OnControl
+        function MapScreen:OnControl(control, down)
+            if control == GLOBAL.CONTROL_SECONDARY and not down and IsAltPressed() and IsShiftPressed() then
+                local x, y, z = self:GetWorldPositionAtCursor()
+                local name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
+                GLOBAL.PositionSystem.DetectPosition(name, x, y, z, true)
+                if GLOBAL.PositionSystem.DATA.QuickAnnounce then
+                    GLOBAL.PositionSystem.AnnouncePosition(name, x, y, z)
+                end
+                GLOBAL.ThePlayer:DoTaskInTime(0, function()
+                    GLOBAL.TheInput:OnControl(GLOBAL.CONTROL_MAP, down)
+                end)
+                return true
+            end
+            if oldOnControl then return oldOnControl(self, control, down) end
         end
     end)
-end)
 
-AddClassPostConstruct("screens/mapscreen", function(MapScreen)
-    local oldOnControl = MapScreen.OnControl
-    function MapScreen:OnControl(control, down)
-        if control == GLOBAL.CONTROL_SECONDARY and not down and IsAltPressed() and IsShiftPressed() then
-            local x, y, z = self:GetWorldPositionAtCursor()
-            local name = string.format(GLOBAL.STRINGS.NOMU_QA.POS_SYS.MARK_POINT_NAME, GLOBAL.ThePlayer:GetDisplayName())
-            GLOBAL.PositionSystem.DetectPosition(name, x, y, z, true)
-            if GLOBAL.PositionSystem.DATA.QuickAnnounce then
-                GLOBAL.PositionSystem.AnnouncePosition(name, x, y, z)
-            end
-            GLOBAL.ThePlayer:DoTaskInTime(0, function()
-                GLOBAL.TheInput:OnControl(GLOBAL.CONTROL_MAP, down)
-            end)
-            return true
-        end
-        if oldOnControl then return oldOnControl(self, control, down) end
-    end
-end)
+end

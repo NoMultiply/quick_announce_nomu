@@ -218,6 +218,7 @@ POS_SYS = {
         MISSING_NAME = '未知名称',
         MARK_POINT_NAME = '%s的地图标点',
         TITLE_TEXT = '坐标系统',
+        TITLE_TEXT_OFF = '坐标系统(未开启)',
         CHASING_TITLE_TEXT = '正在追踪',
         CHAT_TITLE_TEXT = '捕获历史',
         SAVED_TITLE_TEXT = '已保存',
