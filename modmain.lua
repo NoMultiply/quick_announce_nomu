@@ -82,7 +82,7 @@ local DEFAULT_SCHEME = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
 local VERSION = 1
 
 -- 检查是否启用了 Show Me
-local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil or ModManager:GetMod("workshop-2287303119") ~= nil or ModManager:GetMod("workshop-2189004162") ~= nil
+local SHOW_ME_ON = MOD_RPC.ShowMeSHint ~= nil or ModManager:GetMod("workshop-2189004162") ~= nil
 
 GLOBAL.NOMU_QA = {
     DATA = {
