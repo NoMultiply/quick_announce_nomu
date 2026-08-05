@@ -106,6 +106,9 @@ GLOBAL.QA_UTILS = {
                     local p = 1 - math.sin(PI * seasonprogress)
                     moisturerate = (season == "green" and elapseddaysinseason <= 5 and 0) or MOISTURE_RATES.MIN[season] + p * (MOISTURE_RATES.MAX[season] - MOISTURE_RATES.MIN[season])
                 else
+                    if season == "humid" then
+                        seasonprogress = seasonprogress * 1.5
+                    end
                     local p = 1 - math.sin(PI * seasonprogress)
                     moisturerate = MOISTURE_RATES.MIN[season] + p * (MOISTURE_RATES.MAX[season] - MOISTURE_RATES.MIN[season])
                 end

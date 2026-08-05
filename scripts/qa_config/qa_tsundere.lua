@@ -300,13 +300,13 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     ENV = {
         FORMATS = {
-            SINGLE = '喂！这里有 1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
+            SINGLE = '喂！这里有 1个 {NAME} 啦{SHOW_ME}{DISTANCE}',
             DEFAULT = '听好了，这里总共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
             NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}{SHOW_ME}{DISTANCE}。',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
 
-            STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
+            STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都是{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
             STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
             STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}呢，看什么看！',

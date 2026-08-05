@@ -1,7 +1,7 @@
 -- 此lua文件由冰冰羊参考其它模组的upvaluehelper代码制作，并进行了功能完善，如果你想使用我这个版本的upvaluehelper，建议去【冰冰羊的模组运行库】mod里获取最新版的
 -- 创意工坊：https://steamcommunity.com/sharedfiles/filedetails/?id=3750536829
 -- GitHub：https://github.com/BB-GOAT/bbgoat_utils/blob/master/bbgoat_utils/bbgoat_upvaluehelper.lua
--- 本文件更新时间：2026年6月24日
+-- 本文件更新时间：2026年8月6日
 
 local visit = {} -- 保存已经访问的 防止有嵌套
 local visitnum = 0
@@ -19,7 +19,7 @@ end
 
 -- 遍历搜索上值
 ---@param fn function 被搜索的函数
----@param name string 要搜索的上值名
+---@param name string|true 要搜索的上值名(如果为true，则依赖fn_filter筛选上值)
 ---@param fn_filter string|function|nil 限定搜索到的函数必须：来源于某个文件|符合过滤条件
 ---@param value_filter string|function|nil 限定找到的上值（如果是函数）必须：来源于某个文件|符合过滤条件
 ---@return any 找到的上值
@@ -39,12 +39,12 @@ local function FindUpvalue(fn, name, fn_filter, value_filter)
     while true do
         local upname, upvalue = debug.getupvalue(fn, i)
         if not upname then break end -- 全找完了，跳出
-        if upname and upname == name then
+        if upname and (upname == name or name == true) then
             if fn_filter then -- 限定条件 防止被别人提前hook导致取错
                 local fninfo = debug.getinfo(fn)
                 local valueinfo = type(upvalue) == "function" and debug.getinfo(upvalue)
 
-                if ((type(fn_filter) == "string" and fninfo.source and fninfo.source:match(fn_filter)) or (type(fn_filter) == "function" and fn_filter(upvalue))) -- 检查是否符合过滤条件
+                if ((type(fn_filter) == "string" and fninfo.source and fninfo.source:match(fn_filter)) or (type(fn_filter) == "function" and fn_filter(fn))) -- 检查是否符合过滤条件
                     and (not value_filter or (type(value_filter) == "string" and valueinfo and valueinfo.source:match(value_filter)) or (type(value_filter) == "function" and value_filter(upvalue)))
                 then
                     return TryToClose(level, upvalue, i, fn)
