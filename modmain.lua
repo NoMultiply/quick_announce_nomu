@@ -87,7 +87,7 @@ local SHOW_ME_ON = MOD_RPC.ShowMeSHint ~= nil or ModManager:GetMod("workshop-218
 GLOBAL.NOMU_QA = {
     DATA = {
         CUSTOM_PREFIX = "",
-        ALT_MODE = 1,    
+        ALT_MODE = 1,
         SHIFT_MODE = 1,
         DEFAULT_WHISPER = false,
         CHARACTER_SPECIFIC = true,
@@ -112,7 +112,7 @@ GLOBAL.NOMU_QA = {
         SHOWME_FILTERS = {},
         FORBIDDEN_WORDS = {},
         REPLACEMENTS = {},
-        FORBIDDEN_WORDS_ESCAPED = {}, 
+        FORBIDDEN_WORDS_ESCAPED = {},
         REPLACEMENTS_ESCAPED = {},
         SCHEMES = {
             {
@@ -132,7 +132,7 @@ GLOBAL.NOMU_QA = {
 
 local function IsAltPressed()
     local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
-    
+
     if mode == 1 then
         return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
     elseif mode == 2 then
@@ -144,7 +144,7 @@ end
 
 local function IsShiftPressed()
     local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.SHIFT_MODE) or 1
-    
+
     if mode == 1 then
         return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
     elseif mode == 2 then
@@ -157,7 +157,7 @@ end
 -- 三方同步
 local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     if not source_data or type(source_data) ~= "table" then return end
-    
+
     -- 从 source_data 往 user_data 同步
     for k, v in pairs(source_data) do
         if type(v) == "table" then
@@ -174,7 +174,7 @@ local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
                 if backup_data[k] ~= v then
                     -- 更新了默认模板(source_data 变化了)
                     local is_user_customized = (user_data[k] ~= backup_data[k])
-                    
+
                     if is_user_customized then
                         -- 玩家自定义过：只有当占位符变更导致不匹配时，才强制覆盖
                         if not IsPlaceholderMatch(user_data[k], v) then
@@ -205,7 +205,7 @@ local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
             end
         end
     end
-    
+
     for _, k in ipairs(keys_to_remove) do
         user_data[k] = nil
         if not is_legacy and type(backup_data) == "table" then
@@ -262,7 +262,7 @@ end
 -- 更新转义缓存
 GLOBAL.NOMU_QA.UpdateEscapedCaches = function()
     local data = GLOBAL.NOMU_QA.DATA
-    
+
     data.FORBIDDEN_WORDS_ESCAPED = {}
     if data.FORBIDDEN_WORDS then
         for _, word in ipairs(data.FORBIDDEN_WORDS) do
@@ -287,7 +287,7 @@ end
 
 -- 通用的数据类型纠正函数
 local function EnsureDataType(template_val, saved_val)
-    if template_val == nil then return saved_val end 
+    if template_val == nil then return saved_val end
 
     local t_type = type(template_val)
     local s_type = type(saved_val)
@@ -457,7 +457,7 @@ local function Announce(message, no_whisper, debug_info)
         -- 获取自定义前缀
         local prefix = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
         if prefix == nil or prefix == "" then prefix = GLOBAL.STRINGS.LMB end
-        
+
         GLOBAL.TheNet:Say(prefix .. ' ' .. message, whisper)
         return true
     end
@@ -552,7 +552,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
 
                 clean_info = clean_info:gsub("<temperature=([^>]+)>", "%1")
                 clean_info = clean_info:gsub("</?%a+[^>]*>", "")
-                
+
                 local insight_lines = string.split(clean_info, '\n')
                 for _, line in ipairs(insight_lines) do
                     table.insert(items, line)
@@ -569,7 +569,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB))
     local rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
 
-    local found_health_line = false 
+    local found_health_line = false
 
     for _, str in ipairs(items) do
         if str and str:match("[^ \t\r\n]") then
@@ -749,7 +749,7 @@ local function GetSpiderDenStat(ent)
     end
 
     if not ent:HasTag("spiderden") then return nil end
-    
+
     local level = 1
     if ent:HasTag("tent") then
         level = 3
@@ -850,7 +850,7 @@ local function HandleExternalMods(HUD, status, widget)
             while curr and curr ~= HUD.controls.insight_menu do
                 if curr.componentName then comp_name = curr.componentName end
                 if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
-                
+
                 if curr.raw_text and type(curr.raw_text) == "string" then
                     text_str = curr:GetString()
                     break
@@ -868,7 +868,7 @@ local function HandleExternalMods(HUD, status, widget)
             if text_str and text_str ~= "" then
                 local clean_info = text_str
                 local raw_code = clean_info:match("<icon=([^>]+)>") or clean_info:match("<prefab=([^>]+)>")
-                
+
                 if not raw_code and comp_name then
                     raw_code = string.gsub(comp_name, "spawner$", "")
                     raw_code = string.gsub(raw_code, "manager$", "")
@@ -876,7 +876,7 @@ local function HandleExternalMods(HUD, status, widget)
 
                 local INSIGHT_CODE_MAP = GLOBAL.STRINGS.NOMU_QA.INSIGHT_CODE_MAP or {}
                 local prefix_name = ""
-                
+
                 if raw_code and INSIGHT_CODE_MAP[string.lower(raw_code)] then
                     prefix_name = INSIGHT_CODE_MAP[string.lower(raw_code)] .. "："
                 end
@@ -909,7 +909,7 @@ local function HandleExternalMods(HUD, status, widget)
                 if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and raw_code then
                     clean_info = clean_info .. " [代号: " .. raw_code .. "]"
                 end
-                
+
                 return Announce(clean_info)
             end
         end
@@ -1090,7 +1090,7 @@ local function HandlePlayerStats(HUD, status, widget)
         if cfg.btn and cfg.btn.focus and cfg.comp then
             local current, max = cfg.cur_fn(cfg.comp), cfg.max_fn(cfg.comp)
             local category = QA_BADGE_LEVELS[get_category(cfg.thresholds or QA_DEFAULT_THRESHOLDS, current / max)]
-            
+
             -- WX-78 护盾特殊判定
             if cfg.qa == "HEALTH" and ThePlayer.prefab == "wx78" and ThePlayer.wx78_classified then
                 local shield_cur = ThePlayer.wx78_classified.currentshield:value()
@@ -1150,8 +1150,8 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
 
     if is_worldtemp_focus or is_season_focus then
        local raw_season = TheWorld.state.season:upper()
-       local SEASON = GetMapping(GLOBAL.NOMU_QA.SCHEME.SEASON, 'SEASON_NAMES', raw_season) 
-                       or GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season] 
+       local SEASON = GetMapping(GLOBAL.NOMU_QA.SCHEME.SEASON, 'SEASON_NAMES', raw_season)
+                       or GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season]
                        or raw_season
 
         if is_worldtemp_focus then
@@ -1447,10 +1447,10 @@ local function OnHUDMouseButton(HUD)
 
     for _, handler in ipairs(HUD_CLICK_HANDLERS) do
         if handler(HUD, status, widget) then
-            return true 
+            return true
         end
     end
-    
+
     return false
 end
 
@@ -1487,7 +1487,7 @@ local function GetAllMissingIngredients(recipe, builder, inventory)
         for _, v in pairs(recipe.ingredients) do
             local is_catalyst = (v.amount == 0)
             local actual_needed = is_catalyst and 1 or RoundBiasedUp(v.amount * builder:IngredientMod())
-            
+
             local _, num_found = inventory:Has(v.type, actual_needed)
             if num_found < actual_needed then
                 local diff = actual_needed - num_found
@@ -1505,7 +1505,7 @@ local function GetAllMissingIngredients(recipe, builder, inventory)
         for _, v in pairs(recipe.character_ingredients) do
             local is_catalyst = (v.amount == 0)
             local actual_needed = is_catalyst and 1 or v.amount
-            
+
             local _, num_found = builder:HasCharacterIngredient(v)
             if num_found < actual_needed then
                 local diff = actual_needed - num_found
@@ -1833,7 +1833,7 @@ local function AnnounceItem(slot, classname)
     local hardcoded_name = item.prefab and STRINGS.NOMU_QA[item.prefab:upper()]
     local orig_game_name = item.prefab and STRINGS.NAMES[item.prefab:upper()] or ""
     local default_name = item.prefab and (STRINGS.NOMU_QA[item.prefab:upper()] or STRINGS.NAMES[item.prefab:upper()]) or ""
-    
+
     local is_custom_named = false
     local is_qa_hardcoded_diff = false
 
@@ -1845,8 +1845,8 @@ local function AnnounceItem(slot, classname)
                          and not is_target_prefab
     else
         local display_orig = orig_game_name ~= "" and orig_game_name or item_name
-        if display_orig ~= "" 
-           and not string.find(string.upper(display_orig), "MISSING") 
+        if display_orig ~= ""
+           and not string.find(string.upper(display_orig), "MISSING")
            and display_orig ~= hardcoded_name then
             is_qa_hardcoded_diff = true
         end
@@ -1854,7 +1854,7 @@ local function AnnounceItem(slot, classname)
 
     if is_qa_hardcoded_diff then
         local display_orig = orig_game_name ~= "" and orig_game_name or item_name
-        fmts.ITEM = display_orig 
+        fmts.ITEM = display_orig
         fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = hardcoded_name }) -- 后缀改为宣告硬编码名字
     elseif is_custom_named then
         fmts.ITEM_NAME = subfmt(GetMapping(qa, 'WORDS', 'ITEM_NAME'), { NUM = num_found_name, NAME = item_name })
@@ -1892,7 +1892,7 @@ local function AnnounceItem(slot, classname)
     if is_rechargeable and recharge_val then
         if RECHARGEABLE_PREFABS[item.prefab] then
             local seconds = (180 - recharge_val) / 180 * RECHARGEABLE_PREFABS[item.prefab]
-            
+
             if seconds <= 0 then
                 fmts.POST_STATE = GetMapping(qa, 'RECHARGE', 'FULL')
             else
@@ -1906,8 +1906,8 @@ local function AnnounceItem(slot, classname)
                 fmts.POST_STATE = GetMapping(qa, 'RECHARGE', 'FULL')
             else
                 local left_percent = math.floor((180 - recharge_val) / 180 * 100)
-                fmts.POST_STATE = subfmt(GetMapping(qa, 'RECHARGE', 'PERCENT'), { 
-                    PERCENT = left_percent 
+                fmts.POST_STATE = subfmt(GetMapping(qa, 'RECHARGE', 'PERCENT'), {
+                    PERCENT = left_percent
                 })
             end
         end
@@ -1923,13 +1923,13 @@ local function AnnounceItem(slot, classname)
     if classname == 'invslot' then
         result_str = subfmt(qa.FORMATS.INV_SLOT, fmts)
     else
-        local is_heavy = item:HasTag("heavy") 
-        
+        local is_heavy = item:HasTag("heavy")
+
         local slot_pos_name = GetEquipSlotName(qa, slot.equipslot)
         if slot_pos_name then
             fmts.SLOT_POS = slot_pos_name
             fmts.v = slot_pos_name
-            
+
             if is_heavy and qa.FORMATS.EQUIP_SLOT_HEAVY_POS then
                 result_str = subfmt(qa.FORMATS.EQUIP_SLOT_HEAVY_POS, fmts)
             else
@@ -2083,7 +2083,7 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
     recipepopup = recipepopup or slot.recipe_popup
     if recipepopup then
         local ing = recipepopup.ing or {}
-        
+
         -- 兼容 Redux 制作栏和旧版UI数组
         if #ing == 0 and recipepopup.ingredients and recipepopup.ingredients.ingredient_widgets then
             ing = recipepopup.ingredients.ingredient_widgets
@@ -2099,9 +2099,9 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
         local focused_index = ingnum
         if not focused_index then
             for i, _ing in ipairs(ing) do
-                if _ing.focus then 
-                    focused_index = i 
-                    break 
+                if _ing.focus then
+                    focused_index = i
+                    break
                 end
             end
         end
@@ -2120,7 +2120,7 @@ local function AnnounceRecipePinSlot(slot, recipepopup, ingnum)
             if recipe.character_ingredients then
                 for _, v in ipairs(recipe.character_ingredients) do table.insert(all_reqs, v.type) end
             end
-            
+
             specific_ingredient_type = all_reqs[focused_index]
         end
     end
@@ -2191,7 +2191,7 @@ local function AnnounceRecipeCMIngredients(ingredients)
         if recipe.character_ingredients then
             for _, v in ipairs(recipe.character_ingredients) do table.insert(all_reqs, v.type) end
         end
-        
+
         specific_ingredient_type = all_reqs[focused_index]
     end
 
@@ -2262,12 +2262,12 @@ local function GetEntitySpecialState(entity, is_target)
     local stat = GetHotspringStat(entity)
     return stat and ("HOTSPRING_" .. stat) or nil
 end
-    
+
     if entity.prefab == "fruitdragon" then
         local ripe = (entity.AnimState and entity.AnimState:GetBuild() == "fruit_dragon_ripe_build") or string.find(entity:GetDisplayName() or "", "Ripe")
         if ripe then return "FRUITDRAGON_RIPE" end
     end
-    
+
     if entity.prefab == "beefalo" and not entity:HasTag("has_beard") then return "BEEFALO_SHAVED" end
     if entity.prefab == "archive_switch" then
         return (entity.AnimState and (entity.AnimState:IsCurrentAnimation("idle_full") or entity.AnimState:IsCurrentAnimation("activate"))) and "ARCHIVE_SWITCH_FULL" or "ARCHIVE_SWITCH_EMPTY"
@@ -2322,11 +2322,11 @@ local function IsPlayerFrozenOrThawing(entity)
     end
 
     if entity.AnimState ~= nil then
-        return entity.AnimState:IsCurrentAnimation("frozen") 
-            or entity.AnimState:IsCurrentAnimation("frozen_loop_pst") 
-            or entity.AnimState:IsCurrentAnimation("frozen_hit")     
-            or entity.AnimState:IsCurrentAnimation("frozen_pst")      
-            or entity.AnimState:IsCurrentAnimation("frozen_loop")    
+        return entity.AnimState:IsCurrentAnimation("frozen")
+            or entity.AnimState:IsCurrentAnimation("frozen_loop_pst")
+            or entity.AnimState:IsCurrentAnimation("frozen_hit")
+            or entity.AnimState:IsCurrentAnimation("frozen_pst")
+            or entity.AnimState:IsCurrentAnimation("frozen_loop")
     end
 
     return false
@@ -2338,7 +2338,7 @@ local function HandlePlayerClick(entity)
     local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
     local is_ent_ghost = entity:HasTag("playerghost")
     local qa_formats = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS
-    
+
     if entity == GLOBAL.ThePlayer then
 
     if is_me_ghost and qa_formats.I_AM_GHOST then
@@ -2352,7 +2352,7 @@ local function HandlePlayerClick(entity)
         if is_fishing and qa_formats.ME_FISHING then
             return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }))
         end
-        
+
         local rider = entity.replica.rider
         if rider and rider:IsRiding() then
             local mount = rider:GetMount()
@@ -2395,7 +2395,7 @@ local function HandlePlayerClick(entity)
                     mount_name = final_name or display_name
                 end
             end
-            
+
             if qa_formats.ME_RIDING then
                 return Announce(subfmt(qa_formats.ME_RIDING, { NAME = entity:GetDisplayName(), MOUNT = mount_name }))
             end
@@ -2418,7 +2418,7 @@ local function HandlePlayerClick(entity)
         end
         return Announce(subfmt(qa_formats.I_AM_HERE, { NAME = entity:GetDisplayName() }))
     end
-    
+
     -- 给物品给别人
     local my_inventory = GLOBAL.ThePlayer.replica.inventory
     local active_item = my_inventory and my_inventory:GetActiveItem()
@@ -2463,11 +2463,11 @@ local function HandleEnvMiddleClick(entity)
         mod_str = subfmt(GetMapping(qa, 'WORDS', 'MOD_INFO'), { MOD_NAME = mod_name })
     end
 
-    local entity_info = subfmt(qa.FORMATS.CODE, { 
+    local entity_info = subfmt(qa.FORMATS.CODE, {
         PREFAB = entity.prefab, NAME = entity:GetDisplayName(),
-        MOD_INFO = mod_str, ASSET_INFO = "" 
+        MOD_INFO = mod_str, ASSET_INFO = ""
     })
-    
+
     print(entity_info)
     GLOBAL.ThePlayer.components.talker:Say(entity_info, 5)
     return true
@@ -2522,7 +2522,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     -- 世界实体宣告核心逻辑
     local px, py, pz = entity:GetPosition():Get()
     local is_on_water = GLOBAL.TheWorld.Map and GLOBAL.TheWorld.Map:IsOceanAtPoint(px, py, pz) and (entity.GetCurrentPlatform == nil or entity:GetCurrentPlatform() == nil)
-    
+
     local radius = type(GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE) == "number" and GLOBAL.NOMU_QA.DATA.ANNOUNCE_RANGE or 40
     local entities = GLOBAL.TheSim:FindEntities(px, py, pz, radius)
 
@@ -2557,7 +2557,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             local s = v.replica and v.replica.stackable and v.replica.stackable:StackSize() or 1
             count_prefab = count_prefab + s
             if v_name == target_name then count_name = count_name + s end
-            
+
             -- 使用相同的判断逻辑检测当前实体的状态是否匹配目标状态
             if target_state and GetEntitySpecialState(v, false) == target_state then
                 stat_count = stat_count + 1
@@ -2654,7 +2654,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     if use_special and target_state then
         local is_specific_only = (entity.prefab == "heatrock" or entity.prefab == "birdcage" or entity.prefab == "oasislake" or entity.prefab == "toadstool_cap")
         local force_display_name = final_name or display_name
-        
+
         if entity.prefab == "houndfire" then force_display_name = prefab_name or display_name or GLOBAL.STRINGS.NOMU_QA.HOUNDFIRE end
         if target_state == "WITHERED" or target_state == "BARREN" then force_display_name = prefab_name end
 
@@ -2740,13 +2740,13 @@ AddSimPostInit(function()
                 function screen:OnControl(control, down, ...)
                     if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
                         if (self.content and self.content.focus) or (self.title and self.title.focus) or (self.destspanel and self.destspanel.focus) then
-                            
+
                             local question = self.content and self.content:GetString() or GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME
                             question = question:gsub("\n", ""):gsub("\t", "")
-                            
+
                             local opt_str_list = {}
                             local prefix = {"A.", "B.", "C.", "D."}
-                            
+
                             if self.menu and self.menu.items then
                                 for i, v in ipairs(self.menu.items) do
                                     local txt = v:GetText() or ""
@@ -2758,7 +2758,7 @@ AddSimPostInit(function()
                                     end
                                 end
                             end
-                            
+
                             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.MEDAL_BUFF.FORMATS.EXAM, {
                                 QUESTION = question,
                                 OPTIONS = table.concat(opt_str_list, "  ")
@@ -2830,12 +2830,12 @@ local CRAFTING_HOOKS = {
 for _, hook in ipairs(CRAFTING_HOOKS) do
     AddClassPostConstruct(hook.class, function(self)
         local target = self.recipe_grid or self
-        
+
         local oldOnControl = target.OnControl
         target.OnControl = function(ctrl_self, control, down, ...)
             if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
-                if hook.fn(self) then 
-                    return true 
+                if hook.fn(self) then
+                    return true
                 end
             end
             -- 回调原始事件
@@ -2852,7 +2852,7 @@ AddClassPostConstruct("widgets/redux/craftingmenu_widget", function(self)
             if w and w.button and w.filter_def then
                 local filter_def = w.filter_def
                 local old_OnControl = w.button.OnControl
-                
+
                 w.button.OnControl = function(btn_self, control, down, ...)
                     if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
                         local raw_name = string.upper(filter_def.name)
@@ -2862,7 +2862,7 @@ AddClassPostConstruct("widgets/redux/craftingmenu_widget", function(self)
                         local qa = GLOBAL.NOMU_QA.SCHEME.RECIPE
                         local fmt = qa.FORMATS.FILTER_TAB
                         local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format("[分类代码: %s]", tostring(raw_name)) or nil
-                        
+
                         Announce(subfmt(fmt, { TAB = loc_name }), nil, debug_str)
                         return true
                     end
@@ -2985,7 +2985,7 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ADMIN, { NAME = w.displayName }))
                     end
 
-                    if w.perf and w.perf.shown and w.perf.focus then 
+                    if w.perf and w.perf.shown and w.perf.focus then
                         local ClientObjs = GLOBAL.TheNet:GetClientTable() or {}
                         local client = nil
                         for _, c in ipairs(ClientObjs) do
@@ -3004,16 +3004,16 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                                 else status_key = 'BAD' end
                             end
                         end
-                        
+
                         local qa = GLOBAL.NOMU_QA.SCHEME.PLAYER
-                        local status_str = (qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key]) 
+                        local status_str = (qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key])
                                         or (GLOBAL.STRINGS.DEFAULT_NOMU_QA.PLAYER.MAPPINGS.DEFAULT.PERF_STATUS[status_key])
-                        
-                        return Announce(subfmt(qa.FORMATS.PERF, { 
-                            NAME = w.displayName, 
-                            STATUS = status_str, 
-                            PING = (w.userid == GLOBAL.ThePlayer.userid and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '') 
-                        })) 
+
+                        return Announce(subfmt(qa.FORMATS.PERF, {
+                            NAME = w.displayName,
+                            STATUS = status_str,
+                            PING = (w.userid == GLOBAL.ThePlayer.userid and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '')
+                        }))
                     end
 
                     if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
@@ -3035,7 +3035,7 @@ AddClassPostConstruct('screens/playerstatusscreen', function(PlayerStatusScreen)
                             }))
                         end
                     end
-                   
+
                     if w.age and w.age.shown and w.age.focus and #w.age:GetString() > 0 then
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.AGE, {
                             NAME = w.displayName,
@@ -3060,7 +3060,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
             self.players_number._qa_hooked = true
             self.players_number:SetClickable(true)
             self.players_number:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
-            
+
             local old_pn_OnControl = self.players_number.OnControl
             self.players_number.OnControl = function(w, control, down, ...)
                 if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
@@ -3073,7 +3073,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
 
                     local max_players = GLOBAL.TheNet:GetServerMaxPlayers() or "?"
                     local num_str = tostring(actual_players) .. "/" .. tostring(max_players)
-                    
+
                     Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NUM_PLAYER, { NUM = num_str }))
                     return true
                 end
@@ -3091,7 +3091,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                         if not child then return end
                         child:SetClickable(true)
                         child:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
-                        
+
                         local old_child_OnControl = child.OnControl
                         child.OnControl = function(ui, control, down, ...)
                             if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
@@ -3110,11 +3110,11 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                                         end
                                     end
                                     local status_str = qa.MAPPINGS and qa.MAPPINGS.DEFAULT and qa.MAPPINGS.DEFAULT.PERF_STATUS and qa.MAPPINGS.DEFAULT.PERF_STATUS[status_key] or '未知'
-                                    
-                                    Announce(subfmt(qa.FORMATS.PERF, { 
-                                        NAME = target_name, 
-                                        STATUS = status_str, 
-                                        PING = (widget_row.userid == GLOBAL.TheNet:GetUserID() and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '') 
+
+                                    Announce(subfmt(qa.FORMATS.PERF, {
+                                        NAME = target_name,
+                                        STATUS = status_str,
+                                        PING = (widget_row.userid == GLOBAL.TheNet:GetUserID() and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() }) or '')
                                     }))
 
                                 elseif action_type == "characterBadge" then
@@ -3122,7 +3122,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                                     local badge = widget_row.characterBadge
                                     local prefab = badge and badge.prefabname or ""
                                     local is_loading = badge and type(badge.IsLoading) == "function" and badge:IsLoading()
-                                    
+
                                     if is_loading then
                                         Announce(subfmt(qa.FORMATS.CONNECTING, { NAME = target_name }))
                                     elseif prefab == "" then
@@ -3140,7 +3140,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                                 elseif action_type == "name" then
                                     Announce(subfmt(qa.FORMATS.GREET, { NAME = target_name }))
                                 end
-                                
+
                                 return true
                             end
                             if old_child_OnControl then return old_child_OnControl(ui, control, down, ...) end
@@ -3226,7 +3226,7 @@ AddClassPostConstruct('widgets/redux/skilltreebuilder', function(SkillTreeBuilde
 
                 local desc_str = desc_self:GetString()
                 local title_str = SkillTreeBuilder.infopanel.title and SkillTreeBuilder.infopanel.title:GetString() or "未知技能"
-                
+
                 if desc_str and desc_str ~= "" then
                     desc_str = desc_str:gsub("\n", ""):gsub("\t", "")
 
@@ -3296,12 +3296,12 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
 
                 for _, w in ipairs(targets) do
                     if w then
-                        w.focus_forward = nil 
+                        w.focus_forward = nil
                         if type(w.SetRegionSize) == "function" then
                             w:SetRegionSize(50, 50)
                         end
                         w:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
-                        
+
                         local old_OnControl = w.OnControl
                         w.OnControl = function(self_w, control, down, ...)
                             if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
@@ -3317,7 +3317,7 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
                                     if real_value == nil then
                                         real_value = data.saved_value or data.initial_value or data.value
                                     end
-                                    
+
                                     if widget.opt_spinner and widget.opt_spinner.spinner then
                                         local spinner = widget.opt_spinner.spinner
                                         if real_value ~= nil and spinner.options then
@@ -3332,18 +3332,18 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
                                         if val_str == "未知" and type(spinner.GetSelectedText) == "function" then
                                             val_str = spinner:GetSelectedText()
                                         end
-                                        
+
                                     elseif widget.opt_textentry and widget.opt_textentry.textbox then
                                         val_str = real_value ~= nil and tostring(real_value) or widget.opt_textentry.textbox:GetString()
                                     end
-                                    
+
                                     local name_str = GLOBAL.STRINGS.UI.CUSTOMIZATIONSCREEN[string.upper(data.option.name)] or data.option.name
-                                    
+
                                     Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.WORLD_SETTING, {
                                         SETTING = name_str,
                                         VALUE = val_str
                                     }))
-                                    return true 
+                                    return true
                                 end
                             end
                             if old_OnControl then return old_OnControl(self_w, control, down, ...) end
@@ -3364,13 +3364,13 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
         for _, widget in ipairs(self.options_scroll_list.widgets_to_update) do
             if widget.opt and widget.opt.label then
                 local lbl = widget.opt.label
-                
-                lbl.focus_forward = nil 
+
+                lbl.focus_forward = nil
                 if type(lbl.SetRegionSize) == "function" then
                     lbl:SetRegionSize(300, 40)
                 end
                 lbl:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
-                
+
                 local old_OnControl = lbl.OnControl
                 lbl.OnControl = function(self_w, control, down, ...)
                     if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
@@ -3427,7 +3427,7 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
                                     end
                                 end
                             end
-                            
+
                             local modinfo = GLOBAL.KnownModIndex:GetModInfo(self.modname)
                             local mod_name = modinfo and modinfo.name or self.modname
                             local setting_name = data.option.label or data.option.name
@@ -3438,7 +3438,7 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
                                 SETTING = setting_name,
                                 VALUE = val_str
                             }))
-                            return true 
+                            return true
                         end
                     end
                     if old_OnControl then return old_OnControl(self_w, control, down, ...) end
@@ -3453,37 +3453,37 @@ AddClassPostConstruct("screens/redux/textlistpopup", function(self)
     if GLOBAL.TheWorld == nil then return end
     if self.scroll_list and self.scroll_list.widgets_to_update then
         for _, widget in ipairs(self.scroll_list.widgets_to_update) do
-            
+
             widget:SetHoverText(GLOBAL.STRINGS.NOMU_QA.HOVER_TEXT_ANNOUNCE)
-            
+
             local old_OnControl = widget.OnControl
             widget.OnControl = function(w, control, down, ...)
                 if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
                     local mod_name = ""
-                    
+
                     if type(w.GetText) == "function" then
                         mod_name = w:GetText()
                     elseif w.text and type(w.text.GetString) == "function" then
                         mod_name = w.text:GetString()
                     end
-                    
+
                     if mod_name and mod_name ~= "" then
 
                         local qa_fmt = GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_ENABLED
                         local announce_msg = subfmt(qa_fmt, { MOD = mod_name })
-                        
+
                         if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.Announce then
                             GLOBAL.NOMU_QA.Announce(announce_msg)
                         else
                             Announce(announce_msg)
                         end
-                        
-                        return true 
+
+                        return true
                     end
                 end
-                
-                if old_OnControl then 
-                    return old_OnControl(w, control, down, ...) 
+
+                if old_OnControl then
+                    return old_OnControl(w, control, down, ...)
                 end
                 return false
             end
