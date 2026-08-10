@@ -97,17 +97,6 @@ _G.NOMU_QA.DATA = {
 }
 _G.NOMU_QA.SCHEME = DEFAULT_SCHEME
 
--- 初始化坐标系统数据
-_G.PositionSystem = {
-    DATA = {
-        PositionSystemButtonPos = { 0, -50, 0 },
-        QuickAnnounce = true,
-        DetectTips = true,
-        ShowTargetRing = true, 
-    },
-    POSITION = { chasing = {}, chat = {}, saved = {} }
-}
-
 -- 数据同步系统
 local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     if not source_data or type(source_data) ~= "table" then return end
@@ -180,63 +169,6 @@ end
 
 -- 存档文件定义
 local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
-local DATA_FILE_PS = "mod_config_data/position_system_data_save"
-local UNIFIED_POSITION_FILE_PS = "mod_config_data/nomu_ps_saved_positions_v1" 
-
--- 坐标系统方法
-_G.PositionSystem.LoadData = function()
-    _G.TheSim:GetPersistentString(DATA_FILE_PS, function(load_success, str)
-        if load_success and #str > 0 then
-            local run_success, data = _G.RunInSandboxSafe(str)
-            if run_success then
-                for k, v in pairs(data) do if v ~= nil then _G.PositionSystem.DATA[k] = v end end
-            end
-        end
-    end)
-    _G.TheSim:GetPersistentString(UNIFIED_POSITION_FILE_PS, function(load_success, str)
-        local server_name = _G.TheNet:GetServerName() or "UnknownServer"
-        if load_success and #str > 0 then
-            local run_success, data = _G.RunInSandboxSafe(str)
-            if run_success and type(data) == "table" then
-                _G.PositionSystem.ALL_SAVED_POSITIONS = data
-                _G.PositionSystem.POSITION.saved = data[server_name] or {}
-            end
-        else
-            _G.PositionSystem.ALL_SAVED_POSITIONS = {}
-            _G.PositionSystem.POSITION.saved = {}
-        end
-    end)
-end
-
-_G.PositionSystem.SaveData = function()
-    _G.SavePersistentString(DATA_FILE_PS, _G.DataDumper(_G.PositionSystem.DATA, nil, true), false, nil)
-end
-
-_G.PositionSystem.SavePosition = function()
-    local server_name = _G.TheNet:GetServerName() or "UnknownServer"
-    if not _G.PositionSystem.ALL_SAVED_POSITIONS then _G.PositionSystem.ALL_SAVED_POSITIONS = {} end
-    _G.PositionSystem.ALL_SAVED_POSITIONS[server_name] = _G.PositionSystem.POSITION.saved
-    _G.SavePersistentString(UNIFIED_POSITION_FILE_PS, _G.DataDumper(_G.PositionSystem.ALL_SAVED_POSITIONS, nil, true), false, nil)
-end
-
-_G.PositionSystem.AnnouncePosition = function(name, x, y, z, world)
-    if not (name and x and y and z) then return end
-    world = world or (_G.QA_UTILS and _G.QA_UTILS.GetWorldLocalizedName and _G.QA_UTILS.GetWorldLocalizedName() or "未知")
-    local msg = string.format(_G.STRINGS.NOMU_QA.POS_SYS.QUICK_ANNOUNCE_FORMAT, name, world, x, y, z)
-    if _G.NOMU_QA and _G.NOMU_QA.Announce then _G.NOMU_QA.Announce(msg) else _G.TheNet:Say(_G.STRINGS.RMB .. " " .. msg, false) end
-end
-
-_G.PositionSystem.DetectPosition = function(name, x, y, z, force_detect, world)
-    if not (name and x and y and z) then return end
-    world = world or (_G.QA_UTILS and _G.QA_UTILS.GetWorldLocalizedName and _G.QA_UTILS.GetWorldLocalizedName() or "未知")
-    table.insert(_G.PositionSystem.POSITION.chat, { name = name, x = x, y = y, z = z, world = world, type = 'chat' })
-    while #_G.PositionSystem.POSITION.chat > MAX_HISTORY_POSITION do table.remove(_G.PositionSystem.POSITION.chat, 1) end
-    if _G.PositionSystem.DATA.DetectTips or force_detect then
-        if _G.ThePlayer and _G.ThePlayer.HUD and _G.ThePlayer.HUD.controls.status.PositionSystemButton then
-            _G.ThePlayer.HUD.controls.status.PositionSystemButton:DetectPosition(name, x, y, z, world)
-        end
-    end
-end
 
 _G.NOMU_QA.UpdateEscapedCaches = function()
     local data = _G.NOMU_QA.DATA

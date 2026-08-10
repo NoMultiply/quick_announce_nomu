@@ -128,16 +128,6 @@ configuration_options = {
 		default = 106,
 	},
     {
-        name = "enable_position_system",
-        label = "坐标系统（Position System）",
-        hover = "是否开启右键标记坐标以及追踪等相关功能",
-        options = {
-            {description = "开启", data = true, hover = "启用坐标系统"},
-            {description = "关闭", data = false, hover = "禁用坐标系统"},
-        },
-        default = false,
-    },
-    {
         name = "enable_meme_system",
         label = "表情包功能（Meme System）",
         hover = "是否开启Meme表情包相关功能",

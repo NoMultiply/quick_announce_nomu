@@ -8,17 +8,9 @@ GLOBAL.setmetatable(env, {
 })
 
 -- 声明模组所需的资源文件（图标、贴图等）
-Assets = {
-    Asset("IMAGE", "images/PositionSystemIcon.tex"),
-    Asset("ATLAS", "images/PositionSystemIcon.xml"),
-    Asset("IMAGE", "images/PositionSystemMapIcon.tex"),
-    Asset("ATLAS", "images/PositionSystemMapIcon.xml"),
-}
+Assets = {}
 
--- 是否启用坐标系统
-local ENABLE_POSITION_SYSTEM = GetModConfigData("enable_position_system")
-
--- 否启用表情包功能
+-- 是否启用表情包功能
 local ENABLE_MEME_SYSTEM = GetModConfigData("enable_meme_system")
 if ModManager and ModManager:GetMod("workshop-3678295700") ~= nil then
     ENABLE_MEME_SYSTEM = false
@@ -2906,34 +2898,6 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         if entity then HandleEnvMiddleClick(entity) end
         return
     end
-
-    ---- 右键：坐标标记系统 ----
-    if button == GLOBAL.MOUSEBUTTON_RIGHT then
-        if ENABLE_POSITION_SYSTEM then
-            local name, px, py, pz
-            if entity and entity.Transform then
-                name = GetEntityName(entity, true)
-                px, py, pz = entity:GetPosition():Get()
-            else
-                px, py, pz = GLOBAL.TheInput:GetWorldPosition():Get()
-                name = string.format(
-                    LOCAL_STRINGS.POS_SYS.MARK_POINT_NAME,
-                    GLOBAL.ThePlayer:GetDisplayName()
-                )
-            end
-
-            GLOBAL.PositionSystem.DetectPosition(
-                name or LOCAL_STRINGS.POS_SYS.MISSING_NAME, px, py, pz, true
-            )
-            if GLOBAL.PositionSystem.DATA.QuickAnnounce then
-                GLOBAL.PositionSystem.AnnouncePosition(
-                    name or LOCAL_STRINGS.POS_SYS.MISSING_NAME, px, py, pz
-                )
-            end
-            return
-        end
-    end
-
     ---- 左键：实体宣告 ----
     if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
     if not entity then return end
@@ -3237,7 +3201,6 @@ end
 AddSimPostInit(function()
     -- 加载持久化数据
     GLOBAL.NOMU_QA.LoadData()
-    GLOBAL.PositionSystem.LoadData()
 
     -- 动态拦截屏幕弹窗（勋章答题等）
     if GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd.PushScreen then
@@ -4178,115 +4141,23 @@ AddComponentPostInit("playercontroller", function(self)
     end
 end)
 
-----------------------------------------
--- 9.16 坐标系统集成
-----------------------------------------
-
-if ENABLE_POSITION_SYSTEM then
-    local PositionSystemButton = require "widgets/PositionSystemButton"
-
-    -- 在状态栏添加坐标系统按钮
-    AddClassPostConstruct("widgets/statusdisplays", function(self)
-        self.PositionSystemButton = self:AddChild(PositionSystemButton())
-    end)
-
-    -- 拦截聊天消息中的坐标数据与表情包
-    local oldNetworking_Say = GLOBAL.Networking_Say
-    GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-        if message and GLOBAL.ThePlayer and userid ~= GLOBAL.ThePlayer.userid then
-            local _, _, n, w, x, y, z = string.find(message, '%[坐标系统%]%s*"(.-)"%s*在%s*%[(.-)%]%s*坐标%s*%(([^,]-),%s*([^,]-),%s*([^)]-)%)')
-            if n and w and x and y and z then
-                GLOBAL.PositionSystem.DetectPosition(n, tonumber(x), tonumber(y), tonumber(z), false, w)
-            end
-        end
-        if type(message) == "string" and string.match(message, "%[Meme:.-%]") then
-            message = message .. "\n "
-        end
-        
-        return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-    end
-
-    -- 地图上显示坐标标记
-    local Text = require "widgets/text"
-    AddClassPostConstruct("widgets/mapwidget", function(self)
-        self.nomu_map_icons = {}
-
-        self.inst:DoPeriodicTask(0, function()
-            -- 清除旧图标
-            for _, v in pairs(self.nomu_map_icons) do
-                v:Kill()
-            end
-            self.nomu_map_icons = {}
-
-            if not self.shown or not self.bg then return end
-            if not GLOBAL.PositionSystem or not GLOBAL.PositionSystem.POSITION
-                or not GLOBAL.PositionSystem.POSITION.chasing then
-                return
-            end
-
-            -- 为每个追踪点创建地图文字标记
-            for _, v in pairs(GLOBAL.PositionSystem.POSITION.chasing) do
-                local colour = { 0 / 255, 220 / 255, 60 / 255, 1 }
-                if GLOBAL.ThePlayer then
-                    local dist = GLOBAL.ThePlayer:GetPosition():Dist(GLOBAL.Vector3(v.x, v.y, v.z))
-                    if dist >= 8 then colour = { 240 / 255, 70 / 255, 70 / 255, 1 } end
-                end
-
-                local x, y = self.minimap:WorldPosToMapPos(v.x, v.z, 0)
-                local map_pos = GLOBAL.Vector3(
-                    x * GLOBAL.RESOLUTION_X / 2,
-                    y * GLOBAL.RESOLUTION_Y / 2,
-                    0
-                )
-
-                local font_size = math.max(10, 24 - (self:GetZoom() or 0))
-                local map_icon = self.bg:AddChild(Text(GLOBAL.NEWFONT_OUTLINE, font_size, v.name, colour))
-                map_icon:SetPosition(map_pos:Get())
-                table.insert(self.nomu_map_icons, map_icon)
-            end
-        end)
-    end)
-
-    -- 地图界面 Alt+Shift+右键标记坐标
-    AddClassPostConstruct("screens/mapscreen", function(MapScreen)
-        local oldOnControl = MapScreen.OnControl
-
-        function MapScreen:OnControl(control, down)
-            if control == GLOBAL.CONTROL_SECONDARY and not down
-                and IsAltPressed() and IsShiftPressed() then
-
-                local x, y, z = self:GetWorldPositionAtCursor()
-                local name = string.format(
-                    LOCAL_STRINGS.POS_SYS.MARK_POINT_NAME,
-                    GLOBAL.ThePlayer:GetDisplayName()
-                )
-
-                GLOBAL.PositionSystem.DetectPosition(name, x, y, z, true)
-                if GLOBAL.PositionSystem.DATA.QuickAnnounce then
-                    GLOBAL.PositionSystem.AnnouncePosition(name, x, y, z)
-                end
-
-                -- 延迟关闭地图
-                GLOBAL.ThePlayer:DoTaskInTime(0, function()
-                    GLOBAL.TheInput:OnControl(GLOBAL.CONTROL_MAP, down)
-                end)
-
-                return true
-            end
-
-            if oldOnControl then return oldOnControl(self, control, down) end
-        end
-    end)
-end
-
 -- ============================================================================
 -- [10] Meme 表情包
 -- ============================================================================
+
+local oldNetworking_Say = GLOBAL.Networking_Say
+GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+    if ENABLE_MEME_SYSTEM and type(message) == "string" and string.match(message, "%[Meme:.-%]") then
+        message = message .. "\n "
+    end
+    return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+end
+
 if ENABLE_MEME_SYSTEM then
 
     local LIST = {
         List_0 = {}, --  收藏分类
-        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}
+        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
     for i = 1, 79 do table.insert(LIST.List_2, "feibi_"..i) end
@@ -4295,7 +4166,8 @@ if ENABLE_MEME_SYSTEM then
     for i = 1, 29 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
-    for i = 1, 40 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
 
     local LIST_DATA = {
         List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
@@ -4307,6 +4179,7 @@ if ENABLE_MEME_SYSTEM then
         List_6 = { title = "塔菲", atlas = "images/meme/taff.xml", prefix = "taff" },
         List_7 = { title = "月薪猫", atlas = "images/meme/yuexin.xml", prefix = "yuexin" },
         List_8 = { title = "喜羊羊", atlas = "images/meme/xiyy.xml", prefix = "xiyy" },
+        List_9 = { title = "蜜桃猫", atlas = "images/meme/mtcat.xml", prefix = "mtcat" },
     }
 
     GLOBAL.NOMU_QA.MEME_LIST = LIST
@@ -4316,7 +4189,7 @@ if ENABLE_MEME_SYSTEM then
     table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
     table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
 
-    for i = 1, 8 do
+    for i = 1, 9 do
         local data = LIST_DATA["List_"..i]
         if data and data.atlas then
             local image = data.atlas:gsub("%.xml$", ".tex")

@@ -828,131 +828,7 @@ function QACustomizePanel:RefreshFunc(func, mapping)
     self.mapping_list:Refresh(ml, { rows = 8 - n_format, y = self.sy - (2.5 + 0.5 * (8 - n_format) + n_format) * self.dy })
 end
 
--- 坐标系统界面
-local ITEM_WIDTH, ITEM_HEIGHT = 190, 80
-local PositionSystemScreen = Class(NoMuScreen, function(self, nomu_parent)
-    NoMuScreen._ctor(self, "PositionSystemScreen", nomu_parent, 660, 600, "")
-
-    self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT)):SetPosition(0, 280, 0)
-    
-    self.AddToggle(-180, 240, 250, 50, "QuickAnnounce", STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_QUICK_ANNOUNCE_OPEN, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_QUICK_ANNOUNCE_CLOSE, function()
-        GLOBAL.PositionSystem.DATA.QuickAnnounce = not GLOBAL.PositionSystem.DATA.QuickAnnounce; GLOBAL.PositionSystem.SaveData()
-    end)
-    self.AddToggle(180, 240, 250, 50, "DetectTips", STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DETECT_TIPS_OPEN, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DETECT_TIPS_CLOSE, function()
-        GLOBAL.PositionSystem.DATA.DetectTips = not GLOBAL.PositionSystem.DATA.DetectTips; GLOBAL.PositionSystem.SaveData()
-        if not GLOBAL.PositionSystem.DATA.DetectTips and GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton then GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:DetectPosition() end
-    end)
-    
-    self.AddButton(-200, -270, 200, 50, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_RESET_ICON, function() 
-        GLOBAL.PositionSystem.DATA.PositionSystemButtonPos = { 0, -50, 0 }; GLOBAL.PositionSystem.SaveData()
-        if GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton then GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton.root:SetPosition(0, -50, 0) end
-    end)
-    self.AddButton(0, -270, 200, 50, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CLOSE, function() self:Close() end)
-    self.AddToggle(200, -270, 200, 50, "ShowTargetRing", STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_TARGET_RING_OPEN, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_TARGET_RING_CLOSE, function()
-        GLOBAL.PositionSystem.DATA.ShowTargetRing = GLOBAL.PositionSystem.DATA.ShowTargetRing == false; GLOBAL.PositionSystem.SaveData()
-    end)
-
-    self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHASING_TITLE_TEXT)):SetPosition(-225, 190, 0)
-    self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.CHAT_TITLE_TEXT)):SetPosition(0, 190, 0)
-    self.root:AddChild(Text(BODYTEXTFONT, 40, STRINGS.NOMU_QA.POS_SYS.SAVED_TITLE_TEXT)):SetPosition(225, 190, 0)
-
-    local BTN_CONFIG = {
-        chasing = {
-            b1 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_SAVE, color = {0/255, 220/255, 60/255, 1}, fn = function(d) table.insert(GLOBAL.PositionSystem.POSITION.saved, {name=d.name, x=d.x, y=d.y, z=d.z, world=d.world, type='saved'}); GLOBAL.PositionSystem.SavePosition(); self:RefreshPositions() end },
-            b2 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DELETE, color = {240/255, 70/255, 70/255, 1}, fn = function(d) d.indicator:OnControl(GLOBAL.CONTROL_SECONDARY, true); self:RefreshPositions() end }
-        },
-        chat = {
-            b1 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_SAVE, color = {0/255, 220/255, 60/255, 1}, fn = function(d) table.insert(GLOBAL.PositionSystem.POSITION.saved, {name=d.name, x=d.x, y=d.y, z=d.z, world=d.world, type='saved'}); GLOBAL.PositionSystem.SavePosition(); self:RefreshPositions() end },
-            b2 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CHASE, color = {0.9, 0.8, 0.6, 1}, fn = function(d) GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:ChasePosition(d.name, d.x, d.y, d.z, d.world); self:RefreshPositions() end }
-        },
-        saved = {
-            b1 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_DELETE, color = {240/255, 70/255, 70/255, 1}, fn = function(d) for i,v in ipairs(GLOBAL.PositionSystem.POSITION.saved) do if v.name==d.name and v.x==d.x and v.y==d.y and v.z==d.z then table.remove(GLOBAL.PositionSystem.POSITION.saved, i) break end end; GLOBAL.PositionSystem.SavePosition(); self:RefreshPositions() end },
-            b2 = { text = STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CHASE, color = {0.9, 0.8, 0.6, 1}, fn = function(d) GLOBAL.ThePlayer.HUD.controls.status.PositionSystemButton:ChasePosition(d.name, d.x, d.y, d.z, d.world); self:RefreshPositions() end }
-        }
-    }
-
-    local function PositionListItem()
-        local item = Widget('position-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(ITEM_WIDTH, ITEM_HEIGHT, function() end)); item.backing.move_on_click = true
-        item.name = item:AddChild(Text(BODYTEXTFONT, 24)); item.name:SetVAlign(ANCHOR_TOP); item.name:SetHAlign(ANCHOR_MIDDLE); item.name:SetPosition(0, -15, 0); item.name:SetRegionSize(ITEM_WIDTH, ITEM_HEIGHT)
-        item.pos = item:AddChild(Text(UIFONT, 20)); item.pos:SetVAlign(ANCHOR_BOTTOM); item.pos:SetHAlign(ANCHOR_LEFT); item.pos:SetPosition(20, 15, 0); item.pos:SetRegionSize(ITEM_WIDTH, ITEM_HEIGHT)
-
-        local function CreateBtn(x)
-            local btn = item:AddChild(TextButton())
-            btn:SetFont(CHATFONT); btn:SetTextSize(20); btn:SetPosition(x, -15, 0); btn:SetTextFocusColour({1,1,1,1})
-            return btn
-        end
-        item.btn1 = CreateBtn(35); item.btn2 = CreateBtn(70)
-
-        item.SetInfo = function(_, data)
-            item.name:SetString(data.name); item.name:SetColour(1, 1, 1, 1)
-            item.pos:SetString(string.format('%s(%.2f, %.2f, %.2f)', data.world and ("["..data.world.."] ") or "", data.x, data.y, data.z))
-
-            local cfg = BTN_CONFIG[data.type]
-            if cfg then
-                item.btn1:SetTextColour(cfg.b1.color); item.btn1:SetText(cfg.b1.text); item.btn1:SetOnClick(function() cfg.b1.fn(data) end); item.btn1:Show()
-                item.btn2:SetTextColour(cfg.b2.color); item.btn2:SetText(cfg.b2.text); item.btn2:SetOnClick(function() cfg.b2.fn(data) end); item.btn2:Show()
-            else
-                item.btn1:Hide(); item.btn2:Hide()
-            end
-
-            item.backing:SetOnClick(function()
-                self.rename_data = data; self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT .. ' ' .. data.name)
-                self.rename.textbox:SetString(data.name); self.rename.textbox:Enable()
-                self.rename_ok_btn:Enable(); self.rename_cancel_btn:Enable(); self.announce_btn:Enable()
-                if self.EM_menu then self.EM_menu:Show() end
-            end)
-        end
-        item.focus_forward = item.backing; return item
-    end
-
-    self.chasing_list = self.root:AddChild(NoMuList(PositionListItem, -240, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
-    self.chat_list = self.root:AddChild(NoMuList(PositionListItem, 0, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
-    self.saved_list = self.root:AddChild(NoMuList(PositionListItem, 240, 0, ITEM_WIDTH, ITEM_HEIGHT, 1, 4))
-
-    self.rename_label = self.root:AddChild(Text(CHATFONT, 25)); self.rename_label:SetHAlign(ANCHOR_RIGHT); self.rename_label:SetRegionSize(200, 40)
-    self.rename_label:SetPosition(-205, -185); self.rename_label:SetColour(UICOLOURS.GOLD); self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT)
-
-    self.rename = self.root:AddChild(TEMPLATES.StandardSingleLineTextEntry("", 200, 40)); self.rename.textbox:SetTextLengthLimit(50)
-    self.rename.textbox:Disable(); self.rename:SetPosition(0, -185, 0)
-
-    local function close_rename()
-        self.rename_data = nil; self.rename_label:SetString(STRINGS.NOMU_QA.POS_SYS.RENAME_TITLE_TEXT)
-        self.rename.textbox:SetString(); self.rename.textbox:Disable()
-        self.rename_ok_btn:Disable(); self.rename_cancel_btn:Disable(); self.announce_btn:Disable() 
-        if self.EM_bg and self.EM_bg.shown then self.EM_bg:Hide() end
-        if self.EM_menu then self.EM_menu:Hide() end
-    end
-
-    self.rename_ok_btn = self.AddButton(135, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_OK, function()
-        local new_name = self.rename.textbox:GetLineEditString()
-        if self.rename_data and new_name then
-            for i, d in ipairs(GLOBAL.PositionSystem.POSITION[self.rename_data.type]) do
-                if d.name == self.rename_data.name and d.x == self.rename_data.x and d.y == self.rename_data.y and d.z == self.rename_data.z then
-                    GLOBAL.PositionSystem.POSITION[self.rename_data.type][i].name = new_name; break
-                end
-            end
-            GLOBAL.PositionSystem.SavePosition(); self:RefreshPositions(); close_rename()
-        end
-    end)
-    self.rename_cancel_btn = self.AddButton(195, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_CANCEL, close_rename)
-    self.announce_btn = self.AddButton(255, -185, 60, 40, STRINGS.NOMU_QA.POS_SYS.BUTTON_TEXT_ANNOUNCE, function()
-        if self.rename_data then GLOBAL.PositionSystem.AnnouncePosition(self.rename_data.name, self.rename_data.x, self.rename_data.y, self.rename_data.z, self.rename_data.world) end
-    end)
-    self.rename_ok_btn:Disable(); self.rename_cancel_btn:Disable(); self.announce_btn:Disable()
-
-    CreateEmojiAndPhraseMenu(self, "rename_position")
-    if self.EM_menu then self.EM_menu:Hide() end; self:RefreshPositions()
-end)
-
-function PositionSystemScreen:RefreshPositions()
-    self.chasing_list:Refresh(GLOBAL.PositionSystem.POSITION.chasing)
-    local chat_reversed = {}
-    for i = #GLOBAL.PositionSystem.POSITION.chat, 1, -1 do table.insert(chat_reversed, GLOBAL.PositionSystem.POSITION.chat[i]) end
-    self.chat_list:Refresh(chat_reversed); self.saved_list:Refresh(GLOBAL.PositionSystem.POSITION.saved)
-end
-
--- 快捷宣告面板 (重构后的数据驱动排版)
+-- 快捷宣告面板
 local QAPanel = Class(Widget, function(self)
     local width, height = 860, 480
     local sy, dy = height / 2 - 20, 40
@@ -1007,13 +883,6 @@ local QAPanel = Class(Widget, function(self)
     end, -220, 0, 200, 40, 2, 7)) 
 
     AddBtn(-330, -170, 195, dy, STRINGS.NOMU_QA.BUTTON_TEXT_WORD_MANAGE, function() TheFrontEnd:PushScreen(QAWordManagementPanel(self)) end)
-
-    local is_ps_enabled = GetModConfigData("enable_position_system")
-    if is_ps_enabled then
-        AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT, function() TheFrontEnd:PushScreen(PositionSystemScreen(self)) end)
-    else
-        AddBtn(-130, -170, 195, dy, STRINGS.NOMU_QA.POS_SYS.TITLE_TEXT_OFF, function() end):Disable()
-    end
 
     local s = STRINGS.NOMU_QA
     local right_grid = {
@@ -1093,7 +962,6 @@ function QAPanel:OnControl(control, down)
 end
 
 GLOBAL.NOMU_QA.QAPanel = QAPanel
-GLOBAL.NOMU_QA.PositionSystemScreen = PositionSystemScreen
 
 -- 通用 Hook 工具用于向所有支持聊天的组件注入表情菜单
 local function HookEmojiMenu(class_path, mode, get_textbox_fn)
