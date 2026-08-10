@@ -4,6 +4,8 @@ GLOBAL.STRINGS.NOMU_QA = {
     COMMA = '，',
     MEASURE_WORD = '个',
     HOUNDFIRE = '火焰',
+    SKETCH = '草图',
+    SKETCH_POLAR = '草图',
     TOADSTOOL_CAP = '蟾蜍洞穴',
     ICEFISHING_HOLE = '冰钓洞',
     FISSURE_LOWER = '梦魇裂隙（遗迹内）',
@@ -149,8 +151,8 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF = "宣告材料：当前",
     MATERIALS_TEXT = "材料",
 
-    BUTTON_TEXT_SPECIAL_STATE_ON = '特殊状态宣告（开）',
-    BUTTON_TEXT_SPECIAL_STATE_OFF = '特殊状态宣告（关）',
+    BUTTON_TEXT_SPECIAL_STATE_ON = '状态宣告（开）',
+    BUTTON_TEXT_SPECIAL_STATE_OFF = '状态宣告（关）',
 
     BUTTON_TEXT_WORD_MANAGE = '词库管理',
     TITLE_WORD_MANAGE = '词库管理',
@@ -197,6 +199,46 @@ GLOBAL.STRINGS.NOMU_QA = {
         ["mock_dragonfly"] = "时令龙蝇重生时间",
     },
 
+EMOJI_MENU = {
+        TAB_EMOJI = "emoji",
+        TAB_PHRASE = "常用语",
+        TAB_MEME = "表情包",
+        INPUT_ADD_PHRASE = "添加常用语",
+        BTN_ADD = "添加",
+        MEME_GIF = "动图",
+        ON = "已开启",
+        OFF = "已关闭",
+    },
+
+POS_SYS = {
+        BUTTON_TEXT_OK = '确认',
+        BUTTON_TEXT_CANCEL = '取消',
+        BUTTON_TEXT_CLOSE = '关闭',
+        BUTTON_TEXT_DELETE = '删除',
+        BUTTON_TEXT_SAVE = '保存',
+        BUTTON_TEXT_CHASE = '追踪',
+        BUTTON_TEXT_ANNOUNCE = '宣告',
+        BUTTON_TEXT_QUICK_ANNOUNCE_OPEN = '自动宣告（已开启）',
+        BUTTON_TEXT_QUICK_ANNOUNCE_CLOSE = '自动宣告（已关闭）',
+        BUTTON_TEXT_DETECT_TIPS_OPEN = '自动捕获（已开启）',
+        BUTTON_TEXT_DETECT_TIPS_CLOSE = '自动捕获（已关闭）',
+        BUTTON_TEXT_TARGET_RING_OPEN = '目标光圈（已开启）',
+        BUTTON_TEXT_TARGET_RING_CLOSE = '目标光圈（已关闭）',
+        DETECT_TIPS_FORMAT = '[%s] %s (%.2f, %.2f, %.2f)\n' .. STRINGS.LMB .. ' 追踪\n' .. STRINGS.RMB .. ' 忽略',
+        BUTTON_TOOLTIPS_ENTRY = '坐标系统（按住F1可拖动）',
+        BUTTON_TOOLTIPS_INDICATOR = '%s\n' .. STRINGS.LMB .. ' 宣告坐标\n' .. STRINGS.RMB .. ' 取消追踪',
+        QUICK_ANNOUNCE_FORMAT = '[坐标系统] "%s" 在 [%s] 坐标 (%.2f, %.2f, %.2f)',
+        MISSING_NAME = '未知名称',
+        MARK_POINT_NAME = '%s的地图标点',
+        TITLE_TEXT = '坐标系统',
+        TITLE_TEXT_OFF = '坐标系统(未开启)',
+        CHASING_TITLE_TEXT = '正在追踪',
+        CHAT_TITLE_TEXT = '捕获历史',
+        SAVED_TITLE_TEXT = '已保存',
+        RENAME_TITLE_TEXT = '重命名',
+        BUTTON_TEXT_RESET_ICON = '重置图标位置',
+    },
+
     FUNC = {
         SEASON = '季节',
         WORLD_TEMPERATURE_AND_RAIN = '世界温度',
@@ -229,6 +271,7 @@ GLOBAL.STRINGS.NOMU_QA = {
         WOBY_HUNGER = '沃比饥饿值',
         MEDAL_BUFF = '勋章BUFF',
         BLOOMNESS = '绽放状态',
+        FUNGUS_INFECTION = '孢子值',
         BEEFALO = '皮弗娄牛',
     }
 }
@@ -252,11 +295,22 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             START_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
             NO_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}尚未接近。',
             STOP_RAIN = '{WORLD}气温：{TEMPERATURE}，放晴：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
+            START_FOG = '{WORLD}气温：{TEMPERATURE}，孢子雾：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
+            FOGGING = '{WORLD}气温：{TEMPERATURE}，目前正处于孢子雾天气中！',
+            BWB_CAVE_WEATHER = '{WORLD}气温：{TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
+                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨', TRANQUIL = '孢子雾', FROST = '落石', VERDANT = '孢子雾', UMBRAL = '异常天气' },
+                BWB_WORDS = {
+                    RAIN_APPROACH = "降雨第{DAYS}天到达(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_STOP = "降雨第{DAYS}天停(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_NONE = "无降雨迹象",
+                    FOG_ACTIVE = "正处于孢子雾中",
+                    FOG_APPROACH = "孢子雾第{DAYS}天到达(剩{MINUTES}分{SECONDS}秒)",
+                    FOG_NONE = "无孢子雾迹象"
+                }
             }
         }
     },
@@ -587,10 +641,10 @@ ENV = {
                 },
                 ADJ = {
                     BURNT = '被烧毁了',
-                    FIRE = '处于燃烧中',
+                    FIRE = '正燃烧中',
                     WITHERED = '枯萎了',
                     BARREN = '需要施肥',
-                    SMOLDER = '冒烟快要烧起来了',
+                    SMOLDER = '正冒烟中',
                     GOAT_CHARGED = '处于带电状态',
                     HOTSPRING_BOMBED = '水温正合适',
                     HOTSPRING_GLASSED = '已经结晶了',
@@ -1010,6 +1064,23 @@ WOBY_HUNGER = {
                     MID = '需要少量的灵魂……如此致命。',
                     LOW = '我想要美味的灵魂！恶作剧暂且延后！',
                     EMPTY = '我对灵魂的渴望越来越贪婪！',
+                }
+            }
+        }
+    },
+FUNGUS_INFECTION = {
+        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        MAPPINGS = {
+            DEFAULT = {
+                MESSAGE = {
+                    FULL = '我要变异了！',
+                    HIGH = '我感觉全身长满了蘑菇！',
+                    MID = '孢子正在侵蚀我！',
+                    LOW = '咳咳，吸入了太多孢子。',
+                    EMPTY = '我现在还很健康。',
+                },
+                SYMBOL = {
+                    TEXT = '孢子值'
                 }
             }
         }

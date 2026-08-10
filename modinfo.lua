@@ -9,11 +9,12 @@ description = [[
 - 增加对暖石温度状态、月相、时钟、降水宣告的支持
 - “shift + alt + 鼠标左键点击世界物品”宣告附近的物品
 - “shift + alt + 鼠标中键”对自己宣告Ping、对别人打招呼、显示物品信息
+- Meme表情包来自于“驯猫糕手”
 - 添加了自定义宣告同步功能
 - 兼容了 macOS
 ]]
 
-version = "2026-08-06-B"
+version = "2026-08-11"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then
@@ -125,5 +126,25 @@ configuration_options = {
         label = "快捷键（Shortcut）",
         options = theBoardKeys,
 		default = 106,
-	}
+	},
+    {
+        name = "enable_position_system",
+        label = "坐标系统（Position System）",
+        hover = "是否开启右键标记坐标以及追踪等相关功能",
+        options = {
+            {description = "开启", data = true, hover = "启用坐标系统"},
+            {description = "关闭", data = false, hover = "禁用坐标系统"},
+        },
+        default = false,
+    },
+    {
+        name = "enable_meme_system",
+        label = "表情包功能（Meme System）",
+        hover = "是否开启Meme表情包相关功能",
+        options = {
+            {description = "开启", data = true},
+            {description = "关闭", data = false},
+        },
+        default = true,
+    }
 }
