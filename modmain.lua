@@ -4163,7 +4163,7 @@ if ENABLE_MEME_SYSTEM then
     for i = 1, 79 do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 29 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 35 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
     for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
