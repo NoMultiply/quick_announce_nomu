@@ -1,4 +1,36 @@
 GLOBAL.QA_UTILS = {
+
+
+    GetWorldType = function()
+        if not GLOBAL.TheWorld then return "SURFACE" end
+        return GLOBAL.TheWorld:HasTag("porkland") and "PORKLAND"
+        or GLOBAL.TheWorld:HasTag("island") and "SHIPWRECKED"
+        or GLOBAL.TheWorld:HasTag("volcano") and "VOLCANO"
+        or GLOBAL.TheWorld:HasTag("cave") and "CAVES"
+        or "SURFACE"
+    end,
+
+    GetWorldLocalizedName = function()
+        local world = GLOBAL.QA_UTILS.GetWorldType()
+        local dict = GLOBAL.STRINGS.DEFAULT_NOMU_QA.WORLD_TEMPERATURE_AND_RAIN.MAPPINGS.DEFAULT.WORLD
+        return dict and dict[world] or "未知"
+    end,
+    -- 孢子雾预测
+    PredictFungusFog = function()
+        if not GLOBAL.TheWorld then 
+            return false, -1 
+        end
+        local fungusfog = GLOBAL.TheWorld.net and GLOBAL.TheWorld.net.components.fungusfog
+        if not fungusfog then 
+            return false, -1 
+        end
+
+        local is_active = fungusfog.net_fungusfogactive and fungusfog.net_fungusfogactive:value() or false
+        local cd = fungusfog.net_fungusfogcd and fungusfog.net_fungusfogcd:value() or -1
+        
+        return is_active, cd
+    end,
+
     -- 降雨预测 - 部分代码来自快捷宣告（中文）https://steamcommunity.com/sharedfiles/filedetails/?id=2785634357
     PredictRainStart = function()
         local world = TheWorld:HasTag("porkland") and "PORKLAND"
@@ -69,13 +101,21 @@ GLOBAL.QA_UTILS = {
                         autumn = .25,
                         winter = .25,
                         spring = 3,
-                        summer = .1
+                        summer = .1,
+                        tranquil = .25,
+                        frost = .25,
+                        verdant = 3,
+                        umbral = .1
                     },
                     MAX = {
                         autumn = 1.0,
                         winter = 1.0,
                         spring = 3.75,
-                        summer = .5
+                        summer = .5,
+                        tranquil = 1.0,
+                        frost = 1.0,
+                        verdant = 3.75,
+                        umbral = .5
                     }
                 }
             end
