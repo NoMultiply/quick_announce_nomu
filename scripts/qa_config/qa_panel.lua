@@ -310,8 +310,19 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
                 item.btn:SetOnClick(function()
                     SendMemeChatMessage(data.name)
+                    
+                    -- 发送后先隐藏表情面板
                     if self.EM_bg then self.EM_bg:Hide() end
-                    self.RestoreInputFocus()
+
+                    if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                        if type(self.Close) == "function" then
+                            self:Close()
+                        else
+                            GLOBAL.TheFrontEnd:PopScreen(self)
+                        end
+                    else
+                        self.RestoreInputFocus()
+                    end
                 end)
             end
             item.focus_forward = item.btn
