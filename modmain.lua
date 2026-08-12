@@ -71,9 +71,7 @@ local escape_pattern = GLOBAL.NOMU_QA.escape_pattern
 local LOCAL_STRINGS = GLOBAL.STRINGS.NOMU_QA or {}
 
 -- 检测 Show Me 模组是否已启用
-local SHOW_ME_ON = ModManager:GetMod("workshop-666155465") ~= nil
-    or ModManager:GetMod("workshop-2287303119") ~= nil
-    or ModManager:GetMod("workshop-2189004162") ~= nil
+local SHOW_ME_ON = MOD_RPC.ShowMeSHint ~= nil or ModManager:GetMod("workshop-2189004162") ~= nil
 
 -- ============================================================================
 -- [3] 按键管理与核心辅助工具
