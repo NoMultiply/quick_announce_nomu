@@ -224,13 +224,25 @@ local function GetEntityName(entity, force_basic)
         local custom_name = entity.replica.named._name:value()
         if custom_name and custom_name ~= "" then
             is_player_named = true
-            display_name = custom_name
+            if string.find(raw_name, custom_name, 1, true) then
+                display_name = string.gsub(raw_name, "\n", " ")
+            else
+                local adj = entity.GetAdjective and entity:GetAdjective() or ""
+                display_name = adj ~= "" and (adj .. custom_name) or custom_name
+                display_name = string.gsub(display_name, "\n", " ")
+            end
         end
     elseif entity.replica and entity.replica.writeable and entity.replica.writeable._text then
         local custom_text = entity.replica.writeable._text:value()
         if custom_text and custom_text ~= "" then
             is_player_named = true
-            display_name = custom_text
+            if string.find(raw_name, custom_text, 1, true) then
+                display_name = string.gsub(raw_name, "\n", " ")
+            else
+                local adj = entity.GetAdjective and entity:GetAdjective() or ""
+                display_name = adj ~= "" and (adj .. custom_text) or custom_text
+                display_name = string.gsub(display_name, "\n", " ")
+            end
         end
     end
 
@@ -499,7 +511,7 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
 
     -- 拼接结果，超长截断
     if #filtered > 0 then
-        local MAX_LEN = 150
+        local MAX_LEN = 120
         local joined_str = ""
         local is_truncated = false
 
