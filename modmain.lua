@@ -4167,17 +4167,18 @@ if ENABLE_MEME_SYSTEM then
 
     local LIST = {
         List_0 = {}, --  收藏分类
-        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}
+        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
-    for i = 1, 79 do table.insert(LIST.List_2, "feibi_"..i) end
+    for i = 1, 80 do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 55 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 60 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
     for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
     for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
+    for i = 1, 25 do table.insert(LIST.List_10, "jiaran_"..i) end
 
     local LIST_DATA = {
         List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
@@ -4190,6 +4191,7 @@ if ENABLE_MEME_SYSTEM then
         List_7 = { title = "月薪猫", atlas = "images/meme/yuexin.xml", prefix = "yuexin" },
         List_8 = { title = "喜羊羊", atlas = "images/meme/xiyy.xml", prefix = "xiyy" },
         List_9 = { title = "蜜桃猫", atlas = "images/meme/mtcat.xml", prefix = "mtcat" },
+        List_10 = { title = "嘉然", atlas = "images/meme/jiaran.xml", prefix = "jiaran" },
     }
 
     GLOBAL.NOMU_QA.MEME_LIST = LIST
@@ -4199,7 +4201,7 @@ if ENABLE_MEME_SYSTEM then
     table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
     table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
 
-    for i = 1, 9 do
+    for i = 1, 10 do
         local data = LIST_DATA["List_"..i]
         if data and data.atlas then
             local image = data.atlas:gsub("%.xml$", ".tex")
