@@ -4167,17 +4167,18 @@ if ENABLE_MEME_SYSTEM then
 
     local LIST = {
         List_0 = {}, --  收藏分类
-        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}
+        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
-    for i = 1, 79 do table.insert(LIST.List_2, "feibi_"..i) end
+    for i = 1, 80 do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 55 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 60 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
-    for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
     for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
+    for i = 1, 25 do table.insert(LIST.List_10, "jiaran_"..i) end
 
     local LIST_DATA = {
         List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
@@ -4190,6 +4191,7 @@ if ENABLE_MEME_SYSTEM then
         List_7 = { title = "月薪猫", atlas = "images/meme/yuexin.xml", prefix = "yuexin" },
         List_8 = { title = "喜羊羊", atlas = "images/meme/xiyy.xml", prefix = "xiyy" },
         List_9 = { title = "蜜桃猫", atlas = "images/meme/mtcat.xml", prefix = "mtcat" },
+        List_10 = { title = "嘉然", atlas = "images/meme/jiaran.xml", prefix = "jiaran" },
     }
 
     GLOBAL.NOMU_QA.MEME_LIST = LIST
@@ -4199,7 +4201,7 @@ if ENABLE_MEME_SYSTEM then
     table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
     table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
 
-    for i = 1, 9 do
+    for i = 1, 10 do
         local data = LIST_DATA["List_"..i]
         if data and data.atlas then
             local image = data.atlas:gsub("%.xml$", ".tex")
@@ -4219,6 +4221,127 @@ if ENABLE_MEME_SYSTEM then
     end
 
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
+
+    -- 放大表情包逻辑
+    -- [1] Ctrl+左键 屏幕居中放大功能
+    GLOBAL.NOMU_QA.ShowZoomedMeme = function(meme_name, atlas, is_anim)
+        local Screen = GLOBAL.require("widgets/screen")
+        local UIAnim = GLOBAL.require("widgets/uianim")
+        local Image = GLOBAL.require("widgets/image")
+        
+        local zoom_screen = Screen("MemeZoomScreen")
+        
+        -- 半透明黑色背景
+        zoom_screen.bg = zoom_screen:AddChild(Image("images/global.xml", "square.tex"))
+        zoom_screen.bg:SetVRegPoint(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.bg:SetHRegPoint(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.bg:SetVAnchor(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.bg:SetHAnchor(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.bg:SetScaleMode(GLOBAL.SCALEMODE_FILLSCREEN)
+        zoom_screen.bg:SetTint(0, 0, 0, 0.7)
+
+        local current_scale = 1.5
+
+        zoom_screen.OnMouseButton = function(self, button, down, x, y)
+            if not down and (button == GLOBAL.MOUSEBUTTON_LEFT or button == GLOBAL.MOUSEBUTTON_RIGHT) then
+                GLOBAL.TheFrontEnd:PopScreen()
+                return true
+            end
+        end
+        
+        zoom_screen.OnControl = function(self, control, down)
+            if control == GLOBAL.CONTROL_SCROLLFWD or control == GLOBAL.CONTROL_ZOOM_IN then
+                if not down then return true end
+                current_scale = math.min(5.0, current_scale + 0.2)
+                if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
+                return true
+            elseif control == GLOBAL.CONTROL_SCROLLBACK or control == GLOBAL.CONTROL_ZOOM_OUT then
+                if not down then return true end
+                current_scale = math.max(0.5, current_scale - 0.2)
+                if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
+                return true
+            elseif not down and (control == GLOBAL.CONTROL_CANCEL or control == GLOBAL.CONTROL_ACCEPT) then
+                GLOBAL.TheFrontEnd:PopScreen()
+                return true
+            end
+            return false
+        end
+
+        if is_anim then
+            zoom_screen.meme = zoom_screen:AddChild(UIAnim())
+            zoom_screen.meme:GetAnimState():SetBank(meme_name)
+            zoom_screen.meme:GetAnimState():SetBuild(meme_name)
+            zoom_screen.meme:GetAnimState():PlayAnimation("idle", true)
+        else
+            zoom_screen.meme = zoom_screen:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+        end
+        
+        zoom_screen.meme:SetVAnchor(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.meme:SetHAnchor(GLOBAL.ANCHOR_MIDDLE)
+        zoom_screen.meme:SetScale(current_scale, current_scale, current_scale)
+        
+        GLOBAL.TheFrontEnd:PushScreen(zoom_screen)
+    end
+
+    -- [2] 鼠标悬浮
+    GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
+        local Image = GLOBAL.require("widgets/image")
+        local UIAnim = GLOBAL.require("widgets/uianim")
+        local Widget = GLOBAL.require("widgets/widget")
+
+        local dummy_tracker = parent_root:AddChild(Widget("dummy_tracker"))
+        local mx, my = meme_widget:GetPosition():Get()
+        dummy_tracker:SetPosition(mx + 100, my + 38)
+        
+        meme_widget:SetOnGainFocus(function()
+            -- 确保清理旧的
+            if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
+                meme_widget.hover_preview:Kill()
+            end
+
+            local top_parent = GLOBAL.TheFrontEnd.overlayroot
+            local hp
+            if is_anim then
+                hp = top_parent:AddChild(UIAnim())
+                hp:GetAnimState():SetBank(meme_name)
+                hp:GetAnimState():SetBuild(meme_name)
+                hp:GetAnimState():PlayAnimation("idle", true)
+            else
+                hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+            end
+            
+            -- 保证视觉大小与之前的比例一致
+            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
+            hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+            hp:MoveToFront()
+
+            if dummy_tracker.inst:IsValid() then
+                hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
+            end
+
+            hp.inst:DoPeriodicTask(0, function()
+                if not meme_widget.inst:IsValid() or not meme_widget.focus or not dummy_tracker.inst:IsValid() then
+                    hp:Kill()
+                    meme_widget.hover_preview = nil
+                    return
+                end
+                local w_pos = dummy_tracker:GetWorldPosition()
+                hp:SetPosition(w_pos:Get())
+            end)
+            
+            meme_widget.hover_preview = hp
+        end)
+        
+        meme_widget:SetOnLoseFocus(function()
+            if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
+                meme_widget.hover_preview:Kill()
+                meme_widget.hover_preview = nil
+            end
+        end)
+        
+        return dummy_tracker
+    end
+
 
     -- 10.2 拦截与替换聊天框中的表观动画
     AddClassPostConstruct("widgets/redux/chatline", function(self)
@@ -4247,10 +4370,16 @@ if ENABLE_MEME_SYSTEM then
         end
 
         function self:UpdateMemeDisplay()
+            -- 清理旧的表情和定位器
             if self.meme then
                 self.meme:Kill()
                 self.meme = nil
             end
+            if self.meme_dummy_tracker then
+                self.meme_dummy_tracker:Kill()
+                self.meme_dummy_tracker = nil
+            end
+            
             if self.message then
                 local str = self.message:GetString()
                 if str then
@@ -4267,14 +4396,37 @@ if ENABLE_MEME_SYSTEM then
                             self.meme:GetAnimState():PlayAnimation("idle", true)
                             self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
                             self.meme.isanim = true
+                            self.meme.atlas = nil
                         else
                             local prefix = name:match("^(.*)_%d+")
                             local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
                             self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
                             self.meme:SetFadeAlpha(self.meme_alpha)
+                            self.meme.isanim = false
+                            self.meme.atlas = atlas
                         end
                         self.meme:SetPosition(-268, -8)
                         self.meme:SetScale(.4, .4, .4)
+                        
+                        if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
+                            self.meme:SetRegionSize(100, 100) 
+                        end
+                        self.meme:SetClickable(true)
+                        
+                        -- 绑定悬浮放大与定位器逻辑
+                        self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+                        
+                        -- 绑定 Ctrl+左键全屏放大逻辑
+                        self.meme.OnMouseButton = function(w, button, down, x, y)
+                            if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
+                                if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
+                                    if GLOBAL.NOMU_QA.ShowZoomedMeme then
+                                        GLOBAL.NOMU_QA.ShowZoomedMeme(name, self.meme.atlas, self.meme.isanim)
+                                    end
+                                    return true
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -4294,29 +4446,59 @@ if ENABLE_MEME_SYSTEM then
 
             self.message:Hide()
 
+            if self.meme then
+                self.meme:Kill()
+                self.meme = nil
+            end
+            if self.meme_dummy_tracker then
+                self.meme_dummy_tracker:Kill()
+                self.meme_dummy_tracker = nil
+            end
+
             local name = meme_name
             if name:sub(1, 4) == "gif_" then
                 self.meme = self.root:AddChild(UIAnim())
                 self.meme:GetAnimState():SetBank(name)
                 self.meme:GetAnimState():SetBuild(name)
                 self.meme:GetAnimState():PlayAnimation("idle", true)
+                self.meme.isanim = true
+                self.meme.atlas = nil
             else
                 local prefix = name:match("^(.*)_%d+")
                 local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
                 self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
+                self.meme.isanim = false
+                self.meme.atlas = atlas
             end
 
             local msg_x, msg_y = self.message:GetPosition():Get()
             local w, h = self.message:GetRegionSize()
             
             self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12 )
-
             self.meme:SetScale(0.35, 0.35, 0.35)
+            
             if self.extra_line_count then
                 self.extra_line_count = self.extra_line_count + 1
+            end
+
+            if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
+                self.meme:SetRegionSize(100, 100)
+            end
+            self.meme:SetClickable(true)
+
+            self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+            
+            self.meme.OnMouseButton = function(btn, button, down, x, y)
+                if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
+                    if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
+                        if GLOBAL.NOMU_QA.ShowZoomedMeme then
+                            GLOBAL.NOMU_QA.ShowZoomedMeme(name, self.meme.atlas, self.meme.isanim)
+                        end
+                        return true
+                    end
+                end
             end
         end
     end)
 
 end
-

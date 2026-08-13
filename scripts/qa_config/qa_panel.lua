@@ -119,8 +119,8 @@ local controller_emojis = {
     "\238\136\129", "\238\136\128", "\238\129\136", "\238\129\139", "\238\129\135", "\238\129\138", "\238\129\132", "\238\129\133",
 }
 
-local function SendMemeChatMessage(meme_name)
-    if GLOBAL.TheNet then GLOBAL.TheNet:Say("[Meme:" .. meme_name .. "]") end
+local function SendMemeChatMessage(meme_name, whisper)
+    if GLOBAL.TheNet then GLOBAL.TheNet:Say("[Meme:" .. meme_name .. "]", whisper) end
 end
 
 local function CreateEmojiAndPhraseMenu(self, mode)
@@ -264,7 +264,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         end)
         RefreshPhraseList()
 
-       -- ===== Tab 3: Meme 表情包 =====
+        -- ===== Tab 3: Meme 表情包 =====
         if GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM then
         local current_tab = 0 
         local current_cat_page = 1
@@ -274,11 +274,18 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             local item = Widget('meme-grid-item')
             item.btn = item:AddChild(ImageButton())
             item.btn:SetNormalScale(0.45, 0.45, 0.45); item.btn:SetFocusScale(0.5, 0.5, 0.5)
+
+            -- 收藏标识 (金色的星星)
+            item.fav_marker = item:AddChild(Text(GLOBAL.UIFONT, 25, "★"))
+            item.fav_marker:SetColour(1, 0.8, 0.1, 1)
+            item.fav_marker:SetPosition(22, 22)
+            item.fav_marker:SetClickable(false)
+            item.fav_marker:Hide()
             
-            -- 右键收藏/取消收藏逻辑
-            local old_OnControl = item.btn.OnControl
-            item.btn.OnControl = function(self_btn, control, down)
-                if control == GLOBAL.CONTROL_SECONDARY and not down then
+            -- 中键收藏/取消收藏逻辑
+            local old_OnMouseButton = item.btn.OnMouseButton
+            item.btn.OnMouseButton = function(self_btn, button, down, x, y)
+                if button == GLOBAL.MOUSEBUTTON_MIDDLE and not down then
                     if item.data then
                         local name = item.data.name
                         local favs = GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}
@@ -288,15 +295,43 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                         end
                         if found_idx then
                             table.remove(favs, found_idx) -- 存在则取消收藏
+                            item.fav_marker:Hide() --  即时取消标识
                         else
                             table.insert(favs, 1, name) -- 不存在则插入到第一位
+                            item.fav_marker:Show() --  即时显示标识
                         end
                         GLOBAL.NOMU_QA.DATA.MEME_FAVS = favs
                         GLOBAL.NOMU_QA.SaveData()
                         
-                        -- 右键操作后即时刷新列表
+                        -- 中键操作后即时刷新列表
                         if current_tab == 0 and item.refresh_fn then 
                             item.refresh_fn() 
+                        end
+                    end
+                    return true
+                end
+                if old_OnMouseButton then return old_OnMouseButton(self_btn, button, down, x, y) end
+                return false
+            end
+
+            -- 右键私聊发送逻辑
+            local old_OnControl = item.btn.OnControl
+            item.btn.OnControl = function(self_btn, control, down)
+                if control == GLOBAL.CONTROL_SECONDARY and not down then
+                    if item.data then
+                        
+                        SendMemeChatMessage(item.data.name, true) -- true 表示通过私聊频道发送
+                        
+                        if self.EM_bg then self.EM_bg:Hide() end
+
+                        if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                            if type(self.Close) == "function" then
+                                self:Close()
+                            else
+                                GLOBAL.TheFrontEnd:PopScreen(self)
+                            end
+                        else
+                            self.RestoreInputFocus()
                         end
                     end
                     return true
@@ -308,12 +343,40 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             item.SetInfo = function(_, data)
                 item.data = data
                 item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
+                
+                --  初始化时读取收藏状态决定是否显示星星
+                local is_fav = false
+                for _, v in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do
+                    if v == data.name then
+                        is_fav = true
+                        break
+                    end
+                end
+                if is_fav then
+                    item.fav_marker:Show()
+                else
+                    item.fav_marker:Hide()
+                end
+
                 item.btn:SetOnClick(function()
-                    SendMemeChatMessage(data.name)
+                    
+                    SendMemeChatMessage(data.name, false) -- 左键默认公屏发送
+                    
+                    -- 发送后先隐藏表情面板
                     if self.EM_bg then self.EM_bg:Hide() end
-                    self.RestoreInputFocus()
+
+                    if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                        if type(self.Close) == "function" then
+                            self:Close()
+                        else
+                            GLOBAL.TheFrontEnd:PopScreen(self)
+                        end
+                    else
+                        self.RestoreInputFocus()
+                    end
                 end)
             end
+
             item.focus_forward = item.btn
             return item
         end, 0, -15, 65, 65, 5, 4))
@@ -362,8 +425,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             local total_cat_pages = math.max(1, math.ceil(total_meme_lists / cats_per_page))
 
             if total_cat_pages > 1 then
-                local prev_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
-                prev_btn:SetPosition(-170, 126); prev_btn:ForceImageSize(25, 28)
+                local prev_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_square_normal.tex", "button_carny_square_hover.tex", "button_carny_square_disabled.tex", "button_carny_square_down.tex"))
+                prev_btn:SetPosition(-170, 126); prev_btn:ForceImageSize(28, 28) 
                 prev_btn:SetFont(GLOBAL.CHATFONT); prev_btn.text:SetColour(0, 0, 0, 1); prev_btn:SetTextSize(18)
                 prev_btn:SetText("<")
                 prev_btn:SetOnClick(function()
@@ -373,8 +436,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 end)
                 table.insert(self.EM_meme_cat_btns, prev_btn)
 
-                local next_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
-                next_btn:SetPosition(170, 126); next_btn:ForceImageSize(25, 28)
+                local next_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_square_normal.tex", "button_carny_square_hover.tex", "button_carny_square_disabled.tex", "button_carny_square_down.tex"))
+                next_btn:SetPosition(170, 126); next_btn:ForceImageSize(28, 28) 
                 next_btn:SetFont(GLOBAL.CHATFONT); next_btn.text:SetColour(0, 0, 0, 1); next_btn:SetTextSize(18)
                 next_btn:SetText(">")
                 next_btn:SetOnClick(function()
@@ -397,7 +460,14 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             for i = start_idx, end_idx do
                 local list_key = "List_" .. i
                 local title = GLOBAL.NOMU_QA.MEME_LIST_DATA[list_key] and GLOBAL.NOMU_QA.MEME_LIST_DATA[list_key].title or tostring(i)
-                local sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
+                local sub_btn
+                
+                -- 对收藏分类 (i == 0) 使用特殊高亮样式
+                if i == 0 then
+                    sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_hover.tex", "button_carny_long_down.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
+                else
+                    sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
+                end
                 
                 local offset_x = start_x + (i - start_idx) * (btn_width + btn_spacing)
                 sub_btn:SetPosition(offset_x, 126); sub_btn:ForceImageSize(btn_width, 28)
@@ -405,10 +475,24 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 sub_btn:SetFont(GLOBAL.CHATFONT); sub_btn:SetTextSize(15)
                 sub_btn:SetText(title)
 
+                if i == 0 then
+                    sub_btn:SetTextColour({0.2, 0.8, 0.2, 1})
+                    sub_btn:SetTextFocusColour({0.2, 0.8, 0.2, 1})
+                    if sub_btn.SetTextSelectedColour then 
+                        sub_btn:SetTextSelectedColour({0.2, 0.8, 0.2, 1}) 
+                    end
+                    sub_btn.text:SetColour(0.2, 0.8, 0.2, 1)
+                else
+                    sub_btn:SetTextColour({0, 0, 0, 1})
+                    sub_btn:SetTextFocusColour({0, 0, 0, 1})
+                    if sub_btn.SetTextSelectedColour then 
+                        sub_btn:SetTextSelectedColour({0, 0, 0, 1}) 
+                    end
+                    sub_btn.text:SetColour(0, 0, 0, 1)
+                end
+
                 if current_tab == i then
                     sub_btn.image:SetTint(0.8, 0.8, 0.8, 1) 
-                else
-                    sub_btn.text:SetColour(0, 0, 0, 1)
                 end
 
                 sub_btn:SetOnClick(function() 
