@@ -4176,7 +4176,7 @@ if ENABLE_MEME_SYSTEM then
     for i = 1, 60 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
-    for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
     for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
     for i = 1, 25 do table.insert(LIST.List_10, "jiaran_"..i) end
 
@@ -4222,7 +4222,8 @@ if ENABLE_MEME_SYSTEM then
 
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
--- 放大表情包逻辑
+    -- 放大表情包逻辑
+    -- [1] Ctrl+左键 屏幕居中放大功能
     GLOBAL.NOMU_QA.ShowZoomedMeme = function(meme_name, atlas, is_anim)
         local Screen = GLOBAL.require("widgets/screen")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4239,10 +4240,8 @@ if ENABLE_MEME_SYSTEM then
         zoom_screen.bg:SetScaleMode(GLOBAL.SCALEMODE_FILLSCREEN)
         zoom_screen.bg:SetTint(0, 0, 0, 0.7)
 
-        -- 记录当前缩放比例（默认 1.5 倍）
         local current_scale = 1.5
 
-        -- 点击任意位置关闭放大界面
         zoom_screen.OnMouseButton = function(self, button, down, x, y)
             if not down and (button == GLOBAL.MOUSEBUTTON_LEFT or button == GLOBAL.MOUSEBUTTON_RIGHT) then
                 GLOBAL.TheFrontEnd:PopScreen()
@@ -4250,18 +4249,15 @@ if ENABLE_MEME_SYSTEM then
             end
         end
         
-        -- 按下 Esc 等键关闭，或者使用滚轮缩放
         zoom_screen.OnControl = function(self, control, down)
-            -- 滚轮向上（放大）
             if control == GLOBAL.CONTROL_SCROLLFWD or control == GLOBAL.CONTROL_ZOOM_IN then
                 if not down then return true end
-                current_scale = math.min(5.0, current_scale + 0.2) -- 限制最大放大倍数 5.0
+                current_scale = math.min(5.0, current_scale + 0.2)
                 if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
                 return true
-            -- 滚轮向下（缩小）
             elseif control == GLOBAL.CONTROL_SCROLLBACK or control == GLOBAL.CONTROL_ZOOM_OUT then
                 if not down then return true end
-                current_scale = math.max(0.5, current_scale - 0.2) -- 限制最小缩小倍数 0.5
+                current_scale = math.max(0.5, current_scale - 0.2)
                 if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
                 return true
             elseif not down and (control == GLOBAL.CONTROL_CANCEL or control == GLOBAL.CONTROL_ACCEPT) then
@@ -4286,6 +4282,66 @@ if ENABLE_MEME_SYSTEM then
         
         GLOBAL.TheFrontEnd:PushScreen(zoom_screen)
     end
+
+    -- [2] 鼠标悬浮
+    GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
+        local Image = GLOBAL.require("widgets/image")
+        local UIAnim = GLOBAL.require("widgets/uianim")
+        local Widget = GLOBAL.require("widgets/widget")
+
+        local dummy_tracker = parent_root:AddChild(Widget("dummy_tracker"))
+        local mx, my = meme_widget:GetPosition():Get()
+        dummy_tracker:SetPosition(mx + 100, my + 38)
+        
+        meme_widget:SetOnGainFocus(function()
+            -- 确保清理旧的
+            if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
+                meme_widget.hover_preview:Kill()
+            end
+
+            local top_parent = GLOBAL.TheFrontEnd.overlayroot
+            local hp
+            if is_anim then
+                hp = top_parent:AddChild(UIAnim())
+                hp:GetAnimState():SetBank(meme_name)
+                hp:GetAnimState():SetBuild(meme_name)
+                hp:GetAnimState():PlayAnimation("idle", true)
+            else
+                hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+            end
+            
+            -- 保证视觉大小与之前的比例一致
+            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
+            hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+            hp:MoveToFront()
+
+            if dummy_tracker.inst:IsValid() then
+                hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
+            end
+
+            hp.inst:DoPeriodicTask(0, function()
+                if not meme_widget.inst:IsValid() or not meme_widget.focus or not dummy_tracker.inst:IsValid() then
+                    hp:Kill()
+                    meme_widget.hover_preview = nil
+                    return
+                end
+                local w_pos = dummy_tracker:GetWorldPosition()
+                hp:SetPosition(w_pos:Get())
+            end)
+            
+            meme_widget.hover_preview = hp
+        end)
+        
+        meme_widget:SetOnLoseFocus(function()
+            if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
+                meme_widget.hover_preview:Kill()
+                meme_widget.hover_preview = nil
+            end
+        end)
+        
+        return dummy_tracker
+    end
+
 
     -- 10.2 拦截与替换聊天框中的表观动画
     AddClassPostConstruct("widgets/redux/chatline", function(self)
@@ -4314,10 +4370,16 @@ if ENABLE_MEME_SYSTEM then
         end
 
         function self:UpdateMemeDisplay()
+            -- 清理旧的表情和定位器
             if self.meme then
                 self.meme:Kill()
                 self.meme = nil
             end
+            if self.meme_dummy_tracker then
+                self.meme_dummy_tracker:Kill()
+                self.meme_dummy_tracker = nil
+            end
+            
             if self.message then
                 local str = self.message:GetString()
                 if str then
@@ -4346,11 +4408,15 @@ if ENABLE_MEME_SYSTEM then
                         self.meme:SetPosition(-268, -8)
                         self.meme:SetScale(.4, .4, .4)
                         
-                        -- 聊天框内表情包的点击与放大逻辑
                         if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                            self.meme:SetRegionSize(100, 100) -- 确保动图有点击判定区域
+                            self.meme:SetRegionSize(100, 100) 
                         end
                         self.meme:SetClickable(true)
+                        
+                        -- 绑定悬浮放大与定位器逻辑
+                        self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+                        
+                        -- 绑定 Ctrl+左键全屏放大逻辑
                         self.meme.OnMouseButton = function(w, button, down, x, y)
                             if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
                                 if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
@@ -4380,6 +4446,15 @@ if ENABLE_MEME_SYSTEM then
 
             self.message:Hide()
 
+            if self.meme then
+                self.meme:Kill()
+                self.meme = nil
+            end
+            if self.meme_dummy_tracker then
+                self.meme_dummy_tracker:Kill()
+                self.meme_dummy_tracker = nil
+            end
+
             local name = meme_name
             if name:sub(1, 4) == "gif_" then
                 self.meme = self.root:AddChild(UIAnim())
@@ -4406,11 +4481,13 @@ if ENABLE_MEME_SYSTEM then
                 self.extra_line_count = self.extra_line_count + 1
             end
 
-            -- 聊天框内表情包的点击与放大逻辑
             if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
                 self.meme:SetRegionSize(100, 100)
             end
             self.meme:SetClickable(true)
+
+            self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+            
             self.meme.OnMouseButton = function(btn, button, down, x, y)
                 if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
                     if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
