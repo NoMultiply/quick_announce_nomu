@@ -119,8 +119,8 @@ local controller_emojis = {
     "\238\136\129", "\238\136\128", "\238\129\136", "\238\129\139", "\238\129\135", "\238\129\138", "\238\129\132", "\238\129\133",
 }
 
-local function SendMemeChatMessage(meme_name)
-    if GLOBAL.TheNet then GLOBAL.TheNet:Say("[Meme:" .. meme_name .. "]") end
+local function SendMemeChatMessage(meme_name, whisper)
+    if GLOBAL.TheNet then GLOBAL.TheNet:Say("[Meme:" .. meme_name .. "]", whisper) end
 end
 
 local function CreateEmojiAndPhraseMenu(self, mode)
@@ -275,10 +275,10 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             item.btn = item:AddChild(ImageButton())
             item.btn:SetNormalScale(0.45, 0.45, 0.45); item.btn:SetFocusScale(0.5, 0.5, 0.5)
             
-            -- 右键收藏/取消收藏逻辑
-            local old_OnControl = item.btn.OnControl
-            item.btn.OnControl = function(self_btn, control, down)
-                if control == GLOBAL.CONTROL_SECONDARY and not down then
+            -- 中键收藏/取消收藏逻辑
+            local old_OnMouseButton = item.btn.OnMouseButton
+            item.btn.OnMouseButton = function(self_btn, button, down, x, y)
+                if button == GLOBAL.MOUSEBUTTON_MIDDLE and not down then
                     if item.data then
                         local name = item.data.name
                         local favs = GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}
@@ -294,9 +294,34 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                         GLOBAL.NOMU_QA.DATA.MEME_FAVS = favs
                         GLOBAL.NOMU_QA.SaveData()
                         
-                        -- 右键操作后即时刷新列表
+                        -- 中键操作后即时刷新列表
                         if current_tab == 0 and item.refresh_fn then 
                             item.refresh_fn() 
+                        end
+                    end
+                    return true
+                end
+                if old_OnMouseButton then return old_OnMouseButton(self_btn, button, down, x, y) end
+                return false
+            end
+
+            -- 右键私聊发送逻辑
+            local old_OnControl = item.btn.OnControl
+            item.btn.OnControl = function(self_btn, control, down)
+                if control == GLOBAL.CONTROL_SECONDARY and not down then
+                    if item.data then
+                        SendMemeChatMessage(item.data.name, true) -- true 表示通过私聊频道发送
+                        
+                        if self.EM_bg then self.EM_bg:Hide() end
+
+                        if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                            if type(self.Close) == "function" then
+                                self:Close()
+                            else
+                                GLOBAL.TheFrontEnd:PopScreen(self)
+                            end
+                        else
+                            self.RestoreInputFocus()
                         end
                     end
                     return true
@@ -309,7 +334,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 item.data = data
                 item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
                 item.btn:SetOnClick(function()
-                    SendMemeChatMessage(data.name)
+                    SendMemeChatMessage(data.name, false) -- 左键默认公屏发送
                     
                     -- 发送后先隐藏表情面板
                     if self.EM_bg then self.EM_bg:Hide() end
@@ -325,6 +350,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                     end
                 end)
             end
+
             item.focus_forward = item.btn
             return item
         end, 0, -15, 65, 65, 5, 4))
