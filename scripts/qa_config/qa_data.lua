@@ -1,6 +1,5 @@
 local _G = GLOBAL
 
-_G.NOMU_QA = _G.rawget(_G, "NOMU_QA") or {}
 _G.NOMU_QA.VERSION = 1
 
 -- 深拷贝函数，用于安全地复制 Table

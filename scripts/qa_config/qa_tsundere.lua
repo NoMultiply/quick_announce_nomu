@@ -309,7 +309,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
             STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
-            STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}呢，看什么看！',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}！',
         },
         MAPPINGS = {
             DEFAULT = {

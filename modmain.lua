@@ -7,6 +7,8 @@ GLOBAL.setmetatable(env, {
     end
 })
 
+if GLOBAL.rawget(GLOBAL, "NOMU_QA") then return end
+
 -- 声明模组所需的资源文件（图标、贴图等）
 Assets = {}
 
@@ -15,7 +17,7 @@ local ENABLE_MEME_SYSTEM = GetModConfigData("enable_meme_system")
 if ModManager and ModManager:GetMod("workshop-3678295700") ~= nil then
     ENABLE_MEME_SYSTEM = false
 end
-GLOBAL.NOMU_QA = GLOBAL.rawget(GLOBAL, "NOMU_QA") or {}
+GLOBAL.NOMU_QA = {}
 GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM = ENABLE_MEME_SYSTEM
 
 -- 导入外部 Lua 辅助模块的安全加载函数
@@ -58,9 +60,6 @@ modimport('scripts/qa_config/qa_cat.lua')
 modimport('scripts/qa_config/qa_tsundere.lua')
 modimport('scripts/qa_config/qa_cute.lua')
 modimport('scripts/qa_config/qa_utils.lua')
-
--- 初始化核心数据表 NOMU_QA
-GLOBAL.NOMU_QA = GLOBAL.rawget(GLOBAL, "NOMU_QA") or {}
 modimport('scripts/qa_config/qa_data.lua')
 
 -- 提取常用工具函数到本地变量，提高访问效率
