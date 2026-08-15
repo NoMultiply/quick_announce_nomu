@@ -3315,7 +3315,6 @@ end
 AddSimPostInit(function()
     -- 加载持久化数据
     GLOBAL.NOMU_QA.LoadData()
-    GLOBAL.PositionSystem.LoadData()
 
     -- 动态拦截屏幕弹窗（勋章答题等）
     if GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd.PushScreen then
