@@ -3103,7 +3103,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
                 ITEM = item_display_name,
                 SHOW_ME = show_me,
                 DISTANCE = dist_str
-            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "GELBLOB_STORAGE_HAS"))
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_HAS"))
         else
             local empty_count = 0
             for _, v in ipairs(entities) do
@@ -3121,7 +3121,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
                 NUM = empty_count,
                 SHOW_ME = show_me,
                 DISTANCE = dist_str
-            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "GELBLOB_STORAGE_EMPTY"))
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_EMPTY"))
         end
     end
 
