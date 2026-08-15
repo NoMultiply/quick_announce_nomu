@@ -1,3 +1,4 @@
+---@diagnostic disable: lowercase-global
 name = "快捷宣告(NoMu)"
 author = "NoMu，冰冰羊，THEDOG"
 description = [[
@@ -14,17 +15,19 @@ description = [[
 - 兼容了 macOS
 ]]
 
-version = "2026-08-13"
+version = "2026-08-16"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then
     name = name .. " -dev"
+	priority = -3
+else
+	priority = -2
 end
 
 api_version = 10
 
 dst_compatible = true
-priority = -2
 all_clients_require_mod = false
 client_only_mod = true
 server_filter_tags = {}

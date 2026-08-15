@@ -309,7 +309,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             STATE_EQUAL = '喂！这里有 {TOTAL}个 {NAME}，目前竟然全都{ADJ}{SHOW_ME}{DISTANCE}，真是不想说你！',
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
             STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
-            STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}呢，看什么看！',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -388,7 +388,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
 
                     L1 = "最弱小的一级",
                     L2 = "稍微麻烦点的二级",
-                    L3 = "随时会蹦出女王的三级（当心点）",
+                    L3 = "充满威胁的三级（当心点）",
                     L1_BEDAZZLED = "被无聊装饰过的一级",
                     L2_BEDAZZLED = "被无聊装饰过的二级",
                     L3_BEDAZZLED = "被无聊装饰过的三级",

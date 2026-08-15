@@ -137,8 +137,11 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_FUZZY_ON = '模糊宣告（开）',
     BUTTON_TEXT_FUZZY_OFF = '模糊宣告（关）',
 
-    BUTTON_TEXT_PREFIX_ON = '动态前缀（开）',
-    BUTTON_TEXT_PREFIX_OFF = '动态前缀（关）',
+    BUTTON_TEXT_MEME_PREVIEW_ON = "表情预览（关）",
+    BUTTON_TEXT_MEME_PREVIEW_OFF = "表情预览（开）",
+
+    BUTTON_TEXT_SYNC_ON = '是否同步：开启',
+    BUTTON_TEXT_SYNC_OFF = '是否同步：关闭',
 
     BUTTON_TEXT_CUSTOM_PREFIX = '宣告前缀：',
     TITLE_CUSTOM_PREFIX = '设置宣告前缀',
@@ -598,6 +601,9 @@ ENV = {
 
             STATE_THIS = '这里有 {TOTAL}个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
             STATE_THIS_SINGLE = '这里有 1个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
+
+            STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个有 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 是空的{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -666,11 +672,14 @@ ENV = {
                     SAPLING = "还是小树苗",
                     SHORT = "才刚刚长出来",
                     NORMAL = "长得正茂盛",
-                    TALL = "长得高高大大的",
+                    TALL = "长得高高的",
                     BOULDER = "已经变成矿床了",
                     ANCIENT_READY = "结满了果实",
                     ANCIENT_EMPTY = "光秃秃的没有果实",
                     MARBLE_TREE = "是由大理石构成的",
+
+                    TROPHYSCALE_EMPTY = '是空空的',
+                    TROPHYSCALE_HAS = '放有物品',
 
                     L1 = "是一级的",
                     L2 = "是二级的",

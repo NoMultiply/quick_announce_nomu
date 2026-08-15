@@ -7,6 +7,8 @@ GLOBAL.setmetatable(env, {
     end
 })
 
+if GLOBAL.rawget(GLOBAL, "NOMU_QA") then return end
+
 -- 声明模组所需的资源文件（图标、贴图等）
 Assets = {}
 
@@ -15,7 +17,7 @@ local ENABLE_MEME_SYSTEM = GetModConfigData("enable_meme_system")
 if ModManager and ModManager:GetMod("workshop-3678295700") ~= nil then
     ENABLE_MEME_SYSTEM = false
 end
-GLOBAL.NOMU_QA = GLOBAL.rawget(GLOBAL, "NOMU_QA") or {}
+GLOBAL.NOMU_QA = {}
 GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM = ENABLE_MEME_SYSTEM
 
 -- 导入外部 Lua 辅助模块的安全加载函数
@@ -58,9 +60,6 @@ modimport('scripts/qa_config/qa_cat.lua')
 modimport('scripts/qa_config/qa_tsundere.lua')
 modimport('scripts/qa_config/qa_cute.lua')
 modimport('scripts/qa_config/qa_utils.lua')
-
--- 初始化核心数据表 NOMU_QA
-GLOBAL.NOMU_QA = GLOBAL.rawget(GLOBAL, "NOMU_QA") or {}
 modimport('scripts/qa_config/qa_data.lua')
 
 -- 提取常用工具函数到本地变量，提高访问效率
@@ -116,13 +115,13 @@ local function CleanInsightString(clean_info)
     if not clean_info or clean_info == "" then return "" end
 
     -- 替换 <prefab=xxx> 标签为本地化名称
-clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
+    clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
     local upper_prefab = string.upper(prefab)
     -- 依次查找：模组自定义词库 -> 游戏官方词库 -> 原文
     return LOCAL_STRINGS[upper_prefab] 
         or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
         or prefab
-end)
+    end)
 
     -- 替换 <string=xxx.yyy> 标签为对应的 STRINGS 值
     clean_info = clean_info:gsub("<string=([^>]+)>", function(str_path)
@@ -190,7 +189,6 @@ local function GetEntityName(entity, force_basic)
     end
 
     local actual_prefab = tostring(entity.prefabnameoverride or entity.nameoverride or entity.prefab)
-
     local base_prefab_name = GLOBAL.STRINGS.NAMES[string.upper(actual_prefab)] or actual_prefab
 
     local raw_name = ""
@@ -294,8 +292,19 @@ end
 -- 3.5 核心消息宣告函数
 ----------------------------------------
 
+-- 获取语句在模板方案中的位置描述
+local function GetStatementLoc(func_key, sub_key)
+    local func_name = (LOCAL_STRINGS.FUNC and LOCAL_STRINGS.FUNC[func_key])
+        or (GLOBAL.STRINGS.NOMU_QA and GLOBAL.STRINGS.NOMU_QA.FUNC and GLOBAL.STRINGS.NOMU_QA.FUNC[func_key])
+        or func_key
+    if sub_key and sub_key ~= "" then
+        return string.format("%s-%s", tostring(func_name), tostring(sub_key))
+    end
+    return tostring(func_name)
+end
+
 -- 发送宣告消息到聊天频道
-local function Announce(message, no_whisper, debug_info)
+local function Announce(message, no_whisper, debug_info, statement_loc)
     -- 执行文本替换规则
     if GLOBAL.NOMU_QA.DATA.ENABLE_REPLACE and GLOBAL.NOMU_QA.DATA.REPLACEMENTS_ESCAPED then
         for _, rule in ipairs(GLOBAL.NOMU_QA.DATA.REPLACEMENTS_ESCAPED) do
@@ -318,33 +327,55 @@ local function Announce(message, no_whisper, debug_info)
                      :gsub("^[ \t\r\n]+", "")
                      :gsub("[ \t\r\n]+$", "")
 
-    -- 拼接调试信息（仅在调试模式下）
-    if GLOBAL.NOMU_QA.DATA.DEBUG_MODE then
-        if debug_info then
-            message = message .. " " .. debug_info
-        end
-        if CURRENT_HUD_DEBUG_STR then
-            message = message .. " " .. CURRENT_HUD_DEBUG_STR
-        end
-    end
-
     -- 判断是否为私聊（Ctrl 键切换）
     local whisper = GLOBAL.NOMU_QA.DATA.DEFAULT_WHISPER ~= GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL)
     if no_whisper then
         whisper = false
     end
 
-    -- 发送消息
+    local sent = false
+
+    -- 1. 发送正常的宣告消息
     if message ~= "" then
         local prefix = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
         if prefix == nil or prefix == "" then
             prefix = GLOBAL.STRINGS.LMB
         end
         GLOBAL.TheNet:Say(prefix .. ' ' .. message, whisper)
-        return true
+        sent = true
     end
 
-    return false
+    -- 2. 调试模式
+    if GLOBAL.NOMU_QA.DATA.DEBUG_MODE then
+        local debug_parts = {}
+        if debug_info and debug_info ~= "" then
+            table.insert(debug_parts, debug_info)
+        end
+        if CURRENT_HUD_DEBUG_STR and CURRENT_HUD_DEBUG_STR ~= "" then
+            table.insert(debug_parts, CURRENT_HUD_DEBUG_STR)
+            CURRENT_HUD_DEBUG_STR = nil
+        end
+        if statement_loc and statement_loc ~= "" then
+            local loc_tag = statement_loc:find("%[语句:") and statement_loc or string.format("[语句:%s]", statement_loc)
+            table.insert(debug_parts, loc_tag)
+        end
+
+        if #debug_parts > 0 then
+            local full_debug_str = table.concat(debug_parts, " ")
+            print("[NOMU_QA 调试信息] " .. full_debug_str)
+            
+            if GLOBAL.ThePlayer then
+                -- 延迟 0.15 秒宣告
+                GLOBAL.ThePlayer:DoTaskInTime(0.15, function()
+                    GLOBAL.TheNet:Say("[调试] " .. full_debug_str, whisper)
+                end)
+            else
+                GLOBAL.TheNet:Say("[调试] " .. full_debug_str, whisper)
+            end
+        end
+    end
+
+    return sent
 end
 
 ----------------------------------------
@@ -364,7 +395,7 @@ local function GetMapping(qa, category, key)
 end
 
 -- 发送带有表情符号和百分比的徽章类宣告
-local function AnnounceBadge(qa, current, max, category)
+local function AnnounceBadge(qa, current, max, category, qa_key, custom_fmt_key)
     local fmts = {
         CURRENT = math.floor(current + 0.5),
         MAX = max,
@@ -379,7 +410,9 @@ local function AnnounceBadge(qa, current, max, category)
         fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
     end
 
-    return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
+    local fmt_key = custom_fmt_key or 'DEFAULT'
+    local stmt_loc = qa_key and GetStatementLoc(qa_key, fmt_key) or nil
+    return Announce(subfmt(qa.FORMATS[fmt_key] or qa.FORMATS.DEFAULT, fmts), nil, nil, stmt_loc)
 end
 
 -- 根据阈值数组获取百分比对应的层级索引
@@ -650,8 +683,13 @@ local function GetSpiderDenStat(ent)
 
     -- 暗影棋子特殊处理
     if ent:HasTag("shadowchesspiece") then
-        return ent:HasTag("epic") and "L3"
-            or (ent:HasTag("smallepic") and "L2" or "L1")
+        if ent:HasTag("smallepic") then
+            return "L2"
+        elseif ent:HasTag("epic") then
+            return "L3"
+        else
+            return "L1"
+        end
     end
 
     if not ent:HasTag("spiderden") then return nil end
@@ -840,12 +878,8 @@ local function HandleExternalMods(HUD, status, widget)
                 clean_info = prefix_name .. clean_info
             end
 
-            -- 调试模式附加代号
-            if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and raw_code then
-                clean_info = clean_info .. " [代号: " .. raw_code .. "]"
-            end
-
-            return Announce(clean_info)
+            local debug_txt = raw_code and ("[代号: " .. raw_code .. "]") or nil
+            return Announce(clean_info, nil, debug_txt, GetStatementLoc("MEDAL_BUFF", "INSIGHT"))
         end
     end
 
@@ -874,12 +908,12 @@ local function HandleExternalMods(HUD, status, widget)
 
         if qa then
             if left_time == "" or left_time == "--:--" then
-                return Announce(subfmt(qa.FORMATS.FOREVER, { BUFF_NAME = buff_name }))
+                return Announce(subfmt(qa.FORMATS.FOREVER, { BUFF_NAME = buff_name }), nil, nil, GetStatementLoc("MEDAL_BUFF", "FOREVER"))
             else
                 return Announce(subfmt(qa.FORMATS.DEFAULT, {
                     BUFF_NAME = buff_name,
                     TIME = left_time
-                }))
+                }), nil, nil, GetStatementLoc("MEDAL_BUFF", "DEFAULT"))
             end
         end
     end
@@ -927,7 +961,7 @@ local function HandleBeefaloStats(HUD, status, widget)
             MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), {
                 PCT = math.floor(pct * 100 + 0.5)
             })
-        }))
+        }), nil, nil, GetStatementLoc("BEEFALO", "HEALTH"))
 
     -- 饥饿值
     elseif target_badge == b_hud.hungerBadge and b_hud.isHungerVisible then
@@ -937,7 +971,7 @@ local function HandleBeefaloStats(HUD, status, widget)
             or (val > 300 and 'HUNGER_FULL' or 'HUNGER_NORMAL'))
         return Announce(subfmt(qa.FORMATS.HUNGER, {
             MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { VAL = val })
-        }))
+        }), nil, nil, GetStatementLoc("BEEFALO", "HUNGER"))
 
     -- 服从度
     elseif target_badge == b_hud.obedienceBadge then
@@ -948,7 +982,7 @@ local function HandleBeefaloStats(HUD, status, widget)
             MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), {
                 PCT = math.floor(pct + 0.5)
             })
-        }))
+        }), nil, nil, GetStatementLoc("BEEFALO", "OBEDIENCE"))
 
     -- 驯化度
     elseif target_badge == b_hud.domesticationBadge then
@@ -966,7 +1000,7 @@ local function HandleBeefaloStats(HUD, status, widget)
                 PCT = string.format("%.1f", pct)
             }),
             TENDENCY = tendency_str
-        }))
+        }), nil, nil, GetStatementLoc("BEEFALO", "DOMESTICATION"))
 
     -- 骑乘计时器
     elseif target_badge == b_hud.timerBadge then
@@ -978,7 +1012,7 @@ local function HandleBeefaloStats(HUD, status, widget)
         local state = timeLeft < 30 and 'TIMER_LOW' or 'TIMER_RIDING'
         return Announce(subfmt(qa.FORMATS.TIMER, {
             MESSAGE = subfmt(GetMapping(qa, 'MESSAGE', state), { TIME = timeStr })
-        }))
+        }), nil, nil, GetStatementLoc("BEEFALO", "TIMER"))
     end
 
     return false
@@ -1089,7 +1123,7 @@ local function HandlePlayerStats(HUD, status, widget)
             fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
         end
 
-        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
+        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("BLOOMNESS", "DEFAULT"))
     end
 
     ---- 淘气值 ----
@@ -1111,7 +1145,8 @@ local function HandlePlayerStats(HUD, status, widget)
             return AnnounceBadge(
                 GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS,
                 current, max,
-                QA_BADGE_LEVELS[get_category(QA_DEFAULT_THRESHOLDS, current / max)]
+                QA_BADGE_LEVELS[get_category(QA_DEFAULT_THRESHOLDS, current / max)],
+                "NAUGHTINESS"
             )
         end
     end
@@ -1122,7 +1157,7 @@ local function HandlePlayerStats(HUD, status, widget)
 
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.NAUGHTINESS.FORMATS.LUCK, {
             CURRENT = status.luck.num and status.luck.num:GetString() or "0.00"
-        }))
+        }), nil, nil, GetStatementLoc("NAUGHTINESS", "LUCK"))
     end
 
     ---- 遍历通用徽章配置进行宣告 ----
@@ -1169,13 +1204,14 @@ local function HandlePlayerStats(HUD, status, widget)
                         fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
                     end
 
+                    local fmt_key = qa.FORMATS.WITH_SHIELD and "WITH_SHIELD" or "DEFAULT"
                     return Announce(subfmt(
-                        qa.FORMATS.WITH_SHIELD or qa.FORMATS.DEFAULT, fmts
-                    ))
+                        qa.FORMATS[fmt_key], fmts
+                    ), nil, nil, GetStatementLoc(cfg.qa, fmt_key))
                 end
             end
 
-            return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME[cfg.qa], current, max, category)
+            return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME[cfg.qa], current, max, category, cfg.qa)
         end
     end
 
@@ -1210,7 +1246,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             fmts.MESSAGE = GetMapping(qa, 'MESSAGE', 'COOL')
         end
 
-        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
+        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("TEMPERATURE", "DEFAULT"))
     end
 
     ---- 世界温度 & 季节 ----
@@ -1224,7 +1260,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             or GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[raw_season]
             or raw_season
 
-       -- 世界温度 + 降雨预测
+        -- 世界温度 + 降雨预测
         if is_worldtemp_focus then
             local qa = GLOBAL.NOMU_QA.SCHEME.WORLD_TEMPERATURE_AND_RAIN
             local display_temp = math.floor(TheWorld.state.temperature + 0.5) .. "°"
@@ -1272,7 +1308,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
                     TEMPERATURE = display_temp,
                     FOG_STATUS = fog_status,
                     RAIN_STATUS = rain_status
-                }))
+                }), nil, nil, GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", "BWB_CAVE_WEATHER"))
             else
                 local fmts = {
                     TEMPERATURE = display_temp,
@@ -1281,6 +1317,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
                     WORLD = world_name
                 }
                 local qa_fmt = qa.FORMATS.NO_RAIN
+                local fmt_key = "NO_RAIN"
 
                 if TheWorld.state.pop ~= 1 then
                     local world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
@@ -1288,15 +1325,17 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
                     if rain then
                         fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                         qa_fmt = qa.FORMATS.START_RAIN
+                        fmt_key = "START_RAIN"
                     end
                 else
                     local world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
                     fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
                     fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                     qa_fmt = qa.FORMATS.STOP_RAIN
+                    fmt_key = "STOP_RAIN"
                 end
 
-                return Announce(subfmt(qa_fmt, fmts))
+                return Announce(subfmt(qa_fmt, fmts), nil, nil, GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", fmt_key))
             end
         end
 
@@ -1307,7 +1346,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SEASON.FORMATS.DEFAULT, {
                 SEASON = SEASON,
                 DAYS_LEFT = DAYS_LEFT
-            }))
+            }), nil, nil, GetStatementLoc("SEASON", "DEFAULT"))
         end
     end
 
@@ -1340,6 +1379,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
         end
 
         local judge = moonleft % 10
+        local is_moon_fmt = false
         if judge <= 1 then
             fmts.RECENT = judge == 0
                 and GetMapping(qa, 'RECENT', 'TODAY')
@@ -1347,7 +1387,8 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             judge = judge + 10
             fmts.PHASE1, fmts.PHASE2 = fmts.PHASE2, fmts.PHASE1
             if worldment < 20 then
-                return Announce(subfmt(qa.FORMATS.MOON, fmts))
+                is_moon_fmt = true
+                return Announce(subfmt(qa.FORMATS.MOON, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "MOON"))
             end
         elseif judge >= 8 then
             fmts.RECENT = GetMapping(qa, 'RECENT', 'AFTER')
@@ -1358,7 +1399,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
         end
 
         fmts.LEFT = judge
-        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts))
+        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "DEFAULT"))
     end
 
     ---- 时钟宣告 ----
@@ -1377,6 +1418,7 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             end
 
             local fmt = qa.FORMATS.DEFAULT
+            local fmt_key = "DEFAULT"
             local fmts = {
                 PHASE = GetMapping(qa, 'PHASE', phases[clock._phase:value()]),
                 PHASE_REMAIN = _fmt_time(clock._remainingtimeinphase:value()),
@@ -1386,15 +1428,19 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             -- 噩梦循环特殊处理
             if TheWorld.GetNightmareData then
                 local data = TheWorld:GetNightmareData()
-                fmt = (data.remain == 0 and data.total ~= 0)
-                    and qa.FORMATS.NIGHTMARE_LOCK
-                    or qa.FORMATS.NIGHTMARE
+                if data.remain == 0 and data.total ~= 0 then
+                    fmt = qa.FORMATS.NIGHTMARE_LOCK
+                    fmt_key = "NIGHTMARE_LOCK"
+                else
+                    fmt = qa.FORMATS.NIGHTMARE
+                    fmt_key = "NIGHTMARE"
+                end
                 fmts.NIGHTMARE = GetMapping(qa, 'NIGHTMARE', data.phase:upper())
                 fmts.REMAIN = _fmt_time(data.remain)
                 fmts.TOTAL = _fmt_time(data.total)
             end
 
-            return Announce(subfmt(fmt, fmts))
+            return Announce(subfmt(fmt, fmts), nil, nil, GetStatementLoc("CLOCK", fmt_key))
         end
     end
 
@@ -1417,7 +1463,7 @@ local function HandleSpecificMechanics(HUD, status, widget)
             CURRENT = math.floor(current + 0.5),
             MAX = max,
             MESSAGE = GetMapping(qa, 'MESSAGE', QA_BADGE_LEVELS[idx])
-        }))
+        }), nil, nil, GetStatementLoc("BOAT", "DEFAULT"))
     end
 
     ---- 阿比盖尔生命 ----
@@ -1427,7 +1473,8 @@ local function HandleSpecificMechanics(HUD, status, widget)
         return AnnounceBadge(
             GLOBAL.NOMU_QA.SCHEME.ABIGAIL,
             current, max,
-            QA_BADGE_LEVELS[math.floor(current / (max / 5 + 1)) + 1]
+            QA_BADGE_LEVELS[math.floor(current / (max / 5 + 1)) + 1],
+            "ABIGAIL"
         )
     end
 
@@ -1438,7 +1485,7 @@ local function HandleSpecificMechanics(HUD, status, widget)
         local idx = current >= TUNING.MIGHTY_THRESHOLD and 3
             or (current >= TUNING.WIMPY_THRESHOLD and 2 or 1)
         local mighty_states = { 'WIMPY', 'NORMAL', 'MIGHTY' }
-        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.MIGHTINESS, current, max, mighty_states[idx])
+        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.MIGHTINESS, current, max, mighty_states[idx], "MIGHTINESS")
     end
 
     ---- 灵感值（薇格弗德）----
@@ -1448,7 +1495,7 @@ local function HandleSpecificMechanics(HUD, status, widget)
         local idx = pct >= TUNING.BATTLESONG_THRESHOLDS[3] and 4
             or (pct >= TUNING.BATTLESONG_THRESHOLDS[2] and 3
             or (pct >= TUNING.BATTLESONG_THRESHOLDS[1] and 2 or 1))
-        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.INSPIRATION, pct * max, max, QA_BADGE_LEVELS[idx])
+        return AnnounceBadge(GLOBAL.NOMU_QA.SCHEME.INSPIRATION, pct * max, max, QA_BADGE_LEVELS[idx], "INSPIRATION")
     end
 
     ---- WX-78 电路模块 ----
@@ -1524,9 +1571,9 @@ local function HandleSpecificMechanics(HUD, status, widget)
             if #modules_str_list > 0 then
                 return Announce(subfmt(qa.FORMATS.ALL_MODULES, {
                     MODULES = table.concat(modules_str_list, "，")
-                }))
+                }), nil, nil, GetStatementLoc("ENERGY", "ALL_MODULES"))
             else
-                return Announce(qa.FORMATS.NO_MODULES)
+                return Announce(qa.FORMATS.NO_MODULES, nil, nil, GetStatementLoc("ENERGY", "NO_MODULES"))
             end
 
         -- 不在电路区域：宣告电量等级
@@ -1538,7 +1585,7 @@ local function HandleSpecificMechanics(HUD, status, widget)
                 MESSAGE = GetMapping(qa, 'MESSAGE',
                     energy_levels[math.min(math.max(math.floor(current) + 1, 1), 7)]
                 )
-            }))
+            }), nil, nil, GetStatementLoc("ENERGY", "DEFAULT"))
         end
     end
 
@@ -1563,16 +1610,16 @@ local function HandleCooking(HUD, status, widget)
         -- 弹窗内具体数值宣告
         if popup and popup.focus then
             local fmts = { TYPE = GetMapping(qa, 'TYPE', 'POS'), NAME = name }
-            local fmt, value
+            local fmt, value, fmt_key
 
             if popup.health and popup.health.focus then
-                value = recipe.health; fmt = qa.FORMATS.HEALTH
+                value = recipe.health; fmt = qa.FORMATS.HEALTH; fmt_key = "HEALTH"
             end
             if popup.sanity and popup.sanity.focus then
-                value = recipe.sanity; fmt = qa.FORMATS.SANITY
+                value = recipe.sanity; fmt = qa.FORMATS.SANITY; fmt_key = "SANITY"
             end
             if popup.hunger and popup.hunger.focus then
-                value = recipe.hunger; fmt = qa.FORMATS.HUNGER
+                value = recipe.hunger; fmt = qa.FORMATS.HUNGER; fmt_key = "HUNGER"
             end
 
             if value then
@@ -1584,7 +1631,7 @@ local function HandleCooking(HUD, status, widget)
                     or (type(value) == 'number' and value ~= 0
                         and string.format("%g", (math.floor(value * 10 + 0.5) / 10))
                         or '-')
-                return Announce(subfmt(fmt, fmts))
+                return Announce(subfmt(fmt, fmts), nil, nil, GetStatementLoc("COOK", fmt_key))
             end
 
             -- 料理名称焦点：宣告完整三维数值
@@ -1594,7 +1641,7 @@ local function HandleCooking(HUD, status, widget)
                     HUNGER = popup.hunger:GetString(),
                     SANITY = popup.sanity:GetString(),
                     HEALTH = popup.health:GetString()
-                }))
+                }), nil, nil, GetStatementLoc("COOK", "FOOD"))
             end
 
             -- 食材焦点
@@ -1607,18 +1654,18 @@ local function HandleCooking(HUD, status, widget)
                             NAME = name,
                             INGREDIENT = ingredient.localized_name,
                             NUM = ingredient.quantity
-                        }))
+                        }), nil, nil, GetStatementLoc("COOK", ing_fmt))
                     end
                 end
             end
 
         -- 未打开弹窗：宣告可否制作
         else
+            local can_cook = (recipe.readytocook or recipe.reqsmatch) and recipe.unlocked
             return Announce(subfmt(
-                (recipe.readytocook or recipe.reqsmatch) and recipe.unlocked
-                    and qa.FORMATS.CAN or qa.FORMATS.NEED,
+                can_cook and qa.FORMATS.CAN or qa.FORMATS.NEED,
                 { NAME = name }
-            ))
+            ), nil, nil, GetStatementLoc("COOK", can_cook and "CAN" or "NEED"))
         end
     end
 
@@ -1644,7 +1691,7 @@ local function OnHUDMouseButton(HUD)
     local status = HUD.controls.status
     local widget = GLOBAL.TheInput:GetHUDEntityUnderMouse()
 
-    -- [新增] 在调试模式下，向上遍历组件树，提取对应的UI/徽章英文代码
+    -- 在调试模式下，向上遍历组件树，提取对应的UI/徽章英文代码
     if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and widget and widget.widget then
         local curr = widget.widget
         local ui_code = curr.name or "Unknown"
@@ -1672,25 +1719,28 @@ local function OnHUDMouseButton(HUD)
             curr = curr.parent
         end
         CURRENT_HUD_DEBUG_STR = "[UI代码: " .. tostring(ui_code) .. "]"
+        
+        -- 利用零延迟任务，判定该 UI 点击是否被任何宣告逻辑处理
+        if GLOBAL.ThePlayer then
+            GLOBAL.ThePlayer:DoTaskInTime(0, function()
+                -- 如果该变量没有被 Announce() 函数消耗，说明这是一个未适配的 UI
+                if CURRENT_HUD_DEBUG_STR then
+                    print("[NOMU_QA 未适配UI] " .. CURRENT_HUD_DEBUG_STR)
+                    CURRENT_HUD_DEBUG_STR = nil
+                end
+            end)
+        end
     else
         CURRENT_HUD_DEBUG_STR = nil
     end
 
     for _, handler in ipairs(HUD_CLICK_HANDLERS) do
         if handler(HUD, status, widget) then
-            CURRENT_HUD_DEBUG_STR = nil -- 宣告成功后清空暂存
+            CURRENT_HUD_DEBUG_STR = nil -- 已被上面的有效逻辑拦截
             return true
         end
     end
 
-    -- [新增] 兜底处理：如果是未适配的 UI 且处于调试模式，直接宣告出对应的英文代码
-    if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and CURRENT_HUD_DEBUG_STR then
-        Announce("未适配的UI/徽章部件")
-        CURRENT_HUD_DEBUG_STR = nil
-        return true
-    end
-
-    CURRENT_HUD_DEBUG_STR = nil
     return false
 end
 
@@ -1852,7 +1902,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     if buffered then
         return Announce(subfmt(qa_recipe.FORMATS.BUFFERED, {
             ITEM = name, PROTOTYPE = prototype
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("RECIPE", "BUFFERED"))
     end
 
     -- 点击了特定材料：只宣告该材料的拥有/缺失情况
@@ -1927,7 +1977,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
             else
                 fmts.INGREDIENT = subfmt(amount_fmt, { NUM = actual_needed, ITEM = ingredient_name })
             end
-            return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str)
+            return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
         else
             -- 材料不足
             if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
@@ -1936,7 +1986,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
                 else
                     fmts.INGREDIENT = subfmt(amount_fmt, { NUM = num_missing, ITEM = ingredient_name })
                 end
-                return Announce(subfmt(qa_const.FORMATS.CRAFT_NEED, fmts), nil, debug_str)
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_NEED, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_NEED"))
             end
         end
     end
@@ -1945,15 +1995,16 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
     if can_build and knows then
         return Announce(subfmt(qa_recipe.FORMATS.WILL_MAKE, {
             ITEM = name, PROTOTYPE = prototype
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("RECIPE", "WILL_MAKE"))
     end
 
     -- 简单宣告（不列出所有缺失材料）
     if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS and not specific_ingredient_type then
+        local fmt_key = knows and "WE_NEED" or "CAN_SOMEONE"
         return Announce(subfmt(
-            qa_recipe.FORMATS[knows and "WE_NEED" or "CAN_SOMEONE"],
+            qa_recipe.FORMATS[fmt_key],
             { ITEM = name, PROTOTYPE = prototype }
-        ), nil, debug_str)
+        ), nil, debug_str, GetStatementLoc("RECIPE", fmt_key))
     end
 
     -- 完整缺失材料宣告
@@ -1970,12 +2021,12 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
             INGREDIENT = missing_str,
             RECIPE = name,
             AND_PROTOTYPE = and_proto
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_NEED"))
     else
         return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_ALL, {
             RECIPE = name,
             BUT_PROTOTYPE = but_proto
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE_ALL"))
     end
 end
 
@@ -2267,6 +2318,7 @@ local function AnnounceItem(slot, classname)
 
     -- 根据槽位类型选择格式模板
     local result_str
+    local fmt_loc_key = "INV_SLOT"
     if classname == 'invslot' then
         result_str = subfmt(qa.FORMATS.INV_SLOT, fmts)
     else
@@ -2278,27 +2330,28 @@ local function AnnounceItem(slot, classname)
             fmts.v = slot_pos_name
             if is_heavy and qa.FORMATS.EQUIP_SLOT_HEAVY_POS then
                 result_str = subfmt(qa.FORMATS.EQUIP_SLOT_HEAVY_POS, fmts)
+                fmt_loc_key = "EQUIP_SLOT_HEAVY_POS"
             else
                 result_str = subfmt(qa.FORMATS.EQUIP_SLOT_POS, fmts)
+                fmt_loc_key = "EQUIP_SLOT_POS"
             end
         else
             if is_heavy and qa.FORMATS.EQUIP_SLOT_HEAVY then
                 result_str = subfmt(qa.FORMATS.EQUIP_SLOT_HEAVY, fmts)
+                fmt_loc_key = "EQUIP_SLOT_HEAVY"
             else
                 result_str = subfmt(qa.FORMATS.EQUIP_SLOT, fmts)
+                fmt_loc_key = "EQUIP_SLOT"
             end
         end
     end
 
     -- 调试信息
-    local debug_txt = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format(
-        "[物品代码: %s, 容器代码: %s, 槽位代码: %s]",
-        tostring(item.prefab),
-        container and (container.inst and container.inst.prefab or container.type or "inventory") or "无",
-        classname == 'equipslot' and tostring(slot.equipslot) or "inv_" .. tostring(slot.num)
-    ) or ""
+    local cont_name = container and (container.inst and (container.inst == ThePlayer and "inventory" or container.inst.prefab) or container.type or "inventory") or "无"
+    local slot_name = classname == 'equipslot' and tostring(slot.equipslot) or ("inv_" .. tostring(slot.num))
+    local debug_txt = string.format("[物品代码: %s] [容器代码: %s] [槽位代码: %s]", tostring(item.prefab), cont_name, slot_name)
 
-    return Announce(result_str, nil, debug_txt)
+    return Announce(result_str, nil, debug_txt, GetStatementLoc("ITEM", fmt_loc_key))
 end
 
 ----------------------------------------
@@ -2326,11 +2379,11 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
     local qa_const = GLOBAL.NOMU_QA.SCHEME.CONSTRUCTION_AND_TRADE
     local prefix = is_trade and "TRADE_" or "CONS_"
 
-    local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE and string.format(
-        "[施工点代码: %s, 容器代码: %s]",
+    local debug_str = string.format(
+        "[施工点代码: %s] [容器代码: %s]",
         tostring(site.prefab),
         tostring(container_widget and container_widget.inst and container_widget.inst.prefab or "无")
-    ) or nil
+    )
 
     -- 单槽位宣告
     if slot_index and plans[slot_index] then
@@ -2348,17 +2401,18 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
         local amount_fmt = GetMapping(qa_const, 'WORDS', 'AMOUNT_FMT') or "{NUM} {ITEM}"
 
         if missing <= 0 then
-            local fmt_have = qa_const.FORMATS[prefix .. "HAVE_ITEM"] or qa_const.FORMATS[prefix .. "HAVE"]
-            return Announce(subfmt(fmt_have, {
+            local fmt_name = prefix .. (qa_const.FORMATS[prefix .. "HAVE_ITEM"] and "HAVE_ITEM" or "HAVE")
+            return Announce(subfmt(qa_const.FORMATS[fmt_name], {
                 RECIPE = site_name,
                 INGREDIENT = subfmt(amount_fmt, { NUM = plan.amount, ITEM = ing_name })
-            }), nil, debug_str)
+            }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", fmt_name))
         else
             if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
-                return Announce(subfmt(qa_const.FORMATS[prefix .. "NEED"], {
+                local fmt_name = prefix .. "NEED"
+                return Announce(subfmt(qa_const.FORMATS[fmt_name], {
                     INGREDIENT = subfmt(amount_fmt, { NUM = missing, ITEM = ing_name }),
                     RECIPE = site_name
-                }), nil, debug_str)
+                }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", fmt_name))
             end
         end
     end
@@ -2383,15 +2437,17 @@ local function AnnounceConstructionSite(site, container_widget, slot_index)
     end
 
     if #missing > 0 then
-        return Announce(subfmt(qa_const.FORMATS[prefix .. "NEED"], {
+        local fmt_name = prefix .. "NEED"
+        return Announce(subfmt(qa_const.FORMATS[fmt_name], {
             INGREDIENT = table.concat(missing, ", "),
             RECIPE = site_name
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", fmt_name))
     else
-        return Announce(subfmt(qa_const.FORMATS[prefix .. "HAVE"], {
+        local fmt_name = prefix .. "HAVE"
+        return Announce(subfmt(qa_const.FORMATS[fmt_name], {
             RECIPE = site_name,
             INGREDIENT = table.concat(total_req, ", ")
-        }), nil, debug_str)
+        }), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", fmt_name))
     end
 end
 
@@ -2419,13 +2475,11 @@ local function AnnounceSkin(recipepopup)
     if skin_name == nil then
         if #recipepopup.skins_options == 1 then
             local prefab = recipepopup.recipe.product or recipepopup.recipe.name
+            local fmt_key = (not PREFAB_SKINS[prefab] or #PREFAB_SKINS[prefab] == 0) and "NO_SKIN" or "HAS_NO_SKIN"
             return Announce(subfmt(
-                GLOBAL.NOMU_QA.SCHEME.SKIN.FORMATS[
-                    (not PREFAB_SKINS[prefab] or #PREFAB_SKINS[prefab] == 0)
-                        and "NO_SKIN" or "HAS_NO_SKIN"
-                ],
+                GLOBAL.NOMU_QA.SCHEME.SKIN.FORMATS[fmt_key],
                 { ITEM = item_name }
-            ))
+            ), nil, nil, GetStatementLoc("SKIN", fmt_key))
         end
         return
     end
@@ -2438,7 +2492,7 @@ local function AnnounceSkin(recipepopup)
             ITEM = item_name,
             NUM = num,
             TOTAL = PREFAB_SKINS[prefab] and #PREFAB_SKINS[prefab] or num
-        }))
+        }), nil, nil, GetStatementLoc("SKIN", "DEFAULT"))
     end
 end
 
@@ -2602,6 +2656,20 @@ local SPECIAL_STATE_DISPATCHER = {
         return stat and ("HOTSPRING_" .. stat) or nil
     end,
 
+    trophyscale_fish = function(ent, _)
+        if ent.AnimState and (ent.AnimState:IsCurrentAnimation("nofish_idle") or ent.AnimState:IsCurrentAnimation("nofish_hit") or ent.AnimState:IsCurrentAnimation("spawn")) then
+            return "TROPHYSCALE_EMPTY"
+        end
+        return "TROPHYSCALE_HAS"
+    end,
+
+    trophyscale_oversizedveggies = function(ent, _)
+        if ent.AnimState and (ent.AnimState:IsCurrentAnimation("noveg_idle") or ent.AnimState:IsCurrentAnimation("noveg_hit") or ent.AnimState:IsCurrentAnimation("spawn")) then
+            return "TROPHYSCALE_EMPTY"
+        end
+        return "TROPHYSCALE_HAS"
+    end,
+
     fruitdragon = function(ent, _)
         local ripe = (ent.AnimState and ent.AnimState:GetBuild() == "fruit_dragon_ripe_build")
             or string.find(ent:GetDisplayName() or "", "Ripe")
@@ -2735,17 +2803,18 @@ local function HandlePlayerClick(entity)
     local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
     local is_ent_ghost = entity:HasTag("playerghost")
     local qa_formats = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS
+    local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
 
     -- 点击自己
     if entity == GLOBAL.ThePlayer then
         if is_me_ghost and qa_formats.I_AM_GHOST then
-            return Announce(subfmt(qa_formats.I_AM_GHOST, { NAME = entity:GetDisplayName() }))
+            return Announce(subfmt(qa_formats.I_AM_GHOST, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "I_AM_GHOST"))
         end
         if is_frozen and qa_formats.ME_FROZEN then
-            return Announce(subfmt(qa_formats.ME_FROZEN, { NAME = entity:GetDisplayName() }))
+            return Announce(subfmt(qa_formats.ME_FROZEN, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "ME_FROZEN"))
         end
         if is_fishing and qa_formats.ME_FISHING then
-            return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }))
+            return Announce(subfmt(qa_formats.ME_FISHING, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "ME_FISHING"))
         end
 
         -- 骑乘状态
@@ -2756,7 +2825,7 @@ local function HandlePlayerClick(entity)
             if qa_formats.ME_RIDING then
                 return Announce(subfmt(qa_formats.ME_RIDING, {
                     NAME = entity:GetDisplayName(), MOUNT = mount_name
-                }))
+                }), nil, debug_str, GetStatementLoc("PLAYER", "ME_RIDING"))
             end
         end
 
@@ -2769,12 +2838,12 @@ local function HandlePlayerClick(entity)
                 if qa_formats.ME_CARRYING then
                     return Announce(subfmt(qa_formats.ME_CARRYING, {
                         NAME = entity:GetDisplayName(), ITEM = heavy_name
-                    }))
+                    }), nil, debug_str, GetStatementLoc("PLAYER", "ME_CARRYING"))
                 end
             end
         end
 
-        return Announce(subfmt(qa_formats.I_AM_HERE, { NAME = entity:GetDisplayName() }))
+        return Announce(subfmt(qa_formats.I_AM_HERE, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "I_AM_HERE"))
     end
 
     -- 手持物品给予他人
@@ -2785,25 +2854,25 @@ local function HandlePlayerClick(entity)
             NAME = entity:GetDisplayName(),
             NUM = active_item.replica.stackable and active_item.replica.stackable:StackSize() or 1,
             ITEM_NAME = string.gsub(active_item:GetDisplayName(), '\n', ' ')
-        }))
+        }), nil, debug_str, GetStatementLoc("PLAYER", "GIVE_ITEM"))
     end
 
     -- 幽灵状态交互
     if is_me_ghost or is_ent_ghost then
-        local player_fmt = (is_me_ghost and is_ent_ghost) and qa_formats.BOTH_GHOST
-            or (is_me_ghost and qa_formats.ME_GHOST or qa_formats.THEY_GHOST)
-        return Announce(subfmt(player_fmt, { NAME = entity:GetDisplayName() }))
+        local player_fmt_key = (is_me_ghost and is_ent_ghost) and "BOTH_GHOST"
+            or (is_me_ghost and "ME_GHOST" or "THEY_GHOST")
+        return Announce(subfmt(qa_formats[player_fmt_key], { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", player_fmt_key))
     end
 
     -- 对方状态
     if is_frozen and qa_formats.THEY_FROZEN then
-        return Announce(subfmt(qa_formats.THEY_FROZEN, { NAME = entity:GetDisplayName() }))
+        return Announce(subfmt(qa_formats.THEY_FROZEN, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "THEY_FROZEN"))
     end
     if is_fishing and qa_formats.THEY_FISHING then
-        return Announce(subfmt(qa_formats.THEY_FISHING, { NAME = entity:GetDisplayName() }))
+        return Announce(subfmt(qa_formats.THEY_FISHING, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "THEY_FISHING"))
     end
 
-    return Announce(subfmt(qa_formats.GREET, { NAME = entity:GetDisplayName() }))
+    return Announce(subfmt(qa_formats.GREET, { NAME = entity:GetDisplayName() }), nil, debug_str, GetStatementLoc("PLAYER", "GREET"))
 end
 
 ----------------------------------------
@@ -2815,11 +2884,11 @@ local function HandleEnvMiddleClick(entity)
         if entity == GLOBAL.ThePlayer then
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, {
                 PING = GLOBAL.TheNet:GetAveragePing()
-            }))
+            }), nil, nil, GetStatementLoc("PLAYER", "PING"))
         else
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, {
                 NAME = entity:GetDisplayName()
-            }))
+            }), nil, nil, GetStatementLoc("PLAYER", "GREET"))
         end
     end
 
@@ -2908,6 +2977,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         if entity then HandleEnvMiddleClick(entity) end
         return
     end
+
     ---- 左键：实体宣告 ----
     if button ~= GLOBAL.MOUSEBUTTON_LEFT then return end
     if not entity then return end
@@ -3022,21 +3092,57 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     ---- 特殊预制物打断处理 ----
+    if entity.prefab == "gelblob_storage" then
+        local held_item = entity.takeitem and entity.takeitem:value()
+        
+        if held_item ~= nil and held_item:IsValid() then
+            -- 获取内部物品的名称和数量
+            local item_display_name = GetEntityName(held_item, false)
+            local stack_size = held_item.replica and held_item.replica.stackable and held_item.replica.stackable:StackSize() or 1
+            -- 宣告装有物品的状态
+            return Announce(subfmt(qa.FORMATS.STORAGE_HAS, {
+                TOTAL = count_prefab,
+                NAME = prefab_name,
+                NUM = stack_size,
+                ITEM = item_display_name,
+                SHOW_ME = show_me,
+                DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_HAS"))
+        else
+            local empty_count = 0
+            for _, v in ipairs(entities) do
+                if v.prefab == "gelblob_storage" and v.entity:IsVisible() then
+                    local v_item = v.takeitem and v.takeitem:value()
+                    if v_item == nil or not v_item:IsValid() then
+                        empty_count = empty_count + 1
+                    end
+                end
+            end
+
+            return Announce(subfmt(qa.FORMATS.STORAGE_EMPTY, {
+                TOTAL = count_prefab,
+                NAME = prefab_name,
+                NUM = empty_count,
+                SHOW_ME = show_me,
+                DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_EMPTY"))
+        end
+    end
+
     if entity.prefab == "icefishing_hole" then
         return Announce(subfmt(qa.FORMATS.SINGLE, {
             NAME = GLOBAL.STRINGS.NOMU_QA.ICEFISHING_HOLE,
             SHOW_ME = show_me, DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "SINGLE"))
     end
 
     if entity.prefab == "townportal" then
+        local is_on = entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop")
+        local fmt_key = is_on and "PORTAL_ON" or "PORTAL_OFF"
         return Announce(subfmt(
-            GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[
-                entity.AnimState and entity.AnimState:IsCurrentAnimation("idle_on_loop")
-                    and "PORTAL_ON" or "PORTAL_OFF"
-            ],
+            GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[fmt_key],
             { NAME = display_name }
-        ), entity:HasTag('player'), debug_str)
+        ), entity:HasTag('player'), debug_str, GetStatementLoc("PLAYER", fmt_key))
     end
 
     -- 鱼群宣告
@@ -3068,7 +3174,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         return Announce(subfmt(qa.FORMATS.FISH_SHOAL, {
             NAME = shoal_name, NUM = f_c, FISH = fish_name,
             SHOW_ME = show_me, DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "FISH_SHOAL"))
     end
 
     ---- 带特殊状态的宣告 ----
@@ -3081,22 +3187,24 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
         local force_display_name = prefab_name
 
         if is_specific_only or count_prefab == 1 then
-            local fmt = count_prefab > 1 and qa.FORMATS.STATE_THIS or qa.FORMATS.STATE_THIS_SINGLE
+            local fmt_name = count_prefab > 1 and "STATE_THIS" or "STATE_THIS_SINGLE"
+            local fmt = qa.FORMATS[fmt_name]
             return Announce(subfmt(fmt, {
                 TOTAL = count_prefab, NAME = force_display_name,
                 ADJ = GetMapping(qa, 'ADJ', target_state) or target_state,
                 SHOW_ME = show_me, DISTANCE = dist_str
-            }), entity:HasTag('player'), debug_str)
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", fmt_name))
         else
             local is_equal = (stat_count == count_prefab)
+            local fmt_name = is_equal and "STATE_EQUAL" or "STATE_DESCRIBE"
             return Announce(subfmt(
-                is_equal and qa.FORMATS.STATE_EQUAL or qa.FORMATS.STATE_DESCRIBE,
+                qa.FORMATS[fmt_name],
                 {
                     TOTAL = count_prefab, NUM = stat_count, NAME = force_display_name,
                     ADJ = GetMapping(qa, 'ADJ', target_state) or target_state,
                     SHOW_ME = show_me, DISTANCE = dist_str
                 }
-            ), entity:HasTag('player'), debug_str)
+            ), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", fmt_name))
         end
     end
 
@@ -3107,7 +3215,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             NUM_PREFAB = count_prefab, PREFAB_NAME = prefab_name,
             NUM = count_name, NAME = display_name,
             SHOW_ME = show_me, DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "NAMED"))
     end
 
     local final_count = (display_name == prefab_name) and count_prefab or count_name
@@ -3115,13 +3223,13 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     if final_count <= 1 then
         return Announce(subfmt(qa.FORMATS.SINGLE, {
             NAME = display_name, SHOW_ME = show_me, DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str)
+        }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "SINGLE"))
     end
 
     return Announce(subfmt(qa.FORMATS.DEFAULT, {
         NUM = final_count, NAME = display_name,
         SHOW_ME = show_me, DISTANCE = dist_str
-    }), entity:HasTag('player'), debug_str)
+    }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "DEFAULT"))
 end)
 
 -- ============================================================================
@@ -3255,7 +3363,7 @@ AddSimPostInit(function()
                         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.MEDAL_BUFF.FORMATS.EXAM, {
                             QUESTION = question,
                             OPTIONS = table.concat(opt_str_list, " ")
-                        }))
+                        }), nil, nil, GetStatementLoc("MEDAL_BUFF", "EXAM"))
                     end
                 end)
             end
@@ -3340,12 +3448,11 @@ AddClassPostConstruct("widgets/redux/craftingmenu_widget", function(self)
                     local loc_name = GLOBAL.STRINGS.UI.CRAFTING_FILTERS[raw_name] or filter_def.name
                     loc_name = LOCAL_STRINGS[raw_name] or loc_name
 
-                    local debug_str = GLOBAL.NOMU_QA.DATA.DEBUG_MODE
-                        and string.format("[分类代码: %s]", tostring(raw_name)) or nil
+                    local debug_str = string.format("[分类代码: %s]", tostring(raw_name))
 
                     Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.RECIPE.FORMATS.FILTER_TAB, {
                         TAB = loc_name
-                    }), nil, debug_str)
+                    }), nil, debug_str, GetStatementLoc("RECIPE", "FILTER_TAB"))
                     return true
                 end)
             end
@@ -3388,6 +3495,7 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
             elseif classname == 'equipslot' then
                 local slot_pos_name = GetEquipSlotName(GLOBAL.NOMU_QA.SCHEME.ITEM, w.equipslot)
                 if slot_pos_name then
+                    local debug_str = string.format("[槽位代码: %s]", tostring(w.equipslot))
                     return Announce(subfmt(
                         GLOBAL.NOMU_QA.SCHEME.ITEM.FORMATS.EQUIP_SLOT_EMPTY,
                         {
@@ -3395,8 +3503,7 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
                             SLOT_POS = slot_pos_name,
                             v = slot_pos_name
                         }
-                    ), nil, GLOBAL.NOMU_QA.DATA.DEBUG_MODE
-                        and string.format("[槽位代码: %s]", tostring(w.equipslot)) or nil)
+                    ), nil, debug_str, GetStatementLoc("ITEM", "EQUIP_SLOT_EMPTY"))
                 end
 
             -- 容器剩余空间宣告
@@ -3408,14 +3515,14 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
                 local cont_type = inst == GLOBAL.ThePlayer and "PLAYER"
                     or (inst and inst:HasTag("inlimbo") and "INV" or "CONTAINER")
 
+                local cont_code = tostring(inst and (inst == GLOBAL.ThePlayer and "inventory" or inst.prefab) or container.type or "inventory")
+                local ui_code = classname == "invslot" and "inv" or tostring(classname)
+                local debug_str = string.format("[容器代码: %s] [UI代码: %s]", cont_code, ui_code)
+
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SPACE.FORMATS[cont_type], {
                     COUNT = container:GetNumSlots() - used_slots,
                     CONTAINER_NAME = get_container_name(inst)
-                }), nil, GLOBAL.NOMU_QA.DATA.DEBUG_MODE
-                    and string.format("[容器代码: %s]",
-                        tostring(inst and (inst == GLOBAL.ThePlayer and "inventory" or inst.prefab)
-                            or container.type or "inventory"))
-                    or nil)
+                }), nil, debug_str, GetStatementLoc("SPACE", cont_type))
             end
         end)
     end)
@@ -3431,9 +3538,8 @@ AddClassPostConstruct('widgets/giftitemtoast', function(self)
     function self:OnMouseButton(button, down, ...)
         local ret = oldOnMouseButton(self, button, down, ...)
         if button == MOUSEBUTTON_LEFT and down and IsAltPressed() then
-            Announce(self.enabled
-                and GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS.CAN_OPEN
-                or GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS.NEED_SCIENCE)
+            local fmt_name = self.enabled and "CAN_OPEN" or "NEED_SCIENCE"
+            Announce(GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS[fmt_name], nil, nil, GetStatementLoc("GIFT", fmt_name))
         end
         return ret
     end
@@ -3448,21 +3554,21 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
     if self.servertitle and self.servertitle.focus then
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NAME, {
             NAME = self.servertitle:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("SERVER", "NAME"))
     end
 
     -- 服务器天数
     if self.serverstate and self.serverstate.focus then
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.AGE, {
             AGE = self.serverage
-        }))
+        }), nil, nil, GetStatementLoc("SERVER", "AGE"))
     end
 
     -- 玩家人数
     if self.players_number and self.players_number.focus then
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NUM_PLAYER, {
             NUM = self.players_number:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("SERVER", "NUM_PLAYER"))
     end
 
     -- 遍历玩家列表
@@ -3472,14 +3578,14 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
             if w.name and w.name.focus then
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, {
                     NAME = w.displayName
-                }))
+                }), nil, nil, GetStatementLoc("PLAYER", "GREET"))
             end
 
             -- 管理员徽章
             if w.adminBadge and w.adminBadge.shown and w.adminBadge.focus then
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.ADMIN, {
                     NAME = w.displayName
-                }))
+                }), nil, nil, GetStatementLoc("PLAYER", "ADMIN"))
             end
 
             -- 网络性能
@@ -3512,24 +3618,32 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
                     PING = (w.userid == GLOBAL.ThePlayer.userid
                         and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() })
                         or '')
-                }))
+                }), nil, nil, GetStatementLoc("PLAYER", "PERF"))
             end
 
             -- 角色头像/选择状态
             if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
                 local prefab = w.characterBadge.prefabname
-                if not prefab or prefab == "" then
-                    local is_connecting = type(w.characterBadge.IsLoading) == "function"
-                        and w.characterBadge:IsLoading()
+                local is_connecting = type(w.characterBadge.IsLoading) == "function" and w.characterBadge:IsLoading()
+                
+                if is_connecting then
+                    -- 只要在加载，就是连接中
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[is_connecting and "CONNECTING" or "CHOOSING"],
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING, 
                         { NAME = w.displayName }
-                    ))
+                    ), nil, nil, GetStatementLoc("PLAYER", "CONNECTING"))
+                elseif not prefab or prefab == "" then
+                    -- 加载完成，但没有角色代码，说明在选人界面
+                    return Announce(subfmt(
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING, 
+                        { NAME = w.displayName }
+                    ), nil, nil, GetStatementLoc("PLAYER", "CHOOSING"))
                 else
+                    -- 正常游玩状态
                     return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
                         NAME = w.displayName,
                         CHARACTER = GLOBAL.STRINGS.NAMES[prefab:upper()] or prefab
-                    }))
+                    }), nil, nil, GetStatementLoc("PLAYER", "NAME"))
                 end
             end
 
@@ -3538,7 +3652,7 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.AGE, {
                     NAME = w.displayName,
                     AGE = w.age:GetString()
-                }))
+                }), nil, nil, GetStatementLoc("PLAYER", "AGE"))
             end
         end
     end
@@ -3592,7 +3706,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                 local max_players = GLOBAL.TheNet:GetServerMaxPlayers() or "?"
                 Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.NUM_PLAYER, {
                     NUM = tostring(actual_players) .. "/" .. tostring(max_players)
-                }))
+                }), nil, nil, GetStatementLoc("SERVER", "NUM_PLAYER"))
                 return true
             end)
         end
@@ -3631,28 +3745,28 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                                     PING = (widget_row.userid == GLOBAL.TheNet:GetUserID()
                                         and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() })
                                         or '')
-                                }))
+                                }), nil, nil, GetStatementLoc("PLAYER", "PERF"))
 
                             elseif action_type == "characterBadge" then
                                 local badge = widget_row.characterBadge
                                 local prefab = badge and badge.prefabname or ""
                                 local is_loading = badge and type(badge.IsLoading) == "function" and badge:IsLoading()
                                 if is_loading then
-                                    Announce(subfmt(qa.FORMATS.CONNECTING, { NAME = target_name }))
+                                    Announce(subfmt(qa.FORMATS.CONNECTING, { NAME = target_name }), nil, nil, GetStatementLoc("PLAYER", "CONNECTING"))
                                 elseif prefab == "" then
-                                    Announce(subfmt(qa.FORMATS.CHOOSING, { NAME = target_name }))
+                                    Announce(subfmt(qa.FORMATS.CHOOSING, { NAME = target_name }), nil, nil, GetStatementLoc("PLAYER", "CHOOSING"))
                                 else
                                     Announce(subfmt(qa.FORMATS.NAME, {
                                         NAME = target_name,
                                         CHARACTER = GLOBAL.STRINGS.NAMES[prefab:upper()] or prefab
-                                    }))
+                                    }), nil, nil, GetStatementLoc("PLAYER", "NAME"))
                                 end
 
                             elseif action_type == "adminBadge" then
-                                Announce(subfmt(qa.FORMATS.ADMIN, { NAME = target_name }))
+                                Announce(subfmt(qa.FORMATS.ADMIN, { NAME = target_name }), nil, nil, GetStatementLoc("PLAYER", "ADMIN"))
 
                             elseif action_type == "name" then
-                                Announce(subfmt(qa.FORMATS.GREET, { NAME = target_name }))
+                                Announce(subfmt(qa.FORMATS.GREET, { NAME = target_name }), nil, nil, GetStatementLoc("PLAYER", "GREET"))
                             end
 
                             return true
@@ -3680,7 +3794,7 @@ HookClassAltAccept('widgets/playeravatarpopup', function(self)
     if self.age and self.age.focus and self.currentcharacter then
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.AGE_SHORT, {
             NAME = self.player_name, AGE = self.age:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("PLAYER", "AGE_SHORT"))
     end
 
     -- 角色名称
@@ -3688,7 +3802,7 @@ HookClassAltAccept('widgets/playeravatarpopup', function(self)
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
             NAME = self.player_name,
             CHARACTER = STRINGS.NAMES[self.currentcharacter:upper()] or self.currentcharacter
-        }))
+        }), nil, nil, GetStatementLoc("PLAYER", "NAME"))
     end
 
     -- 勋章/背景/装备等各部位
@@ -3697,7 +3811,7 @@ HookClassAltAccept('widgets/playeravatarpopup', function(self)
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.BADGE, {
             NAME = self.player_name,
             BADGE = self.puppet.rank.flair.hovertext:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("PLAYER", "BADGE"))
     end
 
     if self.puppet and self.puppet.frame and self.puppet.frame.focus
@@ -3705,16 +3819,17 @@ HookClassAltAccept('widgets/playeravatarpopup', function(self)
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.BACKGROUND, {
             NAME = self.player_name,
             BACKGROUND = self.puppet.frame.bg.hovertext:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("PLAYER", "BACKGROUND"))
     end
 
     local items = { 'body', 'hand', 'legs', 'feet', 'base', 'head_equip', 'hand_equip', 'body_equip' }
     for _, item in ipairs(items) do
         if self[item .. '_image'] and self[item .. '_image'].focus then
-            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[item:upper()], {
+            local upper_item = item:upper()
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[upper_item], {
                 NAME = self.player_name,
-                [string.upper(item)] = self[item .. '_image']._text:GetString()
-            }))
+                [upper_item] = self[item .. '_image']._text:GetString()
+            }), nil, nil, GetStatementLoc("PLAYER", upper_item))
         end
     end
 end)
@@ -3756,7 +3871,7 @@ HookClassAltAccept('widgets/redux/skilltreebuilder', function(self)
 
         return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.XP, {
             NAME = name, XP = self.root.xptotal:GetString()
-        }))
+        }), nil, nil, GetStatementLoc("SKILL_TREE", "XP"))
     end
 
     -- 技能节点宣告
@@ -3764,15 +3879,12 @@ HookClassAltAccept('widgets/redux/skilltreebuilder', function(self)
         if v.button and v.button.focus and v.status
             and self.skilltreedef and self.skilltreedef[k] and self.skilltreedef[k].title then
 
-            local scheme_fmt = v.status.activated
-                and GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.ACTIVATED
-                or (v.status.activatable
-                    and GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.CAN_ACTIVATE
-                    or GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.NOT_ACTIVATED)
+            local fmt_name = v.status.activated and "ACTIVATED"
+                or (v.status.activatable and "CAN_ACTIVATE" or "NOT_ACTIVATED")
 
-            return Announce(subfmt(scheme_fmt, {
+            return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS[fmt_name], {
                 NAME = name, SKILL = self.skilltreedef[k].title
-            }))
+            }), nil, nil, GetStatementLoc("SKILL_TREE", fmt_name))
         end
     end
 end)
@@ -3797,7 +3909,7 @@ AddClassPostConstruct('widgets/redux/skilltreebuilder', function(self)
                 desc_str = desc_str:gsub("\n", ""):gsub("\t", "")
                 Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS.DESC, {
                     NAME = name, SKILL = title_str, DESC = desc_str
-                }))
+                }), nil, nil, GetStatementLoc("SKILL_TREE", "DESC"))
                 return true
             end
         end)
@@ -3856,7 +3968,7 @@ AddClassPostConstruct("widgets/redux/worldsettings/settingslist", function(self)
 
                     Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.WORLD_SETTING, {
                         SETTING = name_str, VALUE = val_str
-                    }))
+                    }), nil, nil, GetStatementLoc("SERVER", "WORLD_SETTING"))
                     return true
                 end
             end,
@@ -3927,7 +4039,7 @@ AddClassPostConstruct("screens/redux/modconfigurationscreen", function(self)
 
                 Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_SETTING, {
                     MOD = mod_name, SETTING = setting_name, VALUE = val_str
-                }))
+                }), nil, nil, GetStatementLoc("SERVER", "MOD_SETTING"))
                 return true
             end
         end,
@@ -3953,11 +4065,7 @@ AddClassPostConstruct("screens/redux/textlistpopup", function(self)
                 local announce_msg = subfmt(GLOBAL.NOMU_QA.SCHEME.SERVER.FORMATS.MOD_ENABLED, {
                     MOD = mod_name
                 })
-                if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.Announce then
-                    GLOBAL.NOMU_QA.Announce(announce_msg)
-                else
-                    Announce(announce_msg)
-                end
+                Announce(announce_msg, nil, nil, GetStatementLoc("SERVER", "MOD_ENABLED"))
                 return true
             end
         end
@@ -3976,7 +4084,7 @@ HookClassAltAccept('widgets/redux/cookbookpage_crockpot', function(self)
             HUNGER = data.recipe_def.hunger ~= nil and math.floor(10 * data.recipe_def.hunger) / 10 or '-',
             SANITY = data.recipe_def.sanity ~= nil and math.floor(10 * data.recipe_def.sanity) / 10 or '-',
             HEALTH = data.recipe_def.health ~= nil and math.floor(10 * data.recipe_def.health) / 10 or '-'
-        }))
+        }), nil, nil, GetStatementLoc("COOK", "FOOD"))
     end
 end)
 
@@ -4166,14 +4274,14 @@ end
 if ENABLE_MEME_SYSTEM then
 
     local LIST = {
-        List_0 = {}, --  收藏分类
+        List_0 = {}, -- 收藏分类
         List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
     for i = 1, 80 do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 60 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 67 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
     for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
@@ -4222,68 +4330,7 @@ if ENABLE_MEME_SYSTEM then
 
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
-    -- 放大表情包逻辑
-    -- [1] Ctrl+左键 屏幕居中放大功能
-    GLOBAL.NOMU_QA.ShowZoomedMeme = function(meme_name, atlas, is_anim)
-        local Screen = GLOBAL.require("widgets/screen")
-        local UIAnim = GLOBAL.require("widgets/uianim")
-        local Image = GLOBAL.require("widgets/image")
-        
-        local zoom_screen = Screen("MemeZoomScreen")
-        
-        -- 半透明黑色背景
-        zoom_screen.bg = zoom_screen:AddChild(Image("images/global.xml", "square.tex"))
-        zoom_screen.bg:SetVRegPoint(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.bg:SetHRegPoint(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.bg:SetVAnchor(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.bg:SetHAnchor(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.bg:SetScaleMode(GLOBAL.SCALEMODE_FILLSCREEN)
-        zoom_screen.bg:SetTint(0, 0, 0, 0.7)
-
-        local current_scale = 1.5
-
-        zoom_screen.OnMouseButton = function(self, button, down, x, y)
-            if not down and (button == GLOBAL.MOUSEBUTTON_LEFT or button == GLOBAL.MOUSEBUTTON_RIGHT) then
-                GLOBAL.TheFrontEnd:PopScreen()
-                return true
-            end
-        end
-        
-        zoom_screen.OnControl = function(self, control, down)
-            if control == GLOBAL.CONTROL_SCROLLFWD or control == GLOBAL.CONTROL_ZOOM_IN then
-                if not down then return true end
-                current_scale = math.min(5.0, current_scale + 0.2)
-                if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
-                return true
-            elseif control == GLOBAL.CONTROL_SCROLLBACK or control == GLOBAL.CONTROL_ZOOM_OUT then
-                if not down then return true end
-                current_scale = math.max(0.5, current_scale - 0.2)
-                if self.meme then self.meme:SetScale(current_scale, current_scale, current_scale) end
-                return true
-            elseif not down and (control == GLOBAL.CONTROL_CANCEL or control == GLOBAL.CONTROL_ACCEPT) then
-                GLOBAL.TheFrontEnd:PopScreen()
-                return true
-            end
-            return false
-        end
-
-        if is_anim then
-            zoom_screen.meme = zoom_screen:AddChild(UIAnim())
-            zoom_screen.meme:GetAnimState():SetBank(meme_name)
-            zoom_screen.meme:GetAnimState():SetBuild(meme_name)
-            zoom_screen.meme:GetAnimState():PlayAnimation("idle", true)
-        else
-            zoom_screen.meme = zoom_screen:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
-        end
-        
-        zoom_screen.meme:SetVAnchor(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.meme:SetHAnchor(GLOBAL.ANCHOR_MIDDLE)
-        zoom_screen.meme:SetScale(current_scale, current_scale, current_scale)
-        
-        GLOBAL.TheFrontEnd:PushScreen(zoom_screen)
-    end
-
-    -- [2] 鼠标悬浮
+    -- 鼠标悬浮小窗预览功能
     GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4292,13 +4339,19 @@ if ENABLE_MEME_SYSTEM then
         local dummy_tracker = parent_root:AddChild(Widget("dummy_tracker"))
         local mx, my = meme_widget:GetPosition():Get()
         dummy_tracker:SetPosition(mx + 100, my + 38)
-        
-        meme_widget:SetOnGainFocus(function()
-            -- 确保清理旧的
+        -- 封装隐藏逻辑
+        local function HideHover()
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 meme_widget.hover_preview:Kill()
+                meme_widget.hover_preview = nil
             end
+        end
+        -- 封装显示逻辑
+        local function ShowHover()
+            if GLOBAL.NOMU_QA.DATA.DISABLE_MEME_PREVIEW then return end
 
+            if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then return end
+            
             local top_parent = GLOBAL.TheFrontEnd.overlayroot
             local hp
             if is_anim then
@@ -4306,11 +4359,11 @@ if ENABLE_MEME_SYSTEM then
                 hp:GetAnimState():SetBank(meme_name)
                 hp:GetAnimState():SetBuild(meme_name)
                 hp:GetAnimState():PlayAnimation("idle", true)
+                hp:GetAnimState():SetTime(GLOBAL.GetTime())
             else
                 hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
             end
             
-            -- 保证视觉大小与之前的比例一致
             local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
             hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
             hp:MoveToFront()
@@ -4318,32 +4371,78 @@ if ENABLE_MEME_SYSTEM then
             if dummy_tracker.inst:IsValid() then
                 hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
             end
-
-            hp.inst:DoPeriodicTask(0, function()
-                if not meme_widget.inst:IsValid() or not meme_widget.focus or not dummy_tracker.inst:IsValid() then
-                    hp:Kill()
-                    meme_widget.hover_preview = nil
-                    return
-                end
-                local w_pos = dummy_tracker:GetWorldPosition()
-                hp:SetPosition(w_pos:Get())
-            end)
             
             meme_widget.hover_preview = hp
+        end
+
+        meme_widget.inst:ListenForEvent("onremove", HideHover)
+        dummy_tracker.inst:ListenForEvent("onremove", HideHover)
+
+        meme_widget:SetOnGainFocus(function()
+            meme_widget.ui_focus = true
+            ShowHover()
         end)
         
         meme_widget:SetOnLoseFocus(function()
+            meme_widget.ui_focus = false
+            if not meme_widget.manual_hover then
+                HideHover()
+            end
+        end)
+
+        dummy_tracker.inst:DoPeriodicTask(0, function()
+            -- 控件失效保护
+            if not meme_widget.inst:IsValid() or not dummy_tracker.inst:IsValid() then
+                HideHover()
+                return
+            end
+
+            -- 实时更新悬浮图位置
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
-                meme_widget.hover_preview:Kill()
-                meme_widget.hover_preview = nil
+                local w_pos = dummy_tracker:GetWorldPosition()
+                meme_widget.hover_preview:SetPosition(w_pos:Get())
+            end
+
+            -- 判断聊天输入框状态
+            local is_chat_open = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()
+
+            if is_chat_open or not parent_root.shown then
+                meme_widget.manual_hover = false
+                if not meme_widget.ui_focus then 
+                    HideHover() 
+                end
+                return
+            end
+
+            -- 聊天栏关闭时的手动坐标距离探测
+            local mouse_pos = GLOBAL.TheInput:GetScreenPosition()
+            local widget_pos = meme_widget:GetWorldPosition()
+            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
+            
+            local threshold = 35 * ui_scale
+            local dx = mouse_pos.x - widget_pos.x
+            local dy = mouse_pos.y - widget_pos.y
+            local dist_sq = dx * dx + dy * dy
+
+            if dist_sq <= threshold * threshold then
+                if not meme_widget.manual_hover then
+                    meme_widget.manual_hover = true
+                    ShowHover()
+                end
+            else
+                if meme_widget.manual_hover then
+                    meme_widget.manual_hover = false
+                    if not meme_widget.ui_focus then
+                        HideHover()
+                    end
+                end
             end
         end)
         
         return dummy_tracker
     end
 
-
-    -- 10.2 拦截与替换聊天框中的表观动画
+    -- 拦截与替换【局内聊天框】中的表观动画
     AddClassPostConstruct("widgets/redux/chatline", function(self)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4370,6 +4469,27 @@ if ENABLE_MEME_SYSTEM then
         end
 
         function self:UpdateMemeDisplay()
+            local is_skin_announcement = self.type == (GLOBAL.ChatTypes and GLOBAL.ChatTypes.SkinAnnouncement or 4)
+            local str = nil
+            if not is_skin_announcement then
+                str = self.message and self.message:GetString()
+            end
+            
+            local meme_name = str and string.match(str, "%[Meme:(.-)%]")
+            
+            -- 防止滑动刷新导致动画复位
+            if self.current_meme_name == meme_name then
+                if meme_name then
+                    if self.message then self.message:Hide() end
+                else
+                    if self.message and not is_skin_announcement then 
+                        self.message:Show() 
+                    end
+                end
+                return
+            end
+            self.current_meme_name = meme_name
+
             -- 清理旧的表情和定位器
             if self.meme then
                 self.meme:Kill()
@@ -4380,71 +4500,89 @@ if ENABLE_MEME_SYSTEM then
                 self.meme_dummy_tracker = nil
             end
             
-            if self.message then
-                local str = self.message:GetString()
-                if str then
-                    local meme_name = string.match(str, "%[Meme:(.-)%]")
+            if meme_name then
+                if self.message then self.message:Hide() end
+                local name = meme_name 
+                
+                if name:sub(1, 4) == "gif_" then
+                    self.meme = self.root:AddChild(UIAnim())
+                    self.meme:GetAnimState():SetBank(name)
+                    self.meme:GetAnimState():SetBuild(name)
+                    self.meme:GetAnimState():PlayAnimation("idle", true)
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
                     
-                    if meme_name then
-                        self.message:Hide()
-                        local name = meme_name 
-                        
-                        if name:sub(1, 4) == "gif_" then
-                            self.meme = self.root:AddChild(UIAnim())
-                            self.meme:GetAnimState():SetBank(name)
-                            self.meme:GetAnimState():SetBuild(name)
-                            self.meme:GetAnimState():PlayAnimation("idle", true)
-                            self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
-                            self.meme.isanim = true
-                            self.meme.atlas = nil
-                        else
-                            local prefix = name:match("^(.*)_%d+")
-                            local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
-                            self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
-                            self.meme:SetFadeAlpha(self.meme_alpha)
-                            self.meme.isanim = false
-                            self.meme.atlas = atlas
-                        end
-                        self.meme:SetPosition(-268, -8)
-                        self.meme:SetScale(.4, .4, .4)
-                        
-                        if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                            self.meme:SetRegionSize(100, 100) 
-                        end
-                        self.meme:SetClickable(true)
-                        
-                        -- 绑定悬浮放大与定位器逻辑
-                        self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
-                        
-                        -- 绑定 Ctrl+左键全屏放大逻辑
-                        self.meme.OnMouseButton = function(w, button, down, x, y)
-                            if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
-                                if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
-                                    if GLOBAL.NOMU_QA.ShowZoomedMeme then
-                                        GLOBAL.NOMU_QA.ShowZoomedMeme(name, self.meme.atlas, self.meme.isanim)
-                                    end
-                                    return true
-                                end
-                            end
-                        end
-                    end
+                    self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
+                    self.meme.isanim = true
+                    self.meme.atlas = nil
+                else
+                    local prefix = name:match("^(.*)_%d+")
+                    local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
+                    self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
+                    self.meme:SetFadeAlpha(self.meme_alpha)
+                    self.meme.isanim = false
+                    self.meme.atlas = atlas
+                end
+                self.meme:SetPosition(-268, -8)
+                self.meme:SetScale(.4, .4, .4)
+                
+                if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
+                    self.meme:SetRegionSize(100, 100) 
+                end
+                self.meme:SetClickable(true)
+                
+                self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+            else
+                if self.message and not is_skin_announcement then 
+                    self.message:Show() 
                 end
             end
         end
     end)
 
-    -- 10.3 选人界面聊天框表情包渲染支持
+    -- 拦截与替换【选人界面(Lobby)聊天框】中的表观动画
     AddClassPostConstruct("widgets/redux/lobbychatline", function(self)
-        if not self.message then return end
+        local Image = GLOBAL.require("widgets/image")
+        local UIAnim = GLOBAL.require("widgets/uianim")
 
-        local str = self.message:GetString()
-        local meme_name = str and string.match(str, "%[Meme:(.-)%]")
+        local old_SetChatData = self.SetChatData
+        if old_SetChatData then
+            function self:SetChatData(...)
+                old_SetChatData(self, ...)
+                self:UpdateMemeDisplay()
+            end
+        else
+            if self.message then
+                local old_SetString = self.message.SetString
+                self.message.SetString = function(msg_self, str, ...)
+                    if old_SetString then old_SetString(msg_self, str, ...) end
+                    self:UpdateMemeDisplay()
+                end
+                
+                local old_SetTruncatedString = self.message.SetTruncatedString
+                if old_SetTruncatedString then
+                    self.message.SetTruncatedString = function(msg_self, str, ...)
+                        old_SetTruncatedString(msg_self, str, ...)
+                        self:UpdateMemeDisplay()
+                    end
+                end
+            end
+        end
 
-        if meme_name then
-            local Image = GLOBAL.require("widgets/image")
-            local UIAnim = GLOBAL.require("widgets/uianim")
+        function self:UpdateMemeDisplay()
+            if not self.message then return end
 
-            self.message:Hide()
+            local str = self.message:GetString()
+            local meme_name = str and string.match(str, "%[Meme:(.-)%]")
+
+            if self.current_meme_name == meme_name then
+                if meme_name then
+                    if self.message then self.message:Hide() end
+                else
+                    if self.message then self.message:Show() end
+                end
+                return
+            end
+            self.current_meme_name = meme_name
 
             if self.meme then
                 self.meme:Kill()
@@ -4455,49 +4593,51 @@ if ENABLE_MEME_SYSTEM then
                 self.meme_dummy_tracker = nil
             end
 
-            local name = meme_name
-            if name:sub(1, 4) == "gif_" then
-                self.meme = self.root:AddChild(UIAnim())
-                self.meme:GetAnimState():SetBank(name)
-                self.meme:GetAnimState():SetBuild(name)
-                self.meme:GetAnimState():PlayAnimation("idle", true)
-                self.meme.isanim = true
-                self.meme.atlas = nil
-            else
-                local prefix = name:match("^(.*)_%d+")
-                local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
-                self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
-                self.meme.isanim = false
-                self.meme.atlas = atlas
-            end
+            if meme_name then
+                self.message:Hide()
+                local name = meme_name
 
-            local msg_x, msg_y = self.message:GetPosition():Get()
-            local w, h = self.message:GetRegionSize()
-            
-            self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12 )
-            self.meme:SetScale(0.35, 0.35, 0.35)
-            
-            if self.extra_line_count then
-                self.extra_line_count = self.extra_line_count + 1
-            end
-
-            if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                self.meme:SetRegionSize(100, 100)
-            end
-            self.meme:SetClickable(true)
-
-            self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
-            
-            self.meme.OnMouseButton = function(btn, button, down, x, y)
-                if button == GLOBAL.MOUSEBUTTON_LEFT and not down then
-                    if GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_RCTRL) then
-                        if GLOBAL.NOMU_QA.ShowZoomedMeme then
-                            GLOBAL.NOMU_QA.ShowZoomedMeme(name, self.meme.atlas, self.meme.isanim)
-                        end
-                        return true
-                    end
+                if name:sub(1, 4) == "gif_" then
+                    self.meme = self.root:AddChild(UIAnim())
+                    self.meme:GetAnimState():SetBank(name)
+                    self.meme:GetAnimState():SetBuild(name)
+                    self.meme:GetAnimState():PlayAnimation("idle", true)
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
+                    
+                    self.meme.isanim = true
+                    self.meme.atlas = nil
+                else
+                    local prefix = name:match("^(.*)_%d+")
+                    local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
+                    self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
+                    self.meme.isanim = false
+                    self.meme.atlas = atlas
                 end
+
+                local msg_x, msg_y = self.message:GetPosition():Get()
+                local w, h = self.message:GetRegionSize()
+                
+                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12 )
+                self.meme:SetScale(0.35, 0.35, 0.35)
+                
+                if self.extra_line_count then
+                    self.extra_line_count = self.extra_line_count + 1
+                end
+
+                if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
+                    self.meme:SetRegionSize(100, 100)
+                end
+                self.meme:SetClickable(true)
+
+                self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+            else
+                if self.message then self.message:Show() end
             end
+        end
+
+        -- 首次初始化调用
+        if not old_SetChatData then
+            self:UpdateMemeDisplay()
         end
     end)
 
