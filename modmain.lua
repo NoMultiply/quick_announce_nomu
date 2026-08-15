@@ -3621,15 +3621,22 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
             -- 角色头像/选择状态
             if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
                 local prefab = w.characterBadge.prefabname
-                if not prefab or prefab == "" then
-                    local is_connecting = type(w.characterBadge.IsLoading) == "function"
-                        and w.characterBadge:IsLoading()
-                    local fmt_name = is_connecting and "CONNECTING" or "CHOOSING"
+                local is_connecting = type(w.characterBadge.IsLoading) == "function" and w.characterBadge:IsLoading()
+                
+                if is_connecting then
+                    -- 只要在加载，就是连接中
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS[fmt_name],
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING, 
                         { NAME = w.displayName }
-                    ), nil, nil, GetStatementLoc("PLAYER", fmt_name))
+                    ), nil, nil, GetStatementLoc("PLAYER", "CONNECTING"))
+                elseif not prefab or prefab == "" then
+                    -- 加载完成，但没有角色代码，说明在选人界面
+                    return Announce(subfmt(
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING, 
+                        { NAME = w.displayName }
+                    ), nil, nil, GetStatementLoc("PLAYER", "CHOOSING"))
                 else
+                    -- 正常游玩状态
                     return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.NAME, {
                         NAME = w.displayName,
                         CHARACTER = GLOBAL.STRINGS.NAMES[prefab:upper()] or prefab
