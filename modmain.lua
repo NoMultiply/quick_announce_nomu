@@ -684,8 +684,13 @@ local function GetSpiderDenStat(ent)
 
     -- 暗影棋子特殊处理
     if ent:HasTag("shadowchesspiece") then
-        return ent:HasTag("epic") and "L3"
-            or (ent:HasTag("smallepic") and "L2" or "L1")
+        if ent:HasTag("smallepic") then
+            return "L2"
+        elseif ent:HasTag("epic") then
+            return "L3"
+        else
+            return "L1"
+        end
     end
 
     if not ent:HasTag("spiderden") then return nil end

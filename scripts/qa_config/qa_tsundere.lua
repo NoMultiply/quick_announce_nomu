@@ -388,7 +388,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
 
                     L1 = "最弱小的一级",
                     L2 = "稍微麻烦点的二级",
-                    L3 = "随时会蹦出女王的三级（当心点）",
+                    L3 = "充满威胁的三级（当心点）",
                     L1_BEDAZZLED = "被无聊装饰过的一级",
                     L2_BEDAZZLED = "被无聊装饰过的二级",
                     L3_BEDAZZLED = "被无聊装饰过的三级",
