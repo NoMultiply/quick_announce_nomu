@@ -62,7 +62,7 @@ _G.NOMU_QA.DATA = {
     SHOW_ME = 1,
     ANNOUNCE_RANGE = 40,
     FUZZY_ANNOUNCE = false,
-    SHOW_PREFIX = true,
+    DISABLE_MEME_PREVIEW = true,
     SHOW_DISTANCE = 0,
     SHOW_MOD_NAME = false,
     SHOW_ASSET_INFO = 0,
@@ -140,6 +140,9 @@ end
 
 _G.NOMU_QA.UpdateScheme = function(scheme_node)
     if not scheme_node or not scheme_node.data then return end
+
+    if scheme_node.skip_sync then return end
+
     local BUILTIN_LOOKUP = {
         [_G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = _G.STRINGS.DEFAULT_NOMU_QA,
         [_G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = _G.STRINGS.CAT_NOMU_QA,

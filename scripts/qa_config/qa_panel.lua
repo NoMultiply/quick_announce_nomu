@@ -789,6 +789,17 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     sx = sx + 260
     self.title_text_editing = self.root:AddChild(Text(BODYTEXTFONT, 32))
     self.title_text_editing:SetPosition(sx + 300, sy)
+
+    self.sync_toggle_btn = self.AddButton(sx + 490, sy, 180, 40, function()
+        if not self.scheme then return STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON end
+        return self.scheme.skip_sync and STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_OFF or STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON
+    end, function()
+        if not self.scheme then return end
+        self.scheme.skip_sync = not self.scheme.skip_sync
+        GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx].skip_sync = self.scheme.skip_sync
+        GLOBAL.NOMU_QA.SaveData()
+    end)
+    self.sync_toggle_btn:Hide() -- 默认先隐藏，点击列表时再判断
     
     local function save_and_apply() 
         GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx] = DeepCopy(self.scheme)
@@ -832,7 +843,23 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.format_list = self.root:AddChild(NoMuList(function()
         local item = Widget('format-list-item')
         item.backing = item:AddChild(TEMPLATES.ListItemBackground(420, 40, function() end)); item.backing.move_on_click = true
+
         item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
+        item.text:SetRegionSize(340, 40)
+        item.text:SetHAlign(ANCHOR_LEFT)
+        item.text:SetPosition(-30, 0, 0)
+
+        item.reset_btn = item:AddChild(TextButton())
+        item.reset_btn:SetFont(CHATFONT); item.reset_btn:SetTextSize(20)
+        item.reset_btn:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RESET)
+        item.reset_btn:SetPosition(170, 0, 0)
+        item.reset_btn:SetTextFocusColour({1, 1, 1, 1})
+        item.reset_btn:SetTextColour({1, 0.6, 0, 1}) -- 橙色
+        item.reset_btn:Hide()
+
+        function item:OnGainFocus() item.reset_btn:Show() end
+        function item:OnLoseFocus() item.reset_btn:Hide() end
+
         item.SetInfo = function(_, format)
             item.text:SetString(format.name .. ': ' .. format.value)
             item.backing:SetOnClick(function() 
@@ -840,6 +867,25 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                     self.scheme.data[self.scheme_func].FORMATS[format.name] = value
                     save_and_apply(); self:RefreshFunc() 
                 end, 256, 420)) 
+            end)
+            
+            -- 还原该句子的默认值逻辑
+            item.reset_btn:SetOnClick(function()
+                local BUILTIN_LOOKUP = {
+                    [STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = STRINGS.DEFAULT_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = STRINGS.CAT_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = STRINGS.TSUNDERE_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = STRINGS.CUTE_NOMU_QA,
+                }
+                local source_name = self.scheme.source_template or self.scheme.name
+                local source_data = BUILTIN_LOOKUP[source_name] or STRINGS.DEFAULT_NOMU_QA
+                local default_val = source_data[self.scheme_func] and source_data[self.scheme_func].FORMATS and source_data[self.scheme_func].FORMATS[format.name]
+                
+                if default_val then
+                    self.scheme.data[self.scheme_func].FORMATS[format.name] = default_val
+                    save_and_apply()
+                    self:RefreshFunc()
+                end
             end)
         end
         item.focus_forward = item.backing; return item
@@ -857,7 +903,23 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.mapping_list = self.root:AddChild(NoMuList(function()
         local item = Widget('mapping-list-item')
         item.backing = item:AddChild(TEMPLATES.ListItemBackground(420, 40, function() end)); item.backing.move_on_click = true
+
         item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
+        item.text:SetRegionSize(340, 40)
+        item.text:SetHAlign(ANCHOR_LEFT)
+        item.text:SetPosition(-30, 0, 0)
+
+        item.reset_btn = item:AddChild(TextButton())
+        item.reset_btn:SetFont(CHATFONT); item.reset_btn:SetTextSize(20)
+        item.reset_btn:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RESET)
+        item.reset_btn:SetPosition(170, 0, 0)
+        item.reset_btn:SetTextFocusColour({1, 1, 1, 1})
+        item.reset_btn:SetTextColour({1, 0.6, 0, 1}) -- 橙色
+        item.reset_btn:Hide()
+
+        function item:OnGainFocus() item.reset_btn:Show() end
+        function item:OnLoseFocus() item.reset_btn:Hide() end
+
         item.SetInfo = function(_, mapping)
             item.text:SetString(mapping.category .. '-' .. mapping.name .. ': ' .. mapping.value)
             item.backing:SetOnClick(function() 
@@ -865,6 +927,35 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                     self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name] = val
                     save_and_apply(); self:RefreshFunc() 
                 end, 256, 420)) 
+            end)
+            
+            --  还原该映射的默认值逻辑
+            item.reset_btn:SetOnClick(function()
+                local BUILTIN_LOOKUP = {
+                    [STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = STRINGS.DEFAULT_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = STRINGS.CAT_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = STRINGS.TSUNDERE_NOMU_QA,
+                    [STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = STRINGS.CUTE_NOMU_QA,
+                }
+                local source_name = self.scheme.source_template or self.scheme.name
+                local source_data = BUILTIN_LOOKUP[source_name] or STRINGS.DEFAULT_NOMU_QA
+                
+                local default_val = nil
+                if source_data[self.scheme_func] and source_data[self.scheme_func].MAPPINGS then
+                    if source_data[self.scheme_func].MAPPINGS[self.scheme_mapping] and source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category] then
+                        default_val = source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name]
+                    end
+                    -- 如果专属人物没有映射配置，则回退读取默认(DEFAULT)的映射文本
+                    if not default_val and source_data[self.scheme_func].MAPPINGS.DEFAULT and source_data[self.scheme_func].MAPPINGS.DEFAULT[mapping.category] then
+                        default_val = source_data[self.scheme_func].MAPPINGS.DEFAULT[mapping.category][mapping.name]
+                    end
+                end
+
+                if default_val then
+                    self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name] = default_val
+                    save_and_apply()
+                    self:RefreshFunc()
+                end
             end)
         end
         item.focus_forward = item.backing; return item
@@ -884,6 +975,16 @@ function QACustomizePanel:RefreshScheme(idx)
     self.scheme_idx = idx or self.scheme_idx
     self.scheme = DeepCopy(GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx])
     self.title_text_editing:SetString(STRINGS.NOMU_QA.TITLE_TEXT_EDITING .. self.scheme.name)
+
+    if self.sync_toggle_btn then
+        if self.scheme_idx > 4 then
+            self.sync_toggle_btn:Show()
+            self.sync_toggle_btn:SetText(self.scheme.skip_sync and STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_OFF or STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON)
+        else
+            self.sync_toggle_btn:Hide()
+        end
+    end
+
     local fl = {}
     if not self.scheme.data then self.scheme.data = {} end
     for func in pairs(self.scheme.data) do table.insert(fl, func) end
@@ -982,7 +1083,7 @@ local QAPanel = Class(Widget, function(self)
         { type="state", key="ANNOUNCE_RANGE", states={40,60}, texts={[40]=s.BUTTON_TEXT_ANNOUNCE_RANGE_DEFAULT, [60]=s.BUTTON_TEXT_ANNOUNCE_RANGE_LARGE} },
         { type="toggle", key="FUZZY_ANNOUNCE", on=s.BUTTON_TEXT_FUZZY_ON, off=s.BUTTON_TEXT_FUZZY_OFF },
         { type="state", key="SHOW_DISTANCE", states={0,1,2}, texts={[0]=s.BUTTON_TEXT_DISTANCE_OFF, [1]=s.BUTTON_TEXT_DISTANCE_ON, [2]=s.BUTTON_TEXT_DISTANCE_PRECISE} },
-        { type="toggle", key="SHOW_PREFIX", on=s.BUTTON_TEXT_PREFIX_ON, off=s.BUTTON_TEXT_PREFIX_OFF },
+        { type="toggle", key="DISABLE_MEME_PREVIEW", on=s.BUTTON_TEXT_MEME_PREVIEW_ON, off=s.BUTTON_TEXT_MEME_PREVIEW_OFF },
         { type="toggle", key="SHOW_MOD_NAME", on=s.BUTTON_TEXT_SHOW_MOD_NAME_ON, off=s.BUTTON_TEXT_SHOW_MOD_NAME_OFF },
         { type="toggle", key="ENABLE_SPECIAL_STATE", on=s.BUTTON_TEXT_SPECIAL_STATE_ON, off=s.BUTTON_TEXT_SPECIAL_STATE_OFF },
         { type="state", key="SHOW_ASSET_INFO", states={0,1,2}, texts={[0]=s.BUTTON_TEXT_SHOW_ASSET_OFF, [1]=s.BUTTON_TEXT_SHOW_ASSET_CODE, [2]=s.BUTTON_TEXT_SHOW_ASSET_ALL} },
