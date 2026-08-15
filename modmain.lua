@@ -3088,6 +3088,43 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     ---- 特殊预制物打断处理 ----
+    if entity.prefab == "gelblob_storage" then
+        local held_item = entity.takeitem and entity.takeitem:value()
+        
+        if held_item ~= nil and held_item:IsValid() then
+            -- 获取内部物品的名称和数量
+            local item_display_name = GetEntityName(held_item, false)
+            local stack_size = held_item.replica and held_item.replica.stackable and held_item.replica.stackable:StackSize() or 1
+            -- 宣告装有物品的状态
+            return Announce(subfmt(qa.FORMATS.STORAGE_HAS, {
+                TOTAL = count_prefab,
+                NAME = prefab_name,
+                NUM = stack_size,
+                ITEM = item_display_name,
+                SHOW_ME = show_me,
+                DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "GELBLOB_STORAGE_HAS"))
+        else
+            local empty_count = 0
+            for _, v in ipairs(entities) do
+                if v.prefab == "gelblob_storage" and v.entity:IsVisible() then
+                    local v_item = v.takeitem and v.takeitem:value()
+                    if v_item == nil or not v_item:IsValid() then
+                        empty_count = empty_count + 1
+                    end
+                end
+            end
+
+            return Announce(subfmt(qa.FORMATS.STORAGE_EMPTY, {
+                TOTAL = count_prefab,
+                NAME = prefab_name,
+                NUM = empty_count,
+                SHOW_ME = show_me,
+                DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "GELBLOB_STORAGE_EMPTY"))
+        end
+    end
+
     if entity.prefab == "icefishing_hole" then
         return Announce(subfmt(qa.FORMATS.SINGLE, {
             NAME = GLOBAL.STRINGS.NOMU_QA.ICEFISHING_HOLE,

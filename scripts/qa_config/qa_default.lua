@@ -601,6 +601,9 @@ ENV = {
 
             STATE_THIS = '这里有 {TOTAL}个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
             STATE_THIS_SINGLE = '这里有 1个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
+
+            STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个有 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 是空的{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -669,13 +672,13 @@ ENV = {
                     SAPLING = "还是小树苗",
                     SHORT = "才刚刚长出来",
                     NORMAL = "长得正茂盛",
-                    TALL = "长得高高大大的",
+                    TALL = "长得高高的",
                     BOULDER = "已经变成矿床了",
                     ANCIENT_READY = "结满了果实",
                     ANCIENT_EMPTY = "光秃秃的没有果实",
                     MARBLE_TREE = "是由大理石构成的",
 
-                    TROPHYSCALE_EMPTY = '是空的',
+                    TROPHYSCALE_EMPTY = '是空空的',
                     TROPHYSCALE_HAS = '放有物品',
 
                     L1 = "是一级的",
