@@ -987,7 +987,19 @@ function QACustomizePanel:RefreshScheme(idx)
 
     local fl = {}
     if not self.scheme.data then self.scheme.data = {} end
-    for func in pairs(self.scheme.data) do table.insert(fl, func) end
+    local added_funcs = {}
+    for _, func_info in ipairs(GLOBAL.STRINGS.NOMU_QA.FUNC) do
+        if self.scheme.data[func_info.id] then
+            table.insert(fl, func_info.id)
+            added_funcs[func_info.id] = true
+        end
+    end
+    for func_id in pairs(self.scheme.data) do
+        if not added_funcs[func_id] then
+            table.insert(fl, func_id)
+        end
+    end
+
     self.func_list:Refresh(fl); self:RefreshFunc(fl[1], 'DEFAULT')
 end
 

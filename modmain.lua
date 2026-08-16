@@ -832,32 +832,53 @@ local function HandleExternalMods(HUD, status, widget)
     end
 
     if is_insight_menu then
-        local text_str = nil
-        local comp_name = nil
-        local curr = w
+                local text_str = nil
+                local comp_name = nil
+                local item_detail = nil
+                local curr = w
 
-        -- 向上遍历查找文本内容和组件名
-        while curr and curr ~= HUD.controls.insight_menu do
-            if curr.componentName then comp_name = curr.componentName end
-            if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
+                -- 向上遍历查找文本内容和组件名
+                while curr and curr ~= HUD.controls.insight_menu do
+                    if curr.componentName then 
+                        comp_name = curr.componentName 
+                        item_detail = curr -- 保存找到的 Insight 项 UI 控件对象
+                    end
+                    if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
 
-            if curr.raw_text and type(curr.raw_text) == "string" then
-                text_str = curr:GetString()
-                break
-            elseif curr.text and curr.text.GetString then
-                text_str = curr.text:GetString()
-                break
-            end
-            curr = curr.parent
-        end
+                    if curr.raw_text and type(curr.raw_text) == "string" then
+                        text_str = curr:GetString()
+                        break
+                    elseif curr.text and curr.text.GetString then
+                        text_str = curr.text:GetString()
+                        break
+                    end
+                    curr = curr.parent
+                end
 
-        if not text_str and w.GetString then
-            text_str = w:GetString()
-        end
+                if not text_str and w.GetString then
+                    text_str = w:GetString()
+                end
 
-        if text_str and text_str ~= "" then
-            -- 提取图标/预制物代码
-            local raw_code = text_str:match("<icon=([^>]+)>") or text_str:match("<prefab=([^>]+)>")
+                if text_str and text_str ~= "" then
+                    if item_detail and GLOBAL.Insight and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
+                        local cmp = (item_detail.componentData and item_detail.componentData.source_descriptor) or item_detail.componentName
+                        if cmp then
+                            local insight_rep = GLOBAL.ThePlayer.replica.insight
+                            local special_data = insight_rep.world_data and insight_rep.world_data.special_data and insight_rep.world_data.special_data[item_detail.componentName]
+                            
+                            local describer = special_data and (
+                                (special_data.prefably and GLOBAL.Insight.prefab_descriptors and GLOBAL.Insight.prefab_descriptors[cmp] and GLOBAL.Insight.prefab_descriptors[cmp].StatusAnnouncementsDescribe) or
+                                (GLOBAL.Insight.descriptors and GLOBAL.Insight.descriptors[cmp] and GLOBAL.Insight.descriptors[cmp].StatusAnnouncementsDescribe)
+                            )
+                            
+                            if describer then
+                                return false
+                            end
+                        end
+                    end
+
+                    -- 提取图标/预制物代码
+                    local raw_code = text_str:match("<icon=([^>]+)>") or text_str:match("<prefab=([^>]+)>")
             if not raw_code and comp_name then
                 raw_code = string.gsub(comp_name, "spawner$", "")
                 raw_code = string.gsub(raw_code, "manager$", "")
@@ -1972,12 +1993,18 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 
         if num_missing <= 0 then
             -- 材料充足
+            fmts.INGREDIENT = ingredient_name
+            
             if is_catalyst then
-                fmts.INGREDIENT = ingredient_name
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_CATALYST, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE_CATALYST"))
             else
-                fmts.INGREDIENT = subfmt(amount_fmt, { NUM = actual_needed, ITEM = ingredient_name })
+                local craft_count = actual_needed > 0 and math.floor(num_found / actual_needed) or 1
+                fmts.TOTAL_NUM = num_found
+                fmts.REQ_NUM = actual_needed
+                fmts.CRAFT_COUNT = craft_count
+                
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
             end
-            return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
         else
             -- 材料不足
             if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then

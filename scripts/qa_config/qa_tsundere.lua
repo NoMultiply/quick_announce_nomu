@@ -16,11 +16,22 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             START_RAIN = '喂！{WORLD}气温{TEMPERATURE}，{WEATHER}将在第{DAYS}天到来（还剩：{MINUTES}分{SECONDS}秒）。自己记得撑伞，我才不管你！',
             NO_RAIN = '哼，{WORLD}气温{TEMPERATURE}，{WEATHER}暂时还没来。稍微放松一下也可以……就一下！',
             STOP_RAIN = '喂！{WORLD}气温{TEMPERATURE}，将在第{DAYS}天放晴（还剩：{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
+            START_FOG = '喂！{WORLD}气温{TEMPERATURE}，第{DAYS}天就要起孢子雾了（还剩：{MINUTES}分{SECONDS}秒）！给我睁大眼睛看路！',
+            FOGGING = '啧，{WORLD}气温{TEMPERATURE}，现在孢子雾这么大，你瞎跑什么！',
+            BWB_CAVE_WEATHER = '喂，{WORLD}气温{TEMPERATURE}，{FOG_STATUS}，而且{RAIN_STATUS}，给我当心点！',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '下雨', SUMMER = '下雨', AUTUMN = '下雨', WINTER = '暴雪', GREEN = '下雨', DRY = '下雨', MILD = '下雨', WET = '狂风暴雨', TEMPERATE = '下雨', HUMID = '下雨', LUSH = '下雨', APORKALYPSE = '下雨' },
+                WEATHER = { SPRING = '下雨', SUMMER = '下雨', AUTUMN = '下雨', WINTER = '暴雪', GREEN = '下雨', DRY = '下雨', MILD = '下雨', WET = '狂风暴雨', TEMPERATE = '下雨', HUMID = '下雨', LUSH = '下雨', APORKALYPSE = '下雨', TRANQUIL = '起雾', FROST = '落石', VERDANT = '起雾', UMBRAL = '鬼天气' },
+                BWB_WORDS = {
+                    RAIN_APPROACH = "破雨第{DAYS}天就来(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_STOP = "这雨第{DAYS}天就会停(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_NONE = "暂时没看到要下雨",
+                    FOG_ACTIVE = "现在全是烦人的孢子雾",
+                    FOG_APPROACH = "孢子雾第{DAYS}天就来了(剩{MINUTES}分{SECONDS}秒)",
+                    FOG_NONE = "没看到孢子雾，算你走运"
+                }
             }
         }
     },
@@ -216,10 +227,13 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             ME_GHOST = "喂，{NAME}！还不快拿告密的心来救我，笨蛋！",
             THEY_GHOST = "{NAME}，你这笨蛋站着别动，我这就去救你！",
             I_AM_HERE = "喂，{NAME}！我在这里，快跟上！",
+            I_AM_GHOST = "喂！我变成鬼魂了！你瞎了吗还不快拿心脏来救我！",
             ME_FISHING = '喂！{NAME}在钓鱼，闭嘴别把鱼吓跑了！',
             THEY_FISHING = '{NAME}那家伙在钓鱼，别钓上来什么破鞋子！',
             PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
-            PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！'
+            PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！',
+            ME_FROZEN = "喂！{NAME} 被冻成冰块了！快想办法啊笨蛋！",
+            THEY_FROZEN = "你瞎了吗！{NAME} 都被冻住了还不快生火！"
         },
         MAPPINGS = {
             DEFAULT = {
@@ -310,6 +324,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             STATE_DESCRIBE = '听好了笨蛋！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 居然{ADJ}{SHOW_ME}{DISTANCE}，还不快去看看！',
             STATE_THIS = '真是的，这里有 {TOTAL}个 {NAME}，唯独你点的这一个{ADJ}{SHOW_ME}{DISTANCE}，别指望我帮你！',
             STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}！',
+            STORAGE_HAS = '听好了，这里有 {TOTAL}个 {NAME}，唯独这个装了 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY = '喂，这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 里面是空的{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -385,6 +401,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     ANCIENT_READY = "上面挂满了诱人的果实",
                     ANCIENT_EMPTY = "光秃秃的连个果子都没有",
                     MARBLE_TREE = "是由大理石做成的死板树",
+
+                    TROPHYSCALE_EMPTY = '空荡荡的什么都没放',
+                    TROPHYSCALE_HAS = '里面放了破东西',
 
                     L1 = "最弱小的一级",
                     L2 = "稍微麻烦点的二级",
@@ -508,8 +527,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             INV_SLOT = '听好了，{PRONOUN}有{NUM}个{ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。别打它的主意！',
             EQUIP_SLOT = '{PRONOUN}穿戴了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。还挺好看的对吧！',
-            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，什么都没穿！',
+            EQUIP_SLOT_POS = '{PRONOUN}装备了{EQUIP_NUM}个{ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}。',
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的 {v} 光秃秃的，什么都没穿！',
             EQUIP_SLOT_HEAVY = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
             EQUIP_SLOT_HEAVY_POS = '喂！{PRONOUN}正辛辛苦苦搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}！还不快来搭把手笨蛋！',
         },
