@@ -245,6 +245,8 @@ local function GetEntityName(entity, force_basic)
     local custom_qa_name, has_custom = ApplyCustomName(actual_prefab, base_prefab_name)
     local qa_hardcoded_name = GLOBAL.STRINGS.NOMU_QA[string.upper(actual_prefab)]
 
+    local broad_category_name = GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES and GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES[string.upper(actual_prefab)]
+
     if has_custom then
         final_prefab_name = custom_qa_name
         if not is_player_named then
@@ -283,6 +285,10 @@ local function GetEntityName(entity, force_basic)
         if not is_player_named then
             display_name = original_display_name
         end
+    end
+
+    if broad_category_name then
+        final_prefab_name = broad_category_name
     end
 
     return display_name, final_prefab_name, is_player_named
@@ -434,10 +440,10 @@ local SHOW_ME_CACHE = nil
 local function GetShowMePatterns()
     if not SHOW_ME_CACHE then
         SHOW_ME_CACHE = {
-            bad_prefab = (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", ""),
-            bad_bank   = (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", ""),
-            bad_build  = (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", ""),
-            bad_mod    = (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", ""),
+            bad_prefab  = (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", ""),
+            bad_bank    = (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", ""),
+            bad_build   = (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", ""),
+            bad_mod     = (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", ""),
             lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB)),
             rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
         }
@@ -445,37 +451,96 @@ local function GetShowMePatterns()
     return SHOW_ME_CACHE
 end
 
--- 解析并过滤 Show Me 悬浮文本，返回格式化后的字符串
+-- 解析并过滤包裹/礼物内部物品
+local function ParseBundleLine(str)
+    if not str or str == "" then return nil end
+
+    if str:match("^%s*%d+[%d%.]*%s*$") then
+        return nil
+    end
+
+    local clean_str = str:gsub("^%s*%d+%s*[:%.、%-]%s*", "")
+    if clean_str == "" or clean_str:match("^%s*%d+[%d%.]*%s*$") then
+        return nil
+    end
+
+    local name, count = clean_str:match("^(.-)%s*%(%s*(%d+)%s*%)%s*$")
+    if not name then
+        name, count = clean_str:match("^(.-)%s*[xX*×]%s*(%d+)%s*$")
+    end
+
+    if name and name ~= "" then
+        count = tonumber(count) or 1
+        return count > 1 and (name .. " x" .. tostring(count)) or name
+    end
+
+    return clean_str
+end
+
 local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
-    if not SHOW_ME_ON or not target then
+    if not target then
         return ""
     end
 
-    -- 判定目标类型
+    -- 获取 Show Bundle 全局对象
+    local SB = GLOBAL.rawget(GLOBAL, "SB")
+
     local is_gift = target:HasTag('unwrappable')
+        or target:HasTag('bundle')
+        or target:HasTag('gift')
+        or target.prefab == 'gift'
+        or target.prefab == 'bundle'
+        or (target.replica and target.replica.unwrappable ~= nil)
+        or (SB and SB.supported_items and SB.supported_items[target.prefab] ~= nil)
+
     local has_health = target:HasTag('_health')
         or (target.replica and target.replica.health ~= nil)
         or target:HasTag('health')
 
-    -- 根据 SHOW_ME 配置级别决定是否显示
-    -- 1 = 全开, 2 = 仅礼物/血量, 0 = 全关
-    if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1
-        or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health))) then
+    -- 获取 Show Bundle 数据
+    local showbundle_data = target.showbundle_itemdata
+    local has_showbundle = (showbundle_data ~= nil and type(showbundle_data) == "table" and next(showbundle_data) ~= nil)
+
+    if not SHOW_ME_ON and not has_showbundle then
         return ""
     end
 
-    -- 解析原始悬浮文本
-    local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
+    if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1
+        or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health or has_showbundle))) then
+        return ""
+    end
 
-    -- 兼容 Insight 模组数据
-    if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
-        local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
-        if insight_cache and insight_cache[target] then
-            local insight_info = insight_cache[target].information
-            if insight_info and insight_info ~= "" then
-                local clean_info = CleanInsightString(insight_info)
-                local insight_lines = string.split(clean_info, '\n')
-                for _, line in ipairs(insight_lines) do
+    local items = {}
+
+    -- Show Me / Insight 文本
+    if SHOW_ME_ON then
+        items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4) or {}
+
+        -- 兼容 Insight 模组数据
+        if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
+            local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
+            if insight_cache and insight_cache[target] then
+                local insight_info = insight_cache[target].information
+                if insight_info and insight_info ~= "" then
+                    local clean_info = CleanInsightString(insight_info)
+                    local insight_lines = string.split(clean_info, '\n')
+                    for _, line in ipairs(insight_lines) do
+                        table.insert(items, line)
+                    end
+                end
+            end
+        end
+
+        if is_gift and #items == 0 and GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls and GLOBAL.ThePlayer.HUD.controls.hover then
+            local hover = GLOBAL.ThePlayer.HUD.controls.hover
+            if hover.insightText and hover.insightText.raw_text then
+                local clean_info = CleanInsightString(hover.insightText.raw_text)
+                for line in clean_info:gmatch("[^\r\n]+") do
+                    table.insert(items, line)
+                end
+            elseif hover.text and hover.text.GetString then
+                local hover_str = hover.text:GetString() or ""
+                for line in hover_str:gmatch("[^\r\n]+") do
                     table.insert(items, line)
                 end
             end
@@ -486,18 +551,20 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local filtered = {}
     local patterns = GetShowMePatterns()
     local found_health_line = false
+    local target_display_name = (target.GetBasicDisplayName and target:GetBasicDisplayName()) or target.name or ""
 
     for _, str in ipairs(items) do
         if str and str:match("[^ \t\r\n]") then
-            -- 检查是否为被禁止的信息行
-            local is_banned = str:find(patterns.bad_prefab, 1, true)
+            local is_name_line = (target_display_name ~= "" and str == target_display_name)
+
+            local is_banned = is_name_line
+                or str:find(patterns.bad_prefab, 1, true)
                 or str:find(patterns.bad_bank, 1, true)
                 or str:find(patterns.bad_build, 1, true)
                 or str:find(patterns.bad_mod, 1, true)
                 or (patterns.lmb_pattern and str:find(patterns.lmb_pattern))
                 or (patterns.rmb_pattern and str:find(patterns.rmb_pattern))
 
-            -- 用户自定义过滤器
             if not is_banned
                 and GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER
                 and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then
@@ -509,7 +576,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                 end
             end
 
-            -- SHOW_ME == 2 模式下仅保留血量行
             if not is_banned and GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 then
                 if has_health and not is_gift then
                     if found_health_line then
@@ -526,7 +592,32 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
             end
 
             if not is_banned then
-                table.insert(filtered, str)
+                if is_gift then
+                    local parsed_bundle_line = ParseBundleLine(str)
+                    if parsed_bundle_line then
+                        table.insert(filtered, parsed_bundle_line)
+                    end
+                else
+                    table.insert(filtered, str)
+                end
+            end
+        end
+    end
+
+    -- 读取 Show Bundle 模组
+    if is_gift and #filtered == 0 and has_showbundle then
+        for _, info in pairs(showbundle_data) do
+            if type(info) == "table" and info.prefab then
+                local prefab = info.prefab
+                local stack = tonumber(info.stack or info.count or info.num) or 1
+                local upper_prefab = string.upper(tostring(prefab))
+                local item_name = LOCAL_STRINGS[upper_prefab]
+                    or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
+                    or tostring(prefab)
+                item_name = ApplyCustomName(prefab, item_name)
+
+                local str_item = stack > 1 and (item_name .. " x" .. tostring(stack)) or item_name
+                table.insert(filtered, str_item)
             end
         end
     end
@@ -544,7 +635,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     if #filtered > 0 then
         local MAX_LEN = 120
         local joined_str = ""
-        local is_truncated = false
 
         for i, line in ipairs(filtered) do
             local separator = (joined_str == "") and "" or ", "
@@ -556,7 +646,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                 if #joined_str + 3 <= MAX_LEN then
                     joined_str = joined_str .. "..."
                 end
-                is_truncated = true
                 break
             end
         end
@@ -832,32 +921,53 @@ local function HandleExternalMods(HUD, status, widget)
     end
 
     if is_insight_menu then
-        local text_str = nil
-        local comp_name = nil
-        local curr = w
+                local text_str = nil
+                local comp_name = nil
+                local item_detail = nil
+                local curr = w
 
-        -- 向上遍历查找文本内容和组件名
-        while curr and curr ~= HUD.controls.insight_menu do
-            if curr.componentName then comp_name = curr.componentName end
-            if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
+                -- 向上遍历查找文本内容和组件名
+                while curr and curr ~= HUD.controls.insight_menu do
+                    if curr.componentName then 
+                        comp_name = curr.componentName 
+                        item_detail = curr -- 保存找到的 Insight 项 UI 控件对象
+                    end
+                    if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
 
-            if curr.raw_text and type(curr.raw_text) == "string" then
-                text_str = curr:GetString()
-                break
-            elseif curr.text and curr.text.GetString then
-                text_str = curr.text:GetString()
-                break
-            end
-            curr = curr.parent
-        end
+                    if curr.raw_text and type(curr.raw_text) == "string" then
+                        text_str = curr:GetString()
+                        break
+                    elseif curr.text and curr.text.GetString then
+                        text_str = curr.text:GetString()
+                        break
+                    end
+                    curr = curr.parent
+                end
 
-        if not text_str and w.GetString then
-            text_str = w:GetString()
-        end
+                if not text_str and w.GetString then
+                    text_str = w:GetString()
+                end
 
-        if text_str and text_str ~= "" then
-            -- 提取图标/预制物代码
-            local raw_code = text_str:match("<icon=([^>]+)>") or text_str:match("<prefab=([^>]+)>")
+                if text_str and text_str ~= "" then
+                    if item_detail and GLOBAL.Insight and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
+                        local cmp = (item_detail.componentData and item_detail.componentData.source_descriptor) or item_detail.componentName
+                        if cmp then
+                            local insight_rep = GLOBAL.ThePlayer.replica.insight
+                            local special_data = insight_rep.world_data and insight_rep.world_data.special_data and insight_rep.world_data.special_data[item_detail.componentName]
+                            
+                            local describer = special_data and (
+                                (special_data.prefably and GLOBAL.Insight.prefab_descriptors and GLOBAL.Insight.prefab_descriptors[cmp] and GLOBAL.Insight.prefab_descriptors[cmp].StatusAnnouncementsDescribe) or
+                                (GLOBAL.Insight.descriptors and GLOBAL.Insight.descriptors[cmp] and GLOBAL.Insight.descriptors[cmp].StatusAnnouncementsDescribe)
+                            )
+                            
+                            if describer then
+                                return false
+                            end
+                        end
+                    end
+
+                    -- 提取图标/预制物代码
+                    local raw_code = text_str:match("<icon=([^>]+)>") or text_str:match("<prefab=([^>]+)>")
             if not raw_code and comp_name then
                 raw_code = string.gsub(comp_name, "spawner$", "")
                 raw_code = string.gsub(raw_code, "manager$", "")
@@ -1823,7 +1933,7 @@ local function GetAllMissingIngredients(recipe, builder, inventory)
             local actual_needed = is_catalyst and 1
                 or RoundBiasedUp(v.amount * builder:IngredientMod())
 
-            local _, num_found = inventory:Has(v.type, actual_needed)
+            local _, num_found = inventory:Has(v.type, actual_needed, true)
             if num_found < actual_needed then
                 local diff = actual_needed - num_found
                 local item_name = LOCAL_STRINGS[string.upper(v.type)]
@@ -1920,7 +2030,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 
         local actual_needed = is_catalyst and 1
             or RoundBiasedUp(amount_needed * builder:IngredientMod())
-        _, num_found = inventory:Has(specific_ingredient_type, actual_needed)
+        _, num_found = inventory:Has(specific_ingredient_type, actual_needed, true)
 
         -- 在角色材料中查找
         if recipe.character_ingredients then
@@ -1972,12 +2082,18 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 
         if num_missing <= 0 then
             -- 材料充足
+            fmts.INGREDIENT = ingredient_name
+            
             if is_catalyst then
-                fmts.INGREDIENT = ingredient_name
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_CATALYST, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE_CATALYST"))
             else
-                fmts.INGREDIENT = subfmt(amount_fmt, { NUM = actual_needed, ITEM = ingredient_name })
+                local craft_count = actual_needed > 0 and math.floor(num_found / actual_needed) or 1
+                fmts.TOTAL_NUM = num_found
+                fmts.REQ_NUM = actual_needed
+                fmts.CRAFT_COUNT = craft_count
+                
+                return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
             end
-            return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
         else
             -- 材料不足
             if not GLOBAL.NOMU_QA.DATA.ANNOUNCE_ALL_MISSING_INGREDIENTS then
@@ -4275,18 +4391,19 @@ if ENABLE_MEME_SYSTEM then
 
     local LIST = {
         List_0 = {}, -- 收藏分类
-        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
+        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
+        List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
-    for i = 1, 80 do table.insert(LIST.List_2, "feibi_"..i) end
+    for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
-    for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 67 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
-    for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
-    for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
+    for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
+    for i = 1, 67  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 65  do table.insert(LIST.List_6, "taff_"..i) end
+    for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
     for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
-    for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
-    for i = 1, 25 do table.insert(LIST.List_10, "jiaran_"..i) end
+    for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
+    for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
 
     local LIST_DATA = {
         List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
@@ -4305,16 +4422,22 @@ if ENABLE_MEME_SYSTEM then
     GLOBAL.NOMU_QA.MEME_LIST = LIST
     GLOBAL.NOMU_QA.MEME_LIST_DATA = LIST_DATA
 
-    -- 动态加载对应图集的 Asset 资源
+    local VALID_MEME_NAMES = {}
+    for list_key, names in pairs(LIST) do
+        for _, name in ipairs(names) do
+            VALID_MEME_NAMES[name] = true
+        end
+    end
+    GLOBAL.NOMU_QA.VALID_MEME_NAMES = VALID_MEME_NAMES
+
+    -- 动态加载图集资源
     table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
     table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
-
     for i = 1, 10 do
         local data = LIST_DATA["List_"..i]
         if data and data.atlas then
-            local image = data.atlas:gsub("%.xml$", ".tex")
             table.insert(Assets, Asset("ATLAS", data.atlas))
-            table.insert(Assets, Asset("IMAGE", image))
+            table.insert(Assets, Asset("IMAGE", data.atlas:gsub("%.xml$", ".tex")))
         end
     end
     for i = 1, #LIST.List_5 do
@@ -4327,11 +4450,15 @@ if ENABLE_MEME_SYSTEM then
             Prefix_Atlas_Map[v.prefix] = v.atlas
         end
     end
-
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
-    -- 鼠标悬浮小窗预览功能
+    -- 悬浮预览功能
     GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
+        -- 先检查表情是否有效
+        if not VALID_MEME_NAMES[meme_name] then
+            return nil
+        end
+
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
         local Widget = GLOBAL.require("widgets/widget")
@@ -4339,19 +4466,17 @@ if ENABLE_MEME_SYSTEM then
         local dummy_tracker = parent_root:AddChild(Widget("dummy_tracker"))
         local mx, my = meme_widget:GetPosition():Get()
         dummy_tracker:SetPosition(mx + 100, my + 38)
-        -- 封装隐藏逻辑
+
         local function HideHover()
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 meme_widget.hover_preview:Kill()
                 meme_widget.hover_preview = nil
             end
         end
-        -- 封装显示逻辑
         local function ShowHover()
             if GLOBAL.NOMU_QA.DATA.DISABLE_MEME_PREVIEW then return end
-
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then return end
-            
+
             local top_parent = GLOBAL.TheFrontEnd.overlayroot
             local hp
             if is_anim then
@@ -4363,26 +4488,21 @@ if ENABLE_MEME_SYSTEM then
             else
                 hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
             end
-            
             local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
             hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
             hp:MoveToFront()
-
             if dummy_tracker.inst:IsValid() then
                 hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
             end
-            
             meme_widget.hover_preview = hp
         end
 
         meme_widget.inst:ListenForEvent("onremove", HideHover)
         dummy_tracker.inst:ListenForEvent("onremove", HideHover)
-
         meme_widget:SetOnGainFocus(function()
             meme_widget.ui_focus = true
             ShowHover()
         end)
-        
         meme_widget:SetOnLoseFocus(function()
             meme_widget.ui_focus = false
             if not meme_widget.manual_hover then
@@ -4391,40 +4511,27 @@ if ENABLE_MEME_SYSTEM then
         end)
 
         dummy_tracker.inst:DoPeriodicTask(0, function()
-            -- 控件失效保护
             if not meme_widget.inst:IsValid() or not dummy_tracker.inst:IsValid() then
                 HideHover()
                 return
             end
-
-            -- 实时更新悬浮图位置
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 local w_pos = dummy_tracker:GetWorldPosition()
                 meme_widget.hover_preview:SetPosition(w_pos:Get())
             end
-
-            -- 判断聊天输入框状态
             local is_chat_open = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()
-
             if is_chat_open or not parent_root.shown then
                 meme_widget.manual_hover = false
-                if not meme_widget.ui_focus then 
-                    HideHover() 
-                end
+                if not meme_widget.ui_focus then HideHover() end
                 return
             end
-
-            -- 聊天栏关闭时的手动坐标距离探测
             local mouse_pos = GLOBAL.TheInput:GetScreenPosition()
             local widget_pos = meme_widget:GetWorldPosition()
             local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
-            
             local threshold = 35 * ui_scale
             local dx = mouse_pos.x - widget_pos.x
             local dy = mouse_pos.y - widget_pos.y
-            local dist_sq = dx * dx + dy * dy
-
-            if dist_sq <= threshold * threshold then
+            if dx*dx + dy*dy <= threshold*threshold then
                 if not meme_widget.manual_hover then
                     meme_widget.manual_hover = true
                     ShowHover()
@@ -4438,11 +4545,10 @@ if ENABLE_MEME_SYSTEM then
                 end
             end
         end)
-        
         return dummy_tracker
     end
 
-    -- 拦截与替换【局内聊天框】中的表观动画
+    -- 局内聊天框
     AddClassPostConstruct("widgets/redux/chatline", function(self)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4474,23 +4580,23 @@ if ENABLE_MEME_SYSTEM then
             if not is_skin_announcement then
                 str = self.message and self.message:GetString()
             end
-            
             local meme_name = str and string.match(str, "%[Meme:(.-)%]")
-            
-            -- 防止滑动刷新导致动画复位
+
+            -- 判空
+            if meme_name and not VALID_MEME_NAMES[meme_name] then
+                meme_name = nil  -- 无效表情当作普通文本处理
+            end
+
             if self.current_meme_name == meme_name then
                 if meme_name then
                     if self.message then self.message:Hide() end
                 else
-                    if self.message and not is_skin_announcement then 
-                        self.message:Show() 
-                    end
+                    if self.message and not is_skin_announcement then self.message:Show() end
                 end
                 return
             end
             self.current_meme_name = meme_name
 
-            -- 清理旧的表情和定位器
             if self.meme then
                 self.meme:Kill()
                 self.meme = nil
@@ -4499,18 +4605,16 @@ if ENABLE_MEME_SYSTEM then
                 self.meme_dummy_tracker:Kill()
                 self.meme_dummy_tracker = nil
             end
-            
+
             if meme_name then
                 if self.message then self.message:Hide() end
-                local name = meme_name 
-                
+                local name = meme_name
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
                     self.meme:GetAnimState():SetBuild(name)
                     self.meme:GetAnimState():PlayAnimation("idle", true)
-                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
-                    
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
                     self.meme.isanim = true
                     self.meme.atlas = nil
@@ -4524,22 +4628,20 @@ if ENABLE_MEME_SYSTEM then
                 end
                 self.meme:SetPosition(-268, -8)
                 self.meme:SetScale(.4, .4, .4)
-                
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                    self.meme:SetRegionSize(100, 100) 
+                    self.meme:SetRegionSize(100, 100)
                 end
                 self.meme:SetClickable(true)
-                
                 self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
             else
-                if self.message and not is_skin_announcement then 
-                    self.message:Show() 
+                if self.message and not is_skin_announcement then
+                    self.message:Show()
                 end
             end
         end
     end)
 
-    -- 拦截与替换【选人界面(Lobby)聊天框】中的表观动画
+    -- 选人界面聊天框
     AddClassPostConstruct("widgets/redux/lobbychatline", function(self)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4557,7 +4659,6 @@ if ENABLE_MEME_SYSTEM then
                     if old_SetString then old_SetString(msg_self, str, ...) end
                     self:UpdateMemeDisplay()
                 end
-                
                 local old_SetTruncatedString = self.message.SetTruncatedString
                 if old_SetTruncatedString then
                     self.message.SetTruncatedString = function(msg_self, str, ...)
@@ -4570,9 +4671,13 @@ if ENABLE_MEME_SYSTEM then
 
         function self:UpdateMemeDisplay()
             if not self.message then return end
-
             local str = self.message:GetString()
             local meme_name = str and string.match(str, "%[Meme:(.-)%]")
+
+            -- 判空
+            if meme_name and not VALID_MEME_NAMES[meme_name] then
+                meme_name = nil
+            end
 
             if self.current_meme_name == meme_name then
                 if meme_name then
@@ -4596,14 +4701,12 @@ if ENABLE_MEME_SYSTEM then
             if meme_name then
                 self.message:Hide()
                 local name = meme_name
-
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
                     self.meme:GetAnimState():SetBuild(name)
                     self.meme:GetAnimState():PlayAnimation("idle", true)
-                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
-                    
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme.isanim = true
                     self.meme.atlas = nil
                 else
@@ -4613,29 +4716,23 @@ if ENABLE_MEME_SYSTEM then
                     self.meme.isanim = false
                     self.meme.atlas = atlas
                 end
-
                 local msg_x, msg_y = self.message:GetPosition():Get()
                 local w, h = self.message:GetRegionSize()
-                
-                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12 )
+                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
                 self.meme:SetScale(0.35, 0.35, 0.35)
-                
                 if self.extra_line_count then
                     self.extra_line_count = self.extra_line_count + 1
                 end
-
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
                     self.meme:SetRegionSize(100, 100)
                 end
                 self.meme:SetClickable(true)
-
                 self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
             else
                 if self.message then self.message:Show() end
             end
         end
 
-        -- 首次初始化调用
         if not old_SetChatData then
             self:UpdateMemeDisplay()
         end

@@ -54,8 +54,12 @@ GLOBAL.STRINGS.NOMU_QA = {
     SHADOW_TRAP  = '暗影陷阱',
     HOVER_TEXT_ANNOUNCE = 'ALT + ' .. STRINGS.LMB .. ' 宣告',
 
+    BROAD_CATEGORIES = {
+        BIRDCORPSE = "死去的鸟",
+    },
 
-    TITLE_TEXT_QA = '快捷宣告 (NOMU)',
+
+    TITLE_TEXT_QA = '快捷宣告（NOMU）',
 
     BUTTON_TEXT_ALT_MODE_1 = 'Alt判定：默认',
     BUTTON_TEXT_ALT_MODE_2 = 'Alt判定：兼容',
@@ -193,6 +197,11 @@ GLOBAL.STRINGS.NOMU_QA = {
     TITLE_TEXT_MAPPING_DEFAULT = '人物通用',
     BUTTON_TEXT_MAPPING = '当前映射：{NAME}',
 
+    TITLE_ACTION_MENU = '选择操作',
+    BUTTON_TEXT_COPY_TO = '复制到',
+    MESSAGE_COPY_FORMAT_SUCCEED = '已将该句型复制到方案: {NAME}',
+    MESSAGE_COPY_MAPPING_SUCCEED = '已将词条映射复制到方案: {NAME}',
+
     INSIGHT_CODE_MAP = {
         ["farming_manager_lordfruitfly"] = "果蝇王重生时间",
         ["lunarthrall_plant"] = "致命亮茄",
@@ -214,41 +223,45 @@ EMOJI_MENU = {
     },
 
     FUNC = {
-        SEASON = '季节',
-        WORLD_TEMPERATURE_AND_RAIN = '世界温度',
-        TEMPERATURE = '人物温度',
-        MOON_PHASE = '月相',
-        COOK = '料理',
-        CLOCK = '时钟',
-        BOAT = '船',
-        ABIGAIL = '阿比盖尔',
-        LOG_METER = '野兽值',
-        MIGHTINESS = '力量值',
-        INSPIRATION = '灵感值',
-        ENERGY = '电路',
-        GIFT = '每周礼物',
-        PLAYER = '玩家',
-        SERVER = '服务器',
-        SKILL_TREE = '技能树',
-        ENV = '周围环境',
-        SKIN = '皮肤',
-        RECIPE = '配方',
-        CONSTRUCTION_AND_TRADE = '建造与交易',
-        SPACE= '空位',
-        ITEM = '物品',
-        STOMACH = '饥饿值',
-        SANITY = '精神值',
-        HEALTH = '生命值',
-        WETNESS = '潮湿度',
-        THIRST = '饮水值',
-        NAUGHTINESS = '淘气值',
-        WOBY_HUNGER = '沃比饥饿值',
-        MEDAL_BUFF = '勋章BUFF',
-        BLOOMNESS = '绽放状态',
-        FUNGUS_INFECTION = '孢子值',
-        BEEFALO = '皮弗娄牛',
+        { id = 'HEALTH', name = '生命值' },
+        { id = 'SANITY', name = '精神值' },
+        { id = 'STOMACH', name = '饥饿值' },
+        { id = 'TEMPERATURE', name = '人物温度' },
+        { id = 'WETNESS', name = '潮湿度' },
+        { id = 'THIRST', name = '饮水值' },
+        { id = 'NAUGHTINESS', name = '淘气值' },
+        { id = 'CLOCK', name = '时钟' },
+        { id = 'SEASON', name = '季节' },
+        { id = 'WORLD_TEMPERATURE_AND_RAIN', name = '世界温度' },
+        { id = 'MOON_PHASE', name = '月相' },
+        { id = 'ENV', name = '周围环境' },
+        { id = 'ITEM', name = '物品' },
+        { id = 'SPACE', name = '空位' },
+        { id = 'RECIPE', name = '配方' },
+        { id = 'CONSTRUCTION_AND_TRADE', name = '建造与交易' },
+        { id = 'COOK', name = '料理' },
+        { id = 'PLAYER', name = '玩家' },
+        { id = 'BOAT', name = '船' },
+        { id = 'BEEFALO', name = '皮弗娄牛' },
+        { id = 'ABIGAIL', name = '阿比盖尔' },
+        { id = 'WOBY_HUNGER', name = '沃比饥饿值' },
+        { id = 'LOG_METER', name = '野兽值' },
+        { id = 'MIGHTINESS', name = '力量值' },
+        { id = 'INSPIRATION', name = '灵感值' },
+        { id = 'ENERGY', name = '电路' },
+        { id = 'BLOOMNESS', name = '绽放状态' },
+        { id = 'FUNGUS_INFECTION', name = '孢子值' },
+        { id = 'MEDAL_BUFF', name = '勋章BUFF' },
+        { id = 'SKILL_TREE', name = '技能树' },
+        { id = 'SERVER', name = '服务器' },
+        { id = 'SKIN', name = '皮肤' },
+        { id = 'GIFT', name = '每周礼物' }
     }
 }
+
+for _, v in ipairs(GLOBAL.STRINGS.NOMU_QA.FUNC) do
+    GLOBAL.STRINGS.NOMU_QA.FUNC[v.id] = v.name
+end
 
 GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
     SEASON = {
@@ -272,6 +285,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             START_FOG = '{WORLD}气温：{TEMPERATURE}，孢子雾：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
             FOGGING = '{WORLD}气温：{TEMPERATURE}，目前正处于孢子雾天气中！',
             BWB_CAVE_WEATHER = '{WORLD}气温：{TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}',
+            TEST = '测试用{test} {test1} {test2}',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -521,7 +535,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             AGE = '服务器已运行：{AGE} 天',
             NUM_PLAYER = '服务器当前人数：{NUM}',
             WORLD_SETTING = '该房间的【{SETTING}】世界设置为【{VALUE}】。',
-            MOD_SETTING = '该房间模组【{MOD}】的【{SETTING}】设置为【{VALUE}】。',
+            MOD_SETTING = '该房间【{MOD}】模组的【{SETTING}】设置为【{VALUE}】。',
             MOD_ENABLED = '该房间开启了模组：{MOD}。'
         },
         MAPPINGS = {}
@@ -643,7 +657,7 @@ ENV = {
                     WITH_BARNACLES = "长满了藤壶",
                     NO_BARNACLES = "光秃秃的",
                     SEED = "还是种子状态",
-                    GROW = "还在生长期",
+                    GROW = "在生长期",
                     FULL = "已经成熟了",
                     OVER = "长成了巨型作物",
                     ROT = "已经腐烂了",
@@ -658,7 +672,7 @@ ENV = {
                     BEEBOX_SOME = "攒了一些蜂蜜",
                     BEEBOX_EMPTY = "连一滴蜜都没有",
                     PICKABLE_READY = "可以采摘了",
-                    PICKABLE_EMPTY = "还在生长中",
+                    PICKABLE_EMPTY = "在生长中",
                     NEST_HAS_EGG = "里面有高鸟蛋",
                     NEST_EMPTY = "只是个空巢",
                     MUSHROOMFARM_ROTTEN = "变成烂木头了",
@@ -848,7 +862,8 @@ MEDAL_BUFF = {
     CONSTRUCTION_AND_TRADE = {
         FORMATS = {
             CRAFT_NEED = "我们需要 {INGREDIENT} 来制作 {RECIPE}{AND_PROTOTYPE}。",
-            CRAFT_HAVE = "我准备好了足够的 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE = "我准备了 {TOTAL_NUM}个/{REQ_NUM} {INGREDIENT} 来制作 {CRAFT_COUNT}次 {RECIPE}{BUT_PROTOTYPE}。",
+            CRAFT_HAVE_CATALYST = "我准备了 {INGREDIENT} 来制作 {RECIPE}{BUT_PROTOTYPE}。", 
             CRAFT_HAVE_ALL = "我准备好了所有的材料来制作 {RECIPE}{BUT_PROTOTYPE}。",
 
             CONS_NEED = "我们需要 {INGREDIENT} 来继续建造 {RECIPE}。",
@@ -863,8 +878,8 @@ MEDAL_BUFF = {
             DEFAULT = {
                 WORDS = {
                     AMOUNT_FMT = "{NUM}个 {ITEM}",
-                    AND_PROTOTYPE = '，我还需要 {PROTOTYPE} 才能制造它',
-                    BUT_PROTOTYPE = '，但我还需要 {PROTOTYPE} 才能制造它'
+                    AND_PROTOTYPE = '，并且得 {PROTOTYPE} 才能制造它',
+                    BUT_PROTOTYPE = '，但还需 {PROTOTYPE} 才能制造它'
                 }
             }
         }

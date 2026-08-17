@@ -16,11 +16,22 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             START_RAIN = '喵呜～{WORLD}气温是 {TEMPERATURE}，{WEATHER}将在第 {DAYS} 天到来喵（还剩：{MINUTES}分{SECONDS}秒）～',
             NO_RAIN = '嗅嗅……{WORLD}气温：{TEMPERATURE}，肉垫预报{WEATHER}还没来喵󰀍～',
             STOP_RAIN = '喵！{WORLD}气温是 {TEMPERATURE}，第 {DAYS} 天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）可以出去晒毛毛了喵～',
+            START_FOG = '{WORLD}气温：{TEMPERATURE}，孢子雾将在第 {DAYS} 天扩散喵（还剩：{MINUTES}分{SECONDS}秒）～',
+            FOGGING = '喵呜～{WORLD}气温是 {TEMPERATURE}，目前被浓浓的孢子雾包围啦，看不清路喵！',
+            BWB_CAVE_WEATHER = '{WORLD}气温：{TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}喵～',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '刮大风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨' },
+                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '刮大风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨', TRANQUIL = '孢子雾', FROST = '落石', VERDANT = '孢子雾', UMBRAL = '异常天气' },
+                BWB_WORDS = {
+                    RAIN_APPROACH = "雨水第 {DAYS} 天到达(剩 {MINUTES}分{SECONDS}秒)",
+                    RAIN_STOP = "雨水第 {DAYS} 天停歇(剩 {MINUTES}分{SECONDS}秒)",
+                    RAIN_NONE = "没有下雨迹象喵",
+                    FOG_ACTIVE = "正陷在孢子雾中喵",
+                    FOG_APPROACH = "孢子雾第 {DAYS} 天到达(剩 {MINUTES}分{SECONDS}秒)",
+                    FOG_NONE = "没有孢子雾迹象喵"
+                }
             }
         }
     },
@@ -232,10 +243,13 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             ME_GHOST = "拜托 {NAME} 救救我，人家需要一颗温暖的心复活喵󰀍～",
             THEY_GHOST = "{NAME} 撑住！人家的猫爪救援马上就到喵！",
             I_AM_HERE = "{NAME}，人家就在这里喵󰀍～！",
+            I_AM_GHOST = "救命喵嗷～人家变成飘来飘去的幽灵猫啦！谁来救救人家！",
             ME_FISHING = '嘘——{NAME} 正在用肉垫屏息钓鱼鱼喵，快咬钩吧！',
             THEY_FISHING = '喵󰀍～{NAME} 正在专注钓鱼鱼呢，希望能钓到超大号小鱼干喵！',
             PORTAL_ON = '肉垫已经在摸 {NAME} 了喵！',
-            PORTAL_OFF = '{NAME} 在人家这里喵，大家快准备触摸传送喵！'
+            PORTAL_OFF = '{NAME} 在人家这里喵，大家快准备触摸传送喵！',
+            ME_FROZEN = '救命喵呜！{NAME} 彻底冻成冰镇猫猫啦！',
+            THEY_FROZEN = '大家快拿火把来！{NAME} 被冻成大冰块啦喵！'
         },
         MAPPINGS = {}
     },
@@ -245,7 +259,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             AGE = '猫窝已经运转：{AGE} 次打盹周期喵。',
             NUM_PLAYER = '现在有：{NUM} 只猫猫喵。',
             WORLD_SETTING = '猫窝的【{SETTING}】世界规则变成了【{VALUE}】喵󰀍～',
-            MOD_SETTING = '猫窝模组【{MOD}】的【{SETTING}】被设定成了【{VALUE}】喵󰀍～'
+            MOD_SETTING = '猫窝模组【{MOD}】的【{SETTING}】被设定成了【{VALUE}】喵󰀍～',
+            MOD_ENABLED = '猫窝开启了神奇模组：{MOD} 喵！'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -324,14 +339,15 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             DEFAULT = '喵呜～这附近共有 {NUM}个 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
             NAMED = '肉垫发现！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名叫 {NAME} 喵{SHOW_ME}{DISTANCE}󰀍～',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
-            
             FISH_SHOAL = '快看喵！这里有一群好吃的 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}！',
-            FISH_HOLE = '这里有 1个 {NAME} 喵{SHOW_ME}{DISTANCE}。',
 
             STATE_EQUAL = '喵呜～这里有 {TOTAL}个 {NAME}，目前全都{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
             STATE_DESCRIBE = '有情况喵！这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经{ADJ}了喵{SHOW_ME}{DISTANCE}󰀍～',
             STATE_THIS = '抓到一只特殊目标喵！这里共有 {TOTAL}个 {NAME}，而这个{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
             STATE_THIS_SINGLE = '这里有 1个 {NAME}，目前它{ADJ}喵{SHOW_ME}{DISTANCE}󰀍～',
+
+            STORAGE_HAS = '这里有 {TOTAL}个 {NAME} 喵，其中这个装着 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE} 喵！',
+            STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME} 喵，其中有 {NUM}个 空空如也{SHOW_ME}{DISTANCE} 喵。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -438,8 +454,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             WILL_MAKE = '材料像毛线球一样到位啦～人家随时可以开爪制作 {ITEM} 喵！',
             WE_NEED = '人家的耳朵接收到需求～我们需要制造个 {ITEM} 喵！',
             CAN_SOMEONE = '有人能帮人家做一个 {ITEM} 喵？人家需要 {PROTOTYPE} 才能造出它喵！',
-            EQUIP_SLOT_HEAVY = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
-            EQUIP_SLOT_HEAVY_POS = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            FILTER_TAB = '在 {TAB} 栏里刨一刨就能找到喵󰀍～',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -533,7 +548,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             INV_SLOT = '{PRONOUN}的包包里偷偷藏了 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
             EQUIP_SLOT = '{PRONOUN}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
             EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有装备任何东西喵󰀍～'
+            EQUIP_SLOT_HEAVY = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            EQUIP_SLOT_HEAVY_POS = '嘿咻嘿咻～{PRONOUN}正在努力搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}喵󰀍～',
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的 {v} 光秃秃的，没有装备任何东西喵󰀍～'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -547,7 +564,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 },
                 RECHARGE = {
                     CHARGING = '，还差 {TIME} 就能发光喵',
-                    FULL = '，尾巴能量已就绪喵'
+                    FULL = '，尾巴能量已就绪喵',
+                    PERCENT = '，还差 {PERCENT}% 冷却时间喵'
                 },
                 PERCENT_TYPE = { DURABILITY = '的耐久度', FRESHNESS = '新鲜小鱼干味' },
                 TIME = { MINUTES = '分', SECONDS = '秒' },
@@ -574,7 +592,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     CONSTRUCTION_AND_TRADE = {
         FORMATS = {
             CRAFT_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 弄出来喵{AND_PROTOTYPE}！",
-            CRAFT_HAVE = "人家已经把 {INGREDIENT} 准备好做 {RECIPE} 啦喵{BUT_PROTOTYPE}！",
+            CRAFT_HAVE = "人家准备了 {TOTAL_NUM}个/{REQ_NUM} {INGREDIENT} 来制作 {CRAFT_COUNT}次 {RECIPE} 喵{BUT_PROTOTYPE}！",
+            CRAFT_HAVE_CATALYST = "人家准备了 {INGREDIENT} 来制作 {RECIPE} 喵{BUT_PROTOTYPE}！",
             CRAFT_HAVE_ALL = "用肉垫拍拍把 {INGREDIENT} 凑齐啦～马上就能变出 {RECIPE} 喵{BUT_PROTOTYPE}！",
 
             CONS_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 建好喵󰀍～",
@@ -772,7 +791,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
         }
     },
     BLOOMNESS = {
-        FORMATS = { DEFAULT = '({SYMBOL} Lv：{LEVEL} | {CURRENT}/{MAX}) {MESSAGE}' },
+        FORMATS = { DEFAULT = '({SYMBOL} Lv.{LEVEL} | {CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
             DEFAULT = {
                 MESSAGE = {

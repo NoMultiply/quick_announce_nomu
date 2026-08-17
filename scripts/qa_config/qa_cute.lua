@@ -1,7 +1,7 @@
 GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME = '软萌方案'
 
 GLOBAL.STRINGS.CUTE_NOMU_QA = {
-   SEASON = {
+    SEASON = {
         FORMATS = { DEFAULT = '呐～{SEASON}还剩下 {DAYS_LEFT} 天呢，时间过得好快吖～' },
         MAPPINGS = {
             DEFAULT = {
@@ -16,11 +16,22 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             START_RAIN = '呀～{WORLD}现在的气温是：{TEMPERATURE}，第 {DAYS} 天{WEATHER}就来啦（还剩：{MINUTES}分{SECONDS}秒）记得带小伞伞吖～',
             NO_RAIN = '唔……{WORLD}现在的气温是：{TEMPERATURE}，天空很乖，{WEATHER}还没来呢～',
             STOP_RAIN = '哇！{WORLD}气温是：{TEMPERATURE}，第 {DAYS} 天就放晴啦（还剩：{MINUTES}分{SECONDS}秒）可以出去玩啦～',
+            START_FOG = '呀～{WORLD}现在的气温是：{TEMPERATURE}，第 {DAYS} 天就要起孢子雾啦（还剩：{MINUTES}分{SECONDS}秒）视野会变差吖～',
+            FOGGING = '唔……{WORLD}现在的气温是：{TEMPERATURE}，现在正在起好大的孢子雾呢，看不清啦吖！',
+            BWB_CAVE_WEATHER = '呀～{WORLD}气温是：{TEMPERATURE}，{FOG_STATUS}，并且{RAIN_STATUS}吖～',
         },
         MAPPINGS = {
             DEFAULT = {
                 WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '下小雨', SUMMER = '下雨啦', AUTUMN = '下雨啦', WINTER = '飘雪花', GREEN = '下雨啦', DRY = '下雨啦', MILD = '下雨啦', WET = '刮大风', TEMPERATE = '下雨啦', HUMID = '下雨啦', LUSH = '下雨啦', APORKALYPSE = '下雨啦' },
+                WEATHER = { SPRING = '下小雨', SUMMER = '下雨啦', AUTUMN = '下雨啦', WINTER = '飘雪花', GREEN = '下雨啦', DRY = '下雨啦', MILD = '下雨啦', WET = '刮大风', TEMPERATE = '下雨啦', HUMID = '下雨啦', LUSH = '下雨啦', APORKALYPSE = '下雨啦', TRANQUIL = '起孢子雾', FROST = '掉小石头', VERDANT = '起孢子雾', UMBRAL = '奇怪的天气' },
+                BWB_WORDS = {
+                    RAIN_APPROACH = "调皮的雨水第{DAYS}天就来咯(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_STOP = "雨水在第{DAYS}天就会停下啦(剩{MINUTES}分{SECONDS}秒)",
+                    RAIN_NONE = "天空乖乖的没有下雨迹象呢",
+                    FOG_ACTIVE = "现在正处于朦胧的孢子雾中吖",
+                    FOG_APPROACH = "孢子雾第{DAYS}天就会飘过来啦(剩{MINUTES}分{SECONDS}秒)",
+                    FOG_NONE = "空气很清晰，没有孢子雾的迹象呢"
+                }
             }
         }
     },
@@ -221,10 +232,13 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             ME_GHOST = "拜托拜托 {NAME} 救救人家，人家想要一颗温暖的告密的心复活吖……",
             THEY_GHOST = "{NAME} 不要怕！人家马上就来救你啦！",
             I_AM_HERE = "{NAME}，人家就在这里吖！快看人家！",
+            I_AM_GHOST = "救命吖！人家变成轻飘飘的小幽灵了！谁来救救人家！",
             ME_FISHING = '嘘——{NAME} 正在施展神奇的钓鱼魔法吖，小鱼快上钩～',
             THEY_FISHING = '哇哦！{NAME} 正在认认真真地钓鱼呢，祝你钓到胖胖鱼吖！',
             PORTAL_ON = '人家的小手已经摸到 {NAME} 啦！',
-            PORTAL_OFF = '{NAME} 就在人家这里哦，大家快来准备传送吖！'
+            PORTAL_OFF = '{NAME} 就在人家这里哦，大家快来准备传送吖！',
+            ME_FROZEN = "呜呜救命吖！{NAME} 被冻成硬邦邦的小冰雕了！",
+            THEY_FROZEN = "大家快来生火帮忙吖！{NAME} 被冻住了好可怜！"
         },
      MAPPINGS = {
             DEFAULT = {
@@ -313,13 +327,14 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             DEFAULT = '哇～这附近一共有 {NUM}个 {NAME}呀{SHOW_ME}{DISTANCE}。',
             NAMED = '被我发现了呢～这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 小家伙名叫 {NAME}{SHOW_ME}{DISTANCE}～',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
-            
             FISH_SHOAL = '快来看呀！这里有一大群小 {FISH}（共有 {NUM} 条）{SHOW_ME}{DISTANCE}，好热闹吖！',
 
             STATE_EQUAL = '好神奇呀～这里有 {TOTAL}个 {NAME}，目前全都{ADJ}了呢{SHOW_ME}{DISTANCE}～',
             STATE_DESCRIBE = '哇～这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 已经{ADJ}了呀{SHOW_ME}{DISTANCE}～',
             STATE_THIS = '悄悄告诉你哦～这里共有 {TOTAL}个 {NAME}，而这个小家伙{ADJ}了呢{SHOW_ME}{DISTANCE}～',
             STATE_THIS_SINGLE = '这里有 1个 {NAME}，目前它{ADJ}啦{SHOW_ME}{DISTANCE}～',
+            STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个里面藏了 {NUM}个 {ITEM} 吖{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 是空肚子的吖{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -356,7 +371,6 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     TOADSTOOL_DARK = '住着一只不开心的小悲惨毒菌蟾蜍',
                     OASISLAKE_EMPTY = '已经变成一个干巴巴的小沙坑了',
                     OASISLAKE_FULL = '装满了清澈见底的甜蜜湖水呢',
-                    
                     BEEFALO_SHAVED = '被剃光光了毛（看起来光溜溜的呢）',
 
                     WITH_BARNACLES = "长满了小藤壶呀",
@@ -396,6 +410,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     ANCIENT_READY = "挂满了甜丝丝的远古果实哟",
                     ANCIENT_EMPTY = "一无所有连个小果果都没有呢",
                     MARBLE_TREE = "是由坚固大理石雕刻成的小树树",
+
+                    TROPHYSCALE_EMPTY = '是空空如也的',
+                    TROPHYSCALE_HAS = '放着亮晶晶的小物品',
 
                     L1 = "娇小玲珑的一级巢",
                     L2 = "稍微长大了一点的二级巢",
@@ -519,11 +536,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         FORMATS = {
             INV_SLOT = '{PRONOUN}的小包包里偷偷藏了 {NUM}个 {ITEM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
             EQUIP_SLOT = '{PRONOUN}穿戴了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-            EQUIP_SLOT_POS = '{PRONOUN}的{SLOT_POS}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-            EQUIP_SLOT_EMPTY = '{PRONOUN}的{SLOT_POS}光秃秃的，没有穿戴任何东西呢吖～',
+            EQUIP_SLOT_POS = '{PRONOUN}装备了 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
+            EQUIP_SLOT_EMPTY = '{PRONOUN}的 {v} 光秃秃的，没有穿戴任何东西呢吖～',
             EQUIP_SLOT_HEAVY = '哎呀呀～{PRONOUN}正在吃力地搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{IN_CONTAINER}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
             EQUIP_SLOT_HEAVY_POS = '哎呀呀～{PRONOUN}正在吃力地搬运着 {EQUIP_NUM}个 {ITEM}{ITEM_NUM}{ITEM_NAME}{WITH_PERCENT}{POST_STATE}{SHOW_ME}吖～',
-                    
         },
         MAPPINGS = {
             DEFAULT = {
@@ -565,7 +581,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         FORMATS = {
             CRAFT_NEED = "我们需要 {INGREDIENT} 才能把 {RECIPE} 变出来吖{AND_PROTOTYPE}！",
             CRAFT_HAVE = "人家已经把 {INGREDIENT} 准备好啦，可以用来做 {RECIPE} 了吖{BUT_PROTOTYPE}！",
-            CRAFT_HAVE_ALL = "拍拍小手把 {INGREDIENT} 凑齐啦～马上就能变出 {RECIPE} 吖{BUT_PROTOTYPE}！",
+            CRAFT_HAVE_ALL = "拍拍小手准备好啦～马上就能变出 {RECIPE} 吖{BUT_PROTOTYPE}！",
 
             CONS_NEED = "我们还需要 {INGREDIENT} 才能把 {RECIPE} 建得漂漂亮亮的吖～",
             CONS_HAVE = "所有的材料都乖乖躺好啦～{RECIPE} 随时可以动工建起来吖！",
