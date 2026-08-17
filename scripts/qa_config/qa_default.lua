@@ -54,6 +54,10 @@ GLOBAL.STRINGS.NOMU_QA = {
     SHADOW_TRAP  = '暗影陷阱',
     HOVER_TEXT_ANNOUNCE = 'ALT + ' .. STRINGS.LMB .. ' 宣告',
 
+    BROAD_CATEGORIES = {
+        BIRDCORPSE = "死去的鸟",
+    },
+
 
     TITLE_TEXT_QA = '快捷宣告（NOMU）',
 
@@ -193,6 +197,11 @@ GLOBAL.STRINGS.NOMU_QA = {
     TITLE_TEXT_MAPPING_DEFAULT = '人物通用',
     BUTTON_TEXT_MAPPING = '当前映射：{NAME}',
 
+    TITLE_ACTION_MENU = '选择操作',
+    BUTTON_TEXT_COPY_TO = '复制到',
+    MESSAGE_COPY_FORMAT_SUCCEED = '已将该句型复制到方案: {NAME}',
+    MESSAGE_COPY_MAPPING_SUCCEED = '已将词条映射复制到方案: {NAME}',
+
     INSIGHT_CODE_MAP = {
         ["farming_manager_lordfruitfly"] = "果蝇王重生时间",
         ["lunarthrall_plant"] = "致命亮茄",
@@ -276,6 +285,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             START_FOG = '{WORLD}气温：{TEMPERATURE}，孢子雾：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
             FOGGING = '{WORLD}气温：{TEMPERATURE}，目前正处于孢子雾天气中！',
             BWB_CAVE_WEATHER = '{WORLD}气温：{TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}',
+            TEST = '测试用{test} {test1} {test2}',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -647,7 +657,7 @@ ENV = {
                     WITH_BARNACLES = "长满了藤壶",
                     NO_BARNACLES = "光秃秃的",
                     SEED = "还是种子状态",
-                    GROW = "还在生长期",
+                    GROW = "在生长期",
                     FULL = "已经成熟了",
                     OVER = "长成了巨型作物",
                     ROT = "已经腐烂了",
@@ -662,7 +672,7 @@ ENV = {
                     BEEBOX_SOME = "攒了一些蜂蜜",
                     BEEBOX_EMPTY = "连一滴蜜都没有",
                     PICKABLE_READY = "可以采摘了",
-                    PICKABLE_EMPTY = "还在生长中",
+                    PICKABLE_EMPTY = "在生长中",
                     NEST_HAS_EGG = "里面有高鸟蛋",
                     NEST_EMPTY = "只是个空巢",
                     MUSHROOMFARM_ROTTEN = "变成烂木头了",

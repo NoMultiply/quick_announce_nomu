@@ -245,6 +245,8 @@ local function GetEntityName(entity, force_basic)
     local custom_qa_name, has_custom = ApplyCustomName(actual_prefab, base_prefab_name)
     local qa_hardcoded_name = GLOBAL.STRINGS.NOMU_QA[string.upper(actual_prefab)]
 
+    local broad_category_name = GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES and GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES[string.upper(actual_prefab)]
+
     if has_custom then
         final_prefab_name = custom_qa_name
         if not is_player_named then
@@ -283,6 +285,10 @@ local function GetEntityName(entity, force_basic)
         if not is_player_named then
             display_name = original_display_name
         end
+    end
+
+    if broad_category_name then
+        final_prefab_name = broad_category_name
     end
 
     return display_name, final_prefab_name, is_player_named
