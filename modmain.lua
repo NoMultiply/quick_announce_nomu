@@ -4391,18 +4391,19 @@ if ENABLE_MEME_SYSTEM then
 
     local LIST = {
         List_0 = {}, -- 收藏分类
-        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {}, List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
+        List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
+        List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
     for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
-    for i = 1, 80 do table.insert(LIST.List_2, "feibi_"..i) end
+    for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
-    for i = 1, 67 do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 67 do table.insert(LIST.List_5, "gif_catmeme_"..i) end
-    for i = 1, 65 do table.insert(LIST.List_6, "taff_"..i) end
-    for i = 1, 20 do table.insert(LIST.List_7, "yuexin_"..i) end
+    for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
+    for i = 1, 67  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 65  do table.insert(LIST.List_6, "taff_"..i) end
+    for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
     for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
-    for i = 1, 30 do table.insert(LIST.List_9, "mtcat_"..i) end
-    for i = 1, 25 do table.insert(LIST.List_10, "jiaran_"..i) end
+    for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
+    for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
 
     local LIST_DATA = {
         List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
@@ -4421,16 +4422,22 @@ if ENABLE_MEME_SYSTEM then
     GLOBAL.NOMU_QA.MEME_LIST = LIST
     GLOBAL.NOMU_QA.MEME_LIST_DATA = LIST_DATA
 
-    -- 动态加载对应图集的 Asset 资源
+    local VALID_MEME_NAMES = {}
+    for list_key, names in pairs(LIST) do
+        for _, name in ipairs(names) do
+            VALID_MEME_NAMES[name] = true
+        end
+    end
+    GLOBAL.NOMU_QA.VALID_MEME_NAMES = VALID_MEME_NAMES
+
+    -- 动态加载图集资源
     table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
     table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
-
     for i = 1, 10 do
         local data = LIST_DATA["List_"..i]
         if data and data.atlas then
-            local image = data.atlas:gsub("%.xml$", ".tex")
             table.insert(Assets, Asset("ATLAS", data.atlas))
-            table.insert(Assets, Asset("IMAGE", image))
+            table.insert(Assets, Asset("IMAGE", data.atlas:gsub("%.xml$", ".tex")))
         end
     end
     for i = 1, #LIST.List_5 do
@@ -4443,11 +4450,15 @@ if ENABLE_MEME_SYSTEM then
             Prefix_Atlas_Map[v.prefix] = v.atlas
         end
     end
-
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
-    -- 鼠标悬浮小窗预览功能
+    -- 悬浮预览功能
     GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
+        -- 先检查表情是否有效
+        if not VALID_MEME_NAMES[meme_name] then
+            return nil
+        end
+
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
         local Widget = GLOBAL.require("widgets/widget")
@@ -4455,19 +4466,17 @@ if ENABLE_MEME_SYSTEM then
         local dummy_tracker = parent_root:AddChild(Widget("dummy_tracker"))
         local mx, my = meme_widget:GetPosition():Get()
         dummy_tracker:SetPosition(mx + 100, my + 38)
-        -- 封装隐藏逻辑
+
         local function HideHover()
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 meme_widget.hover_preview:Kill()
                 meme_widget.hover_preview = nil
             end
         end
-        -- 封装显示逻辑
         local function ShowHover()
             if GLOBAL.NOMU_QA.DATA.DISABLE_MEME_PREVIEW then return end
-
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then return end
-            
+
             local top_parent = GLOBAL.TheFrontEnd.overlayroot
             local hp
             if is_anim then
@@ -4479,26 +4488,21 @@ if ENABLE_MEME_SYSTEM then
             else
                 hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
             end
-            
             local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
             hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
             hp:MoveToFront()
-
             if dummy_tracker.inst:IsValid() then
                 hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
             end
-            
             meme_widget.hover_preview = hp
         end
 
         meme_widget.inst:ListenForEvent("onremove", HideHover)
         dummy_tracker.inst:ListenForEvent("onremove", HideHover)
-
         meme_widget:SetOnGainFocus(function()
             meme_widget.ui_focus = true
             ShowHover()
         end)
-        
         meme_widget:SetOnLoseFocus(function()
             meme_widget.ui_focus = false
             if not meme_widget.manual_hover then
@@ -4507,40 +4511,27 @@ if ENABLE_MEME_SYSTEM then
         end)
 
         dummy_tracker.inst:DoPeriodicTask(0, function()
-            -- 控件失效保护
             if not meme_widget.inst:IsValid() or not dummy_tracker.inst:IsValid() then
                 HideHover()
                 return
             end
-
-            -- 实时更新悬浮图位置
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 local w_pos = dummy_tracker:GetWorldPosition()
                 meme_widget.hover_preview:SetPosition(w_pos:Get())
             end
-
-            -- 判断聊天输入框状态
             local is_chat_open = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()
-
             if is_chat_open or not parent_root.shown then
                 meme_widget.manual_hover = false
-                if not meme_widget.ui_focus then 
-                    HideHover() 
-                end
+                if not meme_widget.ui_focus then HideHover() end
                 return
             end
-
-            -- 聊天栏关闭时的手动坐标距离探测
             local mouse_pos = GLOBAL.TheInput:GetScreenPosition()
             local widget_pos = meme_widget:GetWorldPosition()
             local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
-            
             local threshold = 35 * ui_scale
             local dx = mouse_pos.x - widget_pos.x
             local dy = mouse_pos.y - widget_pos.y
-            local dist_sq = dx * dx + dy * dy
-
-            if dist_sq <= threshold * threshold then
+            if dx*dx + dy*dy <= threshold*threshold then
                 if not meme_widget.manual_hover then
                     meme_widget.manual_hover = true
                     ShowHover()
@@ -4554,11 +4545,10 @@ if ENABLE_MEME_SYSTEM then
                 end
             end
         end)
-        
         return dummy_tracker
     end
 
-    -- 拦截与替换【局内聊天框】中的表观动画
+    -- 局内聊天框
     AddClassPostConstruct("widgets/redux/chatline", function(self)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4590,23 +4580,23 @@ if ENABLE_MEME_SYSTEM then
             if not is_skin_announcement then
                 str = self.message and self.message:GetString()
             end
-            
             local meme_name = str and string.match(str, "%[Meme:(.-)%]")
-            
-            -- 防止滑动刷新导致动画复位
+
+            -- 判空
+            if meme_name and not VALID_MEME_NAMES[meme_name] then
+                meme_name = nil  -- 无效表情当作普通文本处理
+            end
+
             if self.current_meme_name == meme_name then
                 if meme_name then
                     if self.message then self.message:Hide() end
                 else
-                    if self.message and not is_skin_announcement then 
-                        self.message:Show() 
-                    end
+                    if self.message and not is_skin_announcement then self.message:Show() end
                 end
                 return
             end
             self.current_meme_name = meme_name
 
-            -- 清理旧的表情和定位器
             if self.meme then
                 self.meme:Kill()
                 self.meme = nil
@@ -4615,18 +4605,16 @@ if ENABLE_MEME_SYSTEM then
                 self.meme_dummy_tracker:Kill()
                 self.meme_dummy_tracker = nil
             end
-            
+
             if meme_name then
                 if self.message then self.message:Hide() end
-                local name = meme_name 
-                
+                local name = meme_name
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
                     self.meme:GetAnimState():SetBuild(name)
                     self.meme:GetAnimState():PlayAnimation("idle", true)
-                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
-                    
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
                     self.meme.isanim = true
                     self.meme.atlas = nil
@@ -4640,22 +4628,20 @@ if ENABLE_MEME_SYSTEM then
                 end
                 self.meme:SetPosition(-268, -8)
                 self.meme:SetScale(.4, .4, .4)
-                
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                    self.meme:SetRegionSize(100, 100) 
+                    self.meme:SetRegionSize(100, 100)
                 end
                 self.meme:SetClickable(true)
-                
                 self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
             else
-                if self.message and not is_skin_announcement then 
-                    self.message:Show() 
+                if self.message and not is_skin_announcement then
+                    self.message:Show()
                 end
             end
         end
     end)
 
-    -- 拦截与替换【选人界面(Lobby)聊天框】中的表观动画
+    -- 选人界面聊天框
     AddClassPostConstruct("widgets/redux/lobbychatline", function(self)
         local Image = GLOBAL.require("widgets/image")
         local UIAnim = GLOBAL.require("widgets/uianim")
@@ -4673,7 +4659,6 @@ if ENABLE_MEME_SYSTEM then
                     if old_SetString then old_SetString(msg_self, str, ...) end
                     self:UpdateMemeDisplay()
                 end
-                
                 local old_SetTruncatedString = self.message.SetTruncatedString
                 if old_SetTruncatedString then
                     self.message.SetTruncatedString = function(msg_self, str, ...)
@@ -4686,9 +4671,13 @@ if ENABLE_MEME_SYSTEM then
 
         function self:UpdateMemeDisplay()
             if not self.message then return end
-
             local str = self.message:GetString()
             local meme_name = str and string.match(str, "%[Meme:(.-)%]")
+
+            -- 判空
+            if meme_name and not VALID_MEME_NAMES[meme_name] then
+                meme_name = nil
+            end
 
             if self.current_meme_name == meme_name then
                 if meme_name then
@@ -4712,14 +4701,12 @@ if ENABLE_MEME_SYSTEM then
             if meme_name then
                 self.message:Hide()
                 local name = meme_name
-
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
                     self.meme:GetAnimState():SetBuild(name)
                     self.meme:GetAnimState():PlayAnimation("idle", true)
-                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime()) 
-                    
+                    self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme.isanim = true
                     self.meme.atlas = nil
                 else
@@ -4729,29 +4716,23 @@ if ENABLE_MEME_SYSTEM then
                     self.meme.isanim = false
                     self.meme.atlas = atlas
                 end
-
                 local msg_x, msg_y = self.message:GetPosition():Get()
                 local w, h = self.message:GetRegionSize()
-                
-                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12 )
+                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
                 self.meme:SetScale(0.35, 0.35, 0.35)
-                
                 if self.extra_line_count then
                     self.extra_line_count = self.extra_line_count + 1
                 end
-
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
                     self.meme:SetRegionSize(100, 100)
                 end
                 self.meme:SetClickable(true)
-
                 self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
             else
                 if self.message then self.message:Show() end
             end
         end
 
-        -- 首次初始化调用
         if not old_SetChatData then
             self:UpdateMemeDisplay()
         end
