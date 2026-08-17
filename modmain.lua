@@ -440,10 +440,10 @@ local SHOW_ME_CACHE = nil
 local function GetShowMePatterns()
     if not SHOW_ME_CACHE then
         SHOW_ME_CACHE = {
-            bad_prefab = (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", ""),
-            bad_bank   = (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", ""),
-            bad_build  = (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", ""),
-            bad_mod    = (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", ""),
+            bad_prefab  = (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", ""),
+            bad_bank    = (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", ""),
+            bad_build   = (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", ""),
+            bad_mod     = (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", ""),
             lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB)),
             rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
         }
@@ -451,37 +451,96 @@ local function GetShowMePatterns()
     return SHOW_ME_CACHE
 end
 
--- 解析并过滤 Show Me 悬浮文本，返回格式化后的字符串
+-- 解析并过滤包裹/礼物内部物品
+local function ParseBundleLine(str)
+    if not str or str == "" then return nil end
+
+    if str:match("^%s*%d+[%d%.]*%s*$") then
+        return nil
+    end
+
+    local clean_str = str:gsub("^%s*%d+%s*[:%.、%-]%s*", "")
+    if clean_str == "" or clean_str:match("^%s*%d+[%d%.]*%s*$") then
+        return nil
+    end
+
+    local name, count = clean_str:match("^(.-)%s*%(%s*(%d+)%s*%)%s*$")
+    if not name then
+        name, count = clean_str:match("^(.-)%s*[xX*×]%s*(%d+)%s*$")
+    end
+
+    if name and name ~= "" then
+        count = tonumber(count) or 1
+        return count > 1 and (name .. " x" .. tostring(count)) or name
+    end
+
+    return clean_str
+end
+
 local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
-    if not SHOW_ME_ON or not target then
+    if not target then
         return ""
     end
 
-    -- 判定目标类型
+    -- 获取 Show Bundle 全局对象
+    local SB = GLOBAL.rawget(GLOBAL, "SB")
+
     local is_gift = target:HasTag('unwrappable')
+        or target:HasTag('bundle')
+        or target:HasTag('gift')
+        or target.prefab == 'gift'
+        or target.prefab == 'bundle'
+        or (target.replica and target.replica.unwrappable ~= nil)
+        or (SB and SB.supported_items and SB.supported_items[target.prefab] ~= nil)
+
     local has_health = target:HasTag('_health')
         or (target.replica and target.replica.health ~= nil)
         or target:HasTag('health')
 
-    -- 根据 SHOW_ME 配置级别决定是否显示
-    -- 1 = 全开, 2 = 仅礼物/血量, 0 = 全关
-    if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1
-        or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health))) then
+    -- 获取 Show Bundle 数据
+    local showbundle_data = target.showbundle_itemdata
+    local has_showbundle = (showbundle_data ~= nil and type(showbundle_data) == "table" and next(showbundle_data) ~= nil)
+
+    if not SHOW_ME_ON and not has_showbundle then
         return ""
     end
 
-    -- 解析原始悬浮文本
-    local items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4)
+    if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1
+        or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health or has_showbundle))) then
+        return ""
+    end
 
-    -- 兼容 Insight 模组数据
-    if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
-        local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
-        if insight_cache and insight_cache[target] then
-            local insight_info = insight_cache[target].information
-            if insight_info and insight_info ~= "" then
-                local clean_info = CleanInsightString(insight_info)
-                local insight_lines = string.split(clean_info, '\n')
-                for _, line in ipairs(insight_lines) do
+    local items = {}
+
+    -- Show Me / Insight 文本
+    if SHOW_ME_ON then
+        items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4) or {}
+
+        -- 兼容 Insight 模组数据
+        if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
+            local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
+            if insight_cache and insight_cache[target] then
+                local insight_info = insight_cache[target].information
+                if insight_info and insight_info ~= "" then
+                    local clean_info = CleanInsightString(insight_info)
+                    local insight_lines = string.split(clean_info, '\n')
+                    for _, line in ipairs(insight_lines) do
+                        table.insert(items, line)
+                    end
+                end
+            end
+        end
+
+        if is_gift and #items == 0 and GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls and GLOBAL.ThePlayer.HUD.controls.hover then
+            local hover = GLOBAL.ThePlayer.HUD.controls.hover
+            if hover.insightText and hover.insightText.raw_text then
+                local clean_info = CleanInsightString(hover.insightText.raw_text)
+                for line in clean_info:gmatch("[^\r\n]+") do
+                    table.insert(items, line)
+                end
+            elseif hover.text and hover.text.GetString then
+                local hover_str = hover.text:GetString() or ""
+                for line in hover_str:gmatch("[^\r\n]+") do
                     table.insert(items, line)
                 end
             end
@@ -492,18 +551,20 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     local filtered = {}
     local patterns = GetShowMePatterns()
     local found_health_line = false
+    local target_display_name = (target.GetBasicDisplayName and target:GetBasicDisplayName()) or target.name or ""
 
     for _, str in ipairs(items) do
         if str and str:match("[^ \t\r\n]") then
-            -- 检查是否为被禁止的信息行
-            local is_banned = str:find(patterns.bad_prefab, 1, true)
+            local is_name_line = (target_display_name ~= "" and str == target_display_name)
+
+            local is_banned = is_name_line
+                or str:find(patterns.bad_prefab, 1, true)
                 or str:find(patterns.bad_bank, 1, true)
                 or str:find(patterns.bad_build, 1, true)
                 or str:find(patterns.bad_mod, 1, true)
                 or (patterns.lmb_pattern and str:find(patterns.lmb_pattern))
                 or (patterns.rmb_pattern and str:find(patterns.rmb_pattern))
 
-            -- 用户自定义过滤器
             if not is_banned
                 and GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER
                 and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then
@@ -515,7 +576,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                 end
             end
 
-            -- SHOW_ME == 2 模式下仅保留血量行
             if not is_banned and GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 then
                 if has_health and not is_gift then
                     if found_health_line then
@@ -532,7 +592,32 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
             end
 
             if not is_banned then
-                table.insert(filtered, str)
+                if is_gift then
+                    local parsed_bundle_line = ParseBundleLine(str)
+                    if parsed_bundle_line then
+                        table.insert(filtered, parsed_bundle_line)
+                    end
+                else
+                    table.insert(filtered, str)
+                end
+            end
+        end
+    end
+
+    -- 读取 Show Bundle 模组
+    if is_gift and #filtered == 0 and has_showbundle then
+        for _, info in pairs(showbundle_data) do
+            if type(info) == "table" and info.prefab then
+                local prefab = info.prefab
+                local stack = tonumber(info.stack or info.count or info.num) or 1
+                local upper_prefab = string.upper(tostring(prefab))
+                local item_name = LOCAL_STRINGS[upper_prefab]
+                    or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
+                    or tostring(prefab)
+                item_name = ApplyCustomName(prefab, item_name)
+
+                local str_item = stack > 1 and (item_name .. " x" .. tostring(stack)) or item_name
+                table.insert(filtered, str_item)
             end
         end
     end
@@ -550,7 +635,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
     if #filtered > 0 then
         local MAX_LEN = 120
         local joined_str = ""
-        local is_truncated = false
 
         for i, line in ipairs(filtered) do
             local separator = (joined_str == "") and "" or ", "
@@ -562,7 +646,6 @@ local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
                 if #joined_str + 3 <= MAX_LEN then
                     joined_str = joined_str .. "..."
                 end
-                is_truncated = true
                 break
             end
         end
@@ -1850,7 +1933,7 @@ local function GetAllMissingIngredients(recipe, builder, inventory)
             local actual_needed = is_catalyst and 1
                 or RoundBiasedUp(v.amount * builder:IngredientMod())
 
-            local _, num_found = inventory:Has(v.type, actual_needed)
+            local _, num_found = inventory:Has(v.type, actual_needed, true)
             if num_found < actual_needed then
                 local diff = actual_needed - num_found
                 local item_name = LOCAL_STRINGS[string.upper(v.type)]
@@ -1947,7 +2030,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
 
         local actual_needed = is_catalyst and 1
             or RoundBiasedUp(amount_needed * builder:IngredientMod())
-        _, num_found = inventory:Has(specific_ingredient_type, actual_needed)
+        _, num_found = inventory:Has(specific_ingredient_type, actual_needed, true)
 
         -- 在角色材料中查找
         if recipe.character_ingredients then
