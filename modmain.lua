@@ -118,7 +118,7 @@ local function CleanInsightString(clean_info)
     clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
     local upper_prefab = string.upper(prefab)
     -- 依次查找：模组自定义词库 -> 游戏官方词库 -> 原文
-    return LOCAL_STRINGS[upper_prefab] 
+    return LOCAL_STRINGS[upper_prefab]
         or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
         or prefab
     end)
@@ -369,7 +369,7 @@ local function Announce(message, no_whisper, debug_info, statement_loc)
         if #debug_parts > 0 then
             local full_debug_str = table.concat(debug_parts, " ")
             print("[NOMU_QA 调试信息] " .. full_debug_str)
-            
+
             if GLOBAL.ThePlayer then
                 -- 延迟 0.15 秒宣告
                 GLOBAL.ThePlayer:DoTaskInTime(0.15, function()
@@ -928,8 +928,8 @@ local function HandleExternalMods(HUD, status, widget)
 
                 -- 向上遍历查找文本内容和组件名
                 while curr and curr ~= HUD.controls.insight_menu do
-                    if curr.componentName then 
-                        comp_name = curr.componentName 
+                    if curr.componentName then
+                        comp_name = curr.componentName
                         item_detail = curr -- 保存找到的 Insight 项 UI 控件对象
                     end
                     if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
@@ -954,12 +954,12 @@ local function HandleExternalMods(HUD, status, widget)
                         if cmp then
                             local insight_rep = GLOBAL.ThePlayer.replica.insight
                             local special_data = insight_rep.world_data and insight_rep.world_data.special_data and insight_rep.world_data.special_data[item_detail.componentName]
-                            
+
                             local describer = special_data and (
                                 (special_data.prefably and GLOBAL.Insight.prefab_descriptors and GLOBAL.Insight.prefab_descriptors[cmp] and GLOBAL.Insight.prefab_descriptors[cmp].StatusAnnouncementsDescribe) or
                                 (GLOBAL.Insight.descriptors and GLOBAL.Insight.descriptors[cmp] and GLOBAL.Insight.descriptors[cmp].StatusAnnouncementsDescribe)
                             )
-                            
+
                             if describer then
                                 return false
                             end
@@ -1829,7 +1829,7 @@ local function OnHUDMouseButton(HUD)
             curr = curr.parent
         end
         CURRENT_HUD_DEBUG_STR = "[UI代码: " .. tostring(ui_code) .. "]"
-        
+
         -- 利用零延迟任务，判定该 UI 点击是否被任何宣告逻辑处理
         if GLOBAL.ThePlayer then
             GLOBAL.ThePlayer:DoTaskInTime(0, function()
@@ -2083,7 +2083,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         if num_missing <= 0 then
             -- 材料充足
             fmts.INGREDIENT = ingredient_name
-            
+
             if is_catalyst then
                 return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_CATALYST, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE_CATALYST"))
             else
@@ -2091,7 +2091,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
                 fmts.TOTAL_NUM = num_found
                 fmts.REQ_NUM = actual_needed
                 fmts.CRAFT_COUNT = craft_count
-                
+
                 return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
             end
         else
@@ -3210,7 +3210,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     ---- 特殊预制物打断处理 ----
     if entity.prefab == "gelblob_storage" then
         local held_item = entity.takeitem and entity.takeitem:value()
-        
+
         if held_item ~= nil and held_item:IsValid() then
             -- 获取内部物品的名称和数量
             local item_display_name = GetEntityName(held_item, false)
@@ -3733,7 +3733,11 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
                     STATUS = status_str,
                     PING = (w.userid == GLOBAL.ThePlayer.userid
                         and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() })
-                        or '')
+                        )
+                        or (GLOBAL.rawget(GLOBAL, "SayAboutYourPing_PlayerPings") and w.userid and GLOBAL.SayAboutYourPing_PlayerPings[w.userid]
+                        and subfmt(qa.FORMATS.PING, { PING = GLOBAL.SayAboutYourPing_PlayerPings[w.userid] })
+                        )
+                        or ''
                 }), nil, nil, GetStatementLoc("PLAYER", "PERF"))
             end
 
@@ -3741,17 +3745,17 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
             if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
                 local prefab = w.characterBadge.prefabname
                 local is_connecting = type(w.characterBadge.IsLoading) == "function" and w.characterBadge:IsLoading()
-                
+
                 if is_connecting then
                     -- 只要在加载，就是连接中
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING, 
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING,
                         { NAME = w.displayName }
                     ), nil, nil, GetStatementLoc("PLAYER", "CONNECTING"))
                 elseif not prefab or prefab == "" then
                     -- 加载完成，但没有角色代码，说明在选人界面
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING, 
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING,
                         { NAME = w.displayName }
                     ), nil, nil, GetStatementLoc("PLAYER", "CHOOSING"))
                 else
@@ -4406,7 +4410,7 @@ if ENABLE_MEME_SYSTEM then
     for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
 
     local LIST_DATA = {
-        List_0 = { title = "收藏", atlas = nil, prefix = nil }, 
+        List_0 = { title = "收藏", atlas = nil, prefix = nil },
         List_1 = { title = "杂图", atlas = "images/meme/zayu.xml", prefix = "zayu" },
         List_2 = { title = "菲比", atlas = "images/meme/feibi.xml", prefix = "feibi" },
         List_3 = { title = "塞西莉亚", atlas = "images/meme/hewu.xml", prefix = "hewu" },
