@@ -6,7 +6,7 @@
 local visit = {} -- 保存已经访问的 防止有嵌套
 local visitnum = 0
 local function TryToClose(level, value, i, fn)
-    if value ~= nil then
+    if fn ~= nil then
         visit = {}
         visitnum = 0
         return value, i, fn
@@ -51,7 +51,7 @@ local function FindUpvalue(fn, name, fn_filter, value_filter)
                 else -- 来源错误，递归查找
                     if type(upvalue) == "function" then
                         local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, fn_filter, value_filter)
-                        if upupvalue ~= nil then
+                        if upupfn ~= nil then
                             return TryToClose(level, upupvalue, upupi, upupfn)
                         end
                     end
@@ -66,7 +66,7 @@ local function FindUpvalue(fn, name, fn_filter, value_filter)
                         return TryToClose(level, upvalue, i ,fn)
                     else -- 来源错误，递归查找
                         local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, fn_filter, value_filter)
-                        if upupvalue ~= nil then
+                        if upupfn ~= nil then
                             return TryToClose(level, upupvalue, upupi, upupfn)
                         end
                     end
@@ -77,7 +77,7 @@ local function FindUpvalue(fn, name, fn_filter, value_filter)
         end
         if upvalue and type(upvalue) == "function" and not visit[upvalue] then -- 没有访问过的
             local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, fn_filter, value_filter) -- 找不到就递归查找
-            if upupvalue ~= nil then
+            if upupfn ~= nil then
                 return TryToClose(level, upupvalue, upupi, upupfn)
             end
         end
@@ -92,18 +92,20 @@ end
 ---@return integer
 ---@return function
 local function GetUpvalueHelper(fn, name)
-    local i = 1
-    while debug.getupvalue(fn, i) and debug.getupvalue(fn, i) ~= name do
-        i = i + 1
-    end
-    local _, value = debug.getupvalue(fn, i)
-    if value == nil then
-        local found_value, found_i, found_fn = FindUpvalue(fn, name)
-        if found_value ~= nil then
-            return found_value, found_i, found_fn
+    for i=1, math.huge do
+        local upname, upvalue = debug.getupvalue(fn, i)
+        if not upname then break end
+        if upname == name then
+            return upvalue, i, fn
         end
     end
-    return value, i, fn
+
+    local found_value, found_i, found_fn = FindUpvalue(fn, name)
+    if found_fn ~= nil then
+        return found_value, found_i, found_fn
+    end
+
+    return nil, nil, nil -- 找不到咯！
 end
 
 -- 搜索上值（找不到时自动遍历）
@@ -145,6 +147,12 @@ end
 ---@param ... string 搜索路径
 local function SetUpvalue(start_fn, new_fn, ...)
     local _fn, _fn_i, scope_fn = GetUpvalue(start_fn, ...)
+    if not (_fn_i and scope_fn) then
+        local info = debug.getinfo(2)
+        local filename, line = info.source or "???", info.currentline or "???"
+        print("【警告】" .. filename .. ":" .. line .. " Upvaluehelper.SetUpvalue失败，这是完整的链条：".. table.concat({"(起点)", ...}, "→"))
+        return
+    end
     debug.setupvalue(scope_fn, _fn_i, new_fn)
 end
 
