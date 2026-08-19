@@ -4481,14 +4481,14 @@ if ENABLE_MEME_SYSTEM then
         List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
         List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
-    for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
+    for i = 1, 163 do table.insert(LIST.List_1, "zayu_"..i) end
     for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
     for i = 1, 70  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65  do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
-    for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
     for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
     for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
 
@@ -4539,6 +4539,23 @@ if ENABLE_MEME_SYSTEM then
     end
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
+    GLOBAL.NOMU_QA.HD_MEMES = {}
+    local hd_xml_path = GLOBAL.resolvefilepath("images/meme/meme_hd.xml")
+    if hd_xml_path then
+        local file = GLOBAL.io.open(hd_xml_path, "r")
+        if file then
+            local xml_data = file:read("*a")
+            file:close()
+            for meme_name in string.gmatch(xml_data, 'name="(.-)%.tex"') do
+                GLOBAL.NOMU_QA.HD_MEMES[meme_name] = true
+            end
+        end
+    end
+    
+    -- 统一注册高清图集
+    table.insert(Assets, Asset("ATLAS", "images/meme/meme_hd.xml"))
+    table.insert(Assets, Asset("IMAGE", "images/meme/meme_hd.tex"))
+
     -- 悬浮预览功能
     GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
         -- 先检查表情是否有效
@@ -4566,20 +4583,38 @@ if ENABLE_MEME_SYSTEM then
 
             local top_parent = GLOBAL.TheFrontEnd.overlayroot
             local hp
+            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
+
             if is_anim then
                 hp = top_parent:AddChild(UIAnim())
                 hp:GetAnimState():SetBank(meme_name)
                 hp:GetAnimState():SetBuild(meme_name)
                 hp:GetAnimState():PlayAnimation("idle", true)
                 hp:GetAnimState():SetTime(GLOBAL.GetTime())
+                hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
             else
-                hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+                if GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name] then
+                    hp = top_parent:AddChild(Image("images/meme/meme_hd.xml", meme_name..".tex", meme_name..".tex"))
+                    local hd_scale = 0.80
+                    hp:SetScale(hd_scale * ui_scale, hd_scale * ui_scale, hd_scale * ui_scale)
+                else
+                    hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+                    hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+                end
             end
-            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
-            hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+            
             hp:MoveToFront()
             if dummy_tracker.inst:IsValid() then
-                hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
+                local w_pos = dummy_tracker:GetWorldPosition()
+                local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
+
+                if is_hd then
+                    local hd_offset_x = 45
+                    local hd_offset_y = 38
+                    hp:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+                else
+                    hp:SetPosition(w_pos:Get())
+                end
             end
             meme_widget.hover_preview = hp
         end
@@ -4604,7 +4639,16 @@ if ENABLE_MEME_SYSTEM then
             end
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 local w_pos = dummy_tracker:GetWorldPosition()
-                meme_widget.hover_preview:SetPosition(w_pos:Get())
+
+                local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
+                if is_hd then
+                    local hd_offset_x = 45
+                    local hd_offset_y = 38
+                    
+                    meme_widget.hover_preview:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+                else
+                    meme_widget.hover_preview:SetPosition(w_pos:Get())
+                end
             end
             local is_chat_open = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()
             if is_chat_open or not parent_root.shown then
@@ -4705,6 +4749,8 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
                     self.meme.isanim = true
                     self.meme.atlas = nil
+
+                    self.meme:SetPosition(-268, -8)
                 else
                     local prefix = name:match("^(.*)_%d+")
                     local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
@@ -4712,8 +4758,11 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:SetFadeAlpha(self.meme_alpha)
                     self.meme.isanim = false
                     self.meme.atlas = atlas
+
+                    local img_w, img_h = self.meme:GetSize()
+                    self.meme:SetPosition(-294 + (img_w * 0.4) / 2, -8)
                 end
-                self.meme:SetPosition(-268, -8)
+                
                 self.meme:SetScale(.4, .4, .4)
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
                     self.meme:SetRegionSize(100, 100)
@@ -4788,6 +4837,10 @@ if ENABLE_MEME_SYSTEM then
             if meme_name then
                 self.message:Hide()
                 local name = meme_name
+                
+                local msg_x, msg_y = self.message:GetPosition():Get()
+                local w, h = self.message:GetRegionSize()
+                
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
@@ -4796,16 +4849,19 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme.isanim = true
                     self.meme.atlas = nil
+
+                    self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
                 else
                     local prefix = name:match("^(.*)_%d+")
                     local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
                     self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
                     self.meme.isanim = false
                     self.meme.atlas = atlas
+
+                    local img_w, img_h = self.meme:GetSize()
+                    self.meme:SetPosition((msg_x - w/2 + 72) + (img_w * 0.35) / 2, msg_y - 12)
                 end
-                local msg_x, msg_y = self.message:GetPosition():Get()
-                local w, h = self.message:GetRegionSize()
-                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
+                
                 self.meme:SetScale(0.35, 0.35, 0.35)
                 if self.extra_line_count then
                     self.extra_line_count = self.extra_line_count + 1

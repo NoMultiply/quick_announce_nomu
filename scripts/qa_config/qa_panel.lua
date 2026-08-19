@@ -356,7 +356,26 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 item.SetInfo = function(_, data)
                     item.data = data
                     item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
+
+                    local img_w, img_h = item.btn:GetSize()
+                    local base_scale = 0.45
+                    local max_size = 58
                     
+                    if img_w and img_h then
+                        local final_scale = base_scale
+
+                        if img_w * final_scale > max_size then final_scale = max_size / img_w end
+                        if img_h * final_scale > max_size then final_scale = max_size / img_h end
+
+                        item.btn:SetPosition(0, 0)
+                        item.btn:SetNormalScale(final_scale, final_scale, final_scale)
+                        item.btn:SetFocusScale(final_scale * 1.15, final_scale * 1.15, final_scale * 1.15)
+
+                        if item.btn.image then
+                            item.btn.image:SetScale(final_scale, final_scale, final_scale)
+                        end
+                    end
+
                     local is_fav = false
                     for _, v in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do
                         if v == data.name then
@@ -920,7 +939,6 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
         item.text:SetHAlign(ANCHOR_LEFT)
         item.text:SetPosition(-15, 0, 0)
 
-        -- 统一的 "..." 操作按钮（亮蓝色）
         item.more_btn = item:AddChild(TextButton())
         item.more_btn:SetFont(CHATFONT); item.more_btn:SetTextSize(26)
         item.more_btn:SetText("...")
@@ -996,7 +1014,6 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
         item.text:SetHAlign(ANCHOR_LEFT)
         item.text:SetPosition(-15, 0, 0)
 
-        -- 统一的 "..." 操作按钮（亮蓝色）
         item.more_btn = item:AddChild(TextButton())
         item.more_btn:SetFont(CHATFONT); item.more_btn:SetTextSize(26)
         item.more_btn:SetText("...")
