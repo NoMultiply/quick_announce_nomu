@@ -19,6 +19,11 @@ if ModManager and ModManager:GetMod("workshop-3678295700") ~= nil then
 end
 GLOBAL.NOMU_QA = {}
 GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM = ENABLE_MEME_SYSTEM
+GLOBAL.NOMU_QA.MOON_DATA = {
+    last_phase = nil,
+    phase_start_cycle = 0,
+    is_confident = false, -- 是否已观测到阶段起点
+}
 
 -- 导入外部 Lua 辅助模块的安全加载函数
 local function Import(modulename)
@@ -668,8 +673,10 @@ local BASIC_PICKABLES = {
     monkeytail = true, bananabush = true, sapling_moon = true,
     cactus = true, oasis_cactus = true, rock_avocado_bush = true,
     wormlight_plant = true, oceanvine = true, orchidbush = true,
-    lilybush = true, nightrosebush = true, rosebush = true
+    lilybush = true, nightrosebush = true, rosebush = true,
+    coffeebush = true, rock_limpet = true
 }
+
 
 -- 统一动画状态配置表：将动画名映射到逻辑状态
 local ANIM_STATE_CONFIG = {
@@ -1463,53 +1470,90 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
     ---- 月相宣告 ----
     if HUD.controls.clock
         and HUD.controls.clock._moonanim
-        and HUD.controls.clock._moonanim.focus
-        and HUD.controls.clock._moonanim.moontext then
+        and HUD.controls.clock._moonanim.focus then
 
         local qa = GLOBAL.NOMU_QA.SCHEME.MOON_PHASE
-        local text_val = tostring(HUD.controls.clock._moonanim.moontext)
+        local cur_moonphase = TheWorld.state.moonphase
+        local is_waxing = TheWorld.state.iswaxingmoon
+        local cycles = TheWorld.state.cycles
 
-        if string.find(text_val, '?') ~= nil then
-            return ThePlayer.components.talker:Say(qa.FORMATS.FAILED)
+        if not cur_moonphase then return false end
+
+        --  优先处理今晚就是月圆或月黑
+        if cur_moonphase == "full" or cur_moonphase == "new" then
+            local phase_key = (cur_moonphase == "full") and "FULL" or "NEW"
+            local fmts = {
+                RECENT = GetMapping(qa, 'RECENT', 'TODAY'),
+                PHASE1 = GetMapping(qa, 'MOON', phase_key),
+            }
+            return Announce(subfmt(qa.FORMATS.MOON, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "MOON"))
         end
 
-        local moonment = string.match(text_val, '(%d+)') or 0
-        local worldment = TheWorld.state.cycles + 1 or 0
-        if moonment == 0 or worldment == 0 then return false end
-
-        local fmts = { INTERVAL = GetMapping(qa, 'INTERVAL', 'COMMA') }
-        local moonleft = moonment - worldment
-
-        if moonleft >= 10 then
-            fmts.PHASE1 = GetMapping(qa, 'MOON', 'FULL')
-            fmts.PHASE2 = GetMapping(qa, 'MOON', 'NEW')
-        else
-            fmts.PHASE1 = GetMapping(qa, 'MOON', 'NEW')
-            fmts.PHASE2 = GetMapping(qa, 'MOON', 'FULL')
-        end
-
-        local judge = moonleft % 10
-        local is_moon_fmt = false
-        if judge <= 1 then
-            fmts.RECENT = judge == 0
-                and GetMapping(qa, 'RECENT', 'TODAY')
-                or GetMapping(qa, 'RECENT', 'TOMORROW')
-            judge = judge + 10
-            fmts.PHASE1, fmts.PHASE2 = fmts.PHASE2, fmts.PHASE1
-            if worldment < 20 then
-                is_moon_fmt = true
-                return Announce(subfmt(qa.FORMATS.MOON, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "MOON"))
+        local moon_data = GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.MOON_DATA
+        if not (moon_data and moon_data.is_confident and moon_data.last_phase == cur_moonphase) then
+            if ThePlayer and ThePlayer.components.talker then
+                local failed_msg = (qa.FORMATS and qa.FORMATS.FAILED)
+                    or (GLOBAL.STRINGS.DEFAULT_NOMU_QA.MOON_PHASE.FORMATS.FAILED)
+                ThePlayer.components.talker:Say(failed_msg)
             end
-        elseif judge >= 8 then
+            return true
+        end
+
+        local phase_durations = { quarter = 3, half = 3, threequarter = 3 }
+        local total_len = phase_durations[cur_moonphase] or 3
+        local elapsed = math.max(0, cycles - (moon_data.phase_start_cycle or 0))
+        local remaining_in_cur_phase = math.max(1, total_len - elapsed)
+
+        local days_to_full = 0
+        local days_to_new = 0
+
+        if is_waxing then
+            if cur_moonphase == "threequarter" then
+                days_to_full = remaining_in_cur_phase
+            elseif cur_moonphase == "half" then
+                days_to_full = remaining_in_cur_phase + 3
+            elseif cur_moonphase == "quarter" then
+                days_to_full = remaining_in_cur_phase + 6
+            end
+            days_to_new = days_to_full + 10
+        else
+            if cur_moonphase == "threequarter" then
+                days_to_new = remaining_in_cur_phase + 6
+            elseif cur_moonphase == "half" then
+                days_to_new = remaining_in_cur_phase + 3
+            elseif cur_moonphase == "quarter" then
+                days_to_new = remaining_in_cur_phase
+            end
+            days_to_full = days_to_new + 10
+        end
+
+        local target_phase_is_full = (days_to_full <= days_to_new)
+        local target_days = target_phase_is_full and days_to_full or days_to_new
+        local target_key = target_phase_is_full and "FULL" or "NEW"     -- 下一个目标月相
+        local past_key = target_phase_is_full and "NEW" or "FULL"       -- 刚度过的上一个月相
+
+        local fmts = {
+            INTERVAL = GetMapping(qa, 'INTERVAL', 'COMMA'),
+            PHASE2 = GetMapping(qa, 'MOON', target_key),
+            LEFT = target_days,
+        }
+
+        if target_days == 1 then
+            fmts.RECENT = GetMapping(qa, 'RECENT', 'TOMORROW')
+            fmts.PHASE1 = GetMapping(qa, 'MOON', target_key)
+            return Announce(subfmt(qa.FORMATS.MOON, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "MOON"))
+
+        elseif target_days >= 8 then
             fmts.RECENT = GetMapping(qa, 'RECENT', 'AFTER')
+            fmts.PHASE1 = GetMapping(qa, 'MOON', past_key)
+            return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "DEFAULT"))
+
         else
             fmts.RECENT = ''
             fmts.PHASE1 = ''
             fmts.INTERVAL = GetMapping(qa, 'INTERVAL', 'NONE')
+            return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "DEFAULT"))
         end
-
-        fmts.LEFT = judge
-        return Announce(subfmt(qa.FORMATS.DEFAULT, fmts), nil, nil, GetStatementLoc("MOON_PHASE", "DEFAULT"))
     end
 
     ---- 时钟宣告 ----
@@ -2842,9 +2886,7 @@ local function GetEntitySpecialState(entity, is_target)
     if not entity then return nil end
 
     -- 通用标签状态
-    if entity:HasTag("fire") and not entity:HasTag("campfire") and not entity:HasTag("tree") then
-        return "FIRE"
-    end
+    if entity:HasTag("fire") then return "FIRE" end
     if entity:HasTag("burnt") then return "BURNT" end
     if entity:HasTag("smolder") then return "SMOLDER" end
     if entity.prefab == "lightninggoat" and entity:HasTag("charged") then return "GOAT_CHARGED" end
@@ -3215,7 +3257,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             -- 获取内部物品的名称和数量
             local item_display_name = GetEntityName(held_item, false)
             local stack_size = held_item.replica and held_item.replica.stackable and held_item.replica.stackable:StackSize() or 1
-            -- 宣告装有物品的状态
+
             return Announce(subfmt(qa.FORMATS.STORAGE_HAS, {
                 TOTAL = count_prefab,
                 NAME = prefab_name,
@@ -3225,6 +3267,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
                 DISTANCE = dist_str
             }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_HAS"))
         else
+            -- 统计空的数量
             local empty_count = 0
             for _, v in ipairs(entities) do
                 if v.prefab == "gelblob_storage" and v.entity:IsVisible() then
@@ -3235,13 +3278,18 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
                 end
             end
 
-            return Announce(subfmt(qa.FORMATS.STORAGE_EMPTY, {
+            local fmt_name = "STORAGE_EMPTY"
+            if empty_count == 1 and qa.FORMATS.STORAGE_EMPTY_THIS then
+                fmt_name = "STORAGE_EMPTY_THIS"
+            end
+
+            return Announce(subfmt(qa.FORMATS[fmt_name], {
                 TOTAL = count_prefab,
                 NAME = prefab_name,
                 NUM = empty_count,
                 SHOW_ME = show_me,
                 DISTANCE = dist_str
-            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_EMPTY"))
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", fmt_name))
         end
     end
 
@@ -3325,13 +3373,19 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     ---- 常规宣告（Fallback）----
-    if (is_player_named or (count_prefab > count_name and display_name ~= prefab_name))
-        and qa.FORMATS.NAMED then
-        return Announce(subfmt(qa.FORMATS.NAMED, {
-            NUM_PREFAB = count_prefab, PREFAB_NAME = prefab_name,
-            NUM = count_name, NAME = display_name,
-            SHOW_ME = show_me, DISTANCE = dist_str
-        }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "NAMED"))
+    if (is_player_named or (count_prefab > count_name and display_name ~= prefab_name)) then
+        local fmt_name = (count_name == 1 and qa.FORMATS.NAMED_THIS) and "NAMED_THIS" or "NAMED"
+
+        if qa.FORMATS[fmt_name] then
+            return Announce(subfmt(qa.FORMATS[fmt_name], {
+                NUM_PREFAB = count_prefab,
+                PREFAB_NAME = prefab_name,
+                NUM = count_name,
+                NAME = display_name,
+                SHOW_ME = show_me,
+                DISTANCE = dist_str
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", fmt_name))
+        end
     end
 
     local final_count = (display_name == prefab_name) and count_prefab or count_name
@@ -3492,6 +3546,35 @@ end)
 ----------------------------------------
 -- 9.3 HUD 鼠标点击拦截
 ----------------------------------------
+
+AddClassPostConstruct('screens/playerhud', function(self)
+    local cur_moonphase = GLOBAL.TheWorld and GLOBAL.TheWorld.state and GLOBAL.TheWorld.state.moonphase
+
+    if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.MOON_DATA then
+        if cur_moonphase == "full" or cur_moonphase == "new" then
+            GLOBAL.NOMU_QA.MOON_DATA.last_phase = cur_moonphase
+            GLOBAL.NOMU_QA.MOON_DATA.phase_start_cycle = GLOBAL.TheWorld.state.cycles
+            GLOBAL.NOMU_QA.MOON_DATA.is_confident = true
+        else
+            -- 初始记录当前月相
+            GLOBAL.NOMU_QA.MOON_DATA.last_phase = cur_moonphase
+            GLOBAL.NOMU_QA.MOON_DATA.phase_start_cycle = 0
+            GLOBAL.NOMU_QA.MOON_DATA.is_confident = false
+        end
+    end
+
+    -- 监听月相变更
+    self.inst:ListenForEvent("moonphasechanged2", function(src, data)
+        if GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.MOON_DATA and data and data.moonphase then
+            local moon_data = GLOBAL.NOMU_QA.MOON_DATA
+            if data.moonphase ~= moon_data.last_phase then
+                moon_data.last_phase = data.moonphase
+                moon_data.phase_start_cycle = GLOBAL.TheWorld and GLOBAL.TheWorld.state and GLOBAL.TheWorld.state.cycles or 0
+                moon_data.is_confident = true
+            end
+        end
+    end, GLOBAL.TheWorld)
+end)
 
 AddClassPostConstruct('screens/playerhud', function(PlayerHud)
     local oldOnMouseButton = PlayerHud.OnMouseButton
@@ -4398,14 +4481,14 @@ if ENABLE_MEME_SYSTEM then
         List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
         List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
     }
-    for i = 1, 159 do table.insert(LIST.List_1, "zayu_"..i) end
+    for i = 1, 163 do table.insert(LIST.List_1, "zayu_"..i) end
     for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
     for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
     for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
-    for i = 1, 67  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+    for i = 1, 70  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
     for i = 1, 65  do table.insert(LIST.List_6, "taff_"..i) end
     for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
-    for i = 1, 124 do table.insert(LIST.List_8, "xiyy_"..i) end
+    for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
     for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
     for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
 
@@ -4456,6 +4539,23 @@ if ENABLE_MEME_SYSTEM then
     end
     GLOBAL.NOMU_QA.Prefix_Atlas_Map = Prefix_Atlas_Map
 
+    GLOBAL.NOMU_QA.HD_MEMES = {}
+    local hd_xml_path = GLOBAL.resolvefilepath("images/meme/meme_hd.xml")
+    if hd_xml_path then
+        local file = GLOBAL.io.open(hd_xml_path, "r")
+        if file then
+            local xml_data = file:read("*a")
+            file:close()
+            for meme_name in string.gmatch(xml_data, 'name="(.-)%.tex"') do
+                GLOBAL.NOMU_QA.HD_MEMES[meme_name] = true
+            end
+        end
+    end
+    
+    -- 统一注册高清图集
+    table.insert(Assets, Asset("ATLAS", "images/meme/meme_hd.xml"))
+    table.insert(Assets, Asset("IMAGE", "images/meme/meme_hd.tex"))
+
     -- 悬浮预览功能
     GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
         -- 先检查表情是否有效
@@ -4483,20 +4583,38 @@ if ENABLE_MEME_SYSTEM then
 
             local top_parent = GLOBAL.TheFrontEnd.overlayroot
             local hp
+            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
+
             if is_anim then
                 hp = top_parent:AddChild(UIAnim())
                 hp:GetAnimState():SetBank(meme_name)
                 hp:GetAnimState():SetBuild(meme_name)
                 hp:GetAnimState():PlayAnimation("idle", true)
                 hp:GetAnimState():SetTime(GLOBAL.GetTime())
+                hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
             else
-                hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+                if GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name] then
+                    hp = top_parent:AddChild(Image("images/meme/meme_hd.xml", meme_name..".tex", meme_name..".tex"))
+                    local hd_scale = 0.80
+                    hp:SetScale(hd_scale * ui_scale, hd_scale * ui_scale, hd_scale * ui_scale)
+                else
+                    hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+                    hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+                end
             end
-            local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
-            hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
+            
             hp:MoveToFront()
             if dummy_tracker.inst:IsValid() then
-                hp:SetPosition(dummy_tracker:GetWorldPosition():Get())
+                local w_pos = dummy_tracker:GetWorldPosition()
+                local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
+
+                if is_hd then
+                    local hd_offset_x = 45
+                    local hd_offset_y = 38
+                    hp:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+                else
+                    hp:SetPosition(w_pos:Get())
+                end
             end
             meme_widget.hover_preview = hp
         end
@@ -4521,7 +4639,16 @@ if ENABLE_MEME_SYSTEM then
             end
             if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
                 local w_pos = dummy_tracker:GetWorldPosition()
-                meme_widget.hover_preview:SetPosition(w_pos:Get())
+
+                local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
+                if is_hd then
+                    local hd_offset_x = 45
+                    local hd_offset_y = 38
+                    
+                    meme_widget.hover_preview:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+                else
+                    meme_widget.hover_preview:SetPosition(w_pos:Get())
+                end
             end
             local is_chat_open = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD:IsChatInputScreenOpen()
             if is_chat_open or not parent_root.shown then
@@ -4622,6 +4749,8 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
                     self.meme.isanim = true
                     self.meme.atlas = nil
+
+                    self.meme:SetPosition(-268, -8)
                 else
                     local prefix = name:match("^(.*)_%d+")
                     local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
@@ -4629,8 +4758,11 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:SetFadeAlpha(self.meme_alpha)
                     self.meme.isanim = false
                     self.meme.atlas = atlas
+
+                    local img_w, img_h = self.meme:GetSize()
+                    self.meme:SetPosition(-294 + (img_w * 0.4) / 2, -8)
                 end
-                self.meme:SetPosition(-268, -8)
+                
                 self.meme:SetScale(.4, .4, .4)
                 if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
                     self.meme:SetRegionSize(100, 100)
@@ -4705,6 +4837,10 @@ if ENABLE_MEME_SYSTEM then
             if meme_name then
                 self.message:Hide()
                 local name = meme_name
+                
+                local msg_x, msg_y = self.message:GetPosition():Get()
+                local w, h = self.message:GetRegionSize()
+                
                 if name:sub(1, 4) == "gif_" then
                     self.meme = self.root:AddChild(UIAnim())
                     self.meme:GetAnimState():SetBank(name)
@@ -4713,16 +4849,19 @@ if ENABLE_MEME_SYSTEM then
                     self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
                     self.meme.isanim = true
                     self.meme.atlas = nil
+
+                    self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
                 else
                     local prefix = name:match("^(.*)_%d+")
                     local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
                     self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
                     self.meme.isanim = false
                     self.meme.atlas = atlas
+
+                    local img_w, img_h = self.meme:GetSize()
+                    self.meme:SetPosition((msg_x - w/2 + 72) + (img_w * 0.35) / 2, msg_y - 12)
                 end
-                local msg_x, msg_y = self.message:GetPosition():Get()
-                local w, h = self.message:GetRegionSize()
-                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
+                
                 self.meme:SetScale(0.35, 0.35, 0.35)
                 if self.extra_line_count then
                     self.extra_line_count = self.extra_line_count + 1

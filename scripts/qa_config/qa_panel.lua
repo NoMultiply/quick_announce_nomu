@@ -304,6 +304,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 
                 local old_OnMouseButton = item.btn.OnMouseButton
                 item.btn.OnMouseButton = function(self_btn, button, down, x, y)
+                    -- 中键收藏/取消收藏逻辑
                     if button == GLOBAL.MOUSEBUTTON_MIDDLE and not down then
                         if item.data then
                             local name = item.data.name
@@ -328,13 +329,9 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                         end
                         return true
                     end
-                    if old_OnMouseButton then return old_OnMouseButton(self_btn, button, down, x, y) end
-                    return false
-                end
-
-                local old_OnControl = item.btn.OnControl
-                item.btn.OnControl = function(self_btn, control, down)
-                    if control == GLOBAL.CONTROL_SECONDARY and not down then
+                    
+                    -- 右键发送悄悄话表情逻辑
+                    if button == GLOBAL.MOUSEBUTTON_RIGHT and not down then
                         if item.data then
                             SendMemeChatMessage(item.data.name, true)
                             if self.EM_bg then self.EM_bg:Hide() end
@@ -351,14 +348,34 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                         end
                         return true
                     end
-                    if old_OnControl then return old_OnControl(self_btn, control, down) end
+                    
+                    if old_OnMouseButton then return old_OnMouseButton(self_btn, button, down, x, y) end
                     return false
                 end
                 
                 item.SetInfo = function(_, data)
                     item.data = data
                     item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
+
+                    local img_w, img_h = item.btn:GetSize()
+                    local base_scale = 0.45
+                    local max_size = 58
                     
+                    if img_w and img_h then
+                        local final_scale = base_scale
+
+                        if img_w * final_scale > max_size then final_scale = max_size / img_w end
+                        if img_h * final_scale > max_size then final_scale = max_size / img_h end
+
+                        item.btn:SetPosition(0, 0)
+                        item.btn:SetNormalScale(final_scale, final_scale, final_scale)
+                        item.btn:SetFocusScale(final_scale * 1.15, final_scale * 1.15, final_scale * 1.15)
+
+                        if item.btn.image then
+                            item.btn.image:SetScale(final_scale, final_scale, final_scale)
+                        end
+                    end
+
                     local is_fav = false
                     for _, v in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do
                         if v == data.name then
@@ -581,6 +598,23 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     end
 end
 
+local function GetMergedBuiltin(target_source)
+    local merged = DeepCopy(GLOBAL.STRINGS.DEFAULT_NOMU_QA)
+    if target_source and target_source ~= GLOBAL.STRINGS.DEFAULT_NOMU_QA then
+        local function MergeTables(dst, src)
+            for k, v in pairs(src) do
+                if type(v) == "table" and type(dst[k]) == "table" then
+                    MergeTables(dst[k], v)
+                else
+                    dst[k] = type(v) == "table" and DeepCopy(v) or v
+                end
+            end
+        end
+        MergeTables(merged, target_source)
+    end
+    return merged
+end
+
 -- 字符串输入面板
 local GetInputString = Class(NoMuScreen, function(self, nomu_parent, title, value, callback, limit, width)
     NoMuScreen._ctor(self, "GetInputString", nomu_parent, width or 280, 130)
@@ -793,8 +827,14 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                 item.rename:Hide(); item.no_rename = true; item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RESET)
                 item.delete:SetOnClick(function() 
                     TheFrontEnd:PushScreen(ConfirmDialog(nil, STRINGS.NOMU_QA.TITLE_TEXT_SURE_TO_RESET_DEFAULT, function() 
-                        local defs = { GLOBAL.STRINGS.DEFAULT_NOMU_QA, GLOBAL.STRINGS.CAT_NOMU_QA, GLOBAL.STRINGS.TSUNDERE_NOMU_QA, GLOBAL.STRINGS.CUTE_NOMU_QA }
+                        local defs = { 
+                            GLOBAL.STRINGS.DEFAULT_NOMU_QA, 
+                            GetMergedBuiltin(GLOBAL.STRINGS.CAT_NOMU_QA), 
+                            GetMergedBuiltin(GLOBAL.STRINGS.TSUNDERE_NOMU_QA), 
+                            GetMergedBuiltin(GLOBAL.STRINGS.CUTE_NOMU_QA) 
+                        }
                         GLOBAL.NOMU_QA.DATA.SCHEMES[data.idx].data = DeepCopy(defs[data.idx])
+                        GLOBAL.NOMU_QA.DATA.SCHEMES[data.idx].backup_data = DeepCopy(defs[data.idx])
                         GLOBAL.NOMU_QA.SaveData(); self:RefreshScheme(data.idx) 
                     end)) 
                 end)
@@ -935,13 +975,14 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                     end))
                 end, function()
                     local BUILTIN_LOOKUP = {
-                        [STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = STRINGS.DEFAULT_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = STRINGS.CAT_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = STRINGS.TSUNDERE_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = STRINGS.CUTE_NOMU_QA,
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = GLOBAL.STRINGS.DEFAULT_NOMU_QA,
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CAT_NOMU_QA),
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.TSUNDERE_NOMU_QA),
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CUTE_NOMU_QA),
                     }
                     local source_name = self.scheme.source_template or self.scheme.name
-                    local source_data = BUILTIN_LOOKUP[source_name] or STRINGS.DEFAULT_NOMU_QA
+                    local source_data = BUILTIN_LOOKUP[source_name] or GLOBAL.STRINGS.DEFAULT_NOMU_QA
+                    
                     local default_val = source_data[self.scheme_func] and source_data[self.scheme_func].FORMATS and source_data[self.scheme_func].FORMATS[format.name]
                     
                     if default_val then
@@ -1011,13 +1052,13 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                     end))
                 end, function()
                     local BUILTIN_LOOKUP = {
-                        [STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = STRINGS.DEFAULT_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = STRINGS.CAT_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = STRINGS.TSUNDERE_NOMU_QA,
-                        [STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = STRINGS.CUTE_NOMU_QA,
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = GLOBAL.STRINGS.DEFAULT_NOMU_QA,
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CAT_NOMU_QA),
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.TSUNDERE_NOMU_QA),
+                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CUTE_NOMU_QA),
                     }
                     local source_name = self.scheme.source_template or self.scheme.name
-                    local source_data = BUILTIN_LOOKUP[source_name] or STRINGS.DEFAULT_NOMU_QA
+                    local source_data = BUILTIN_LOOKUP[source_name] or GLOBAL.STRINGS.DEFAULT_NOMU_QA
                     
                     local default_val = nil
                     if source_data[self.scheme_func] and source_data[self.scheme_func].MAPPINGS then

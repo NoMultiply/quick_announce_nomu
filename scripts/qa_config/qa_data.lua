@@ -137,22 +137,45 @@ local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
     end
 end
 
+local function MergeTables(dst, src)
+    for k, v in pairs(src) do
+        if type(v) == "table" and type(dst[k]) == "table" then
+            MergeTables(dst[k], v)
+        else
+            dst[k] = type(v) == "table" and DeepCopy(v) or v
+        end
+    end
+end
+
+local function GetMergedBuiltin(target_source)
+    local merged = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
+    if target_source and target_source ~= _G.STRINGS.DEFAULT_NOMU_QA then
+        MergeTables(merged, target_source)
+    end
+    return merged
+end
+
 _G.NOMU_QA.UpdateScheme = function(scheme_node)
     if not scheme_node or not scheme_node.data then return end
 
     if scheme_node.skip_sync then return end
-
+    
     local BUILTIN_LOOKUP = {
         [_G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = _G.STRINGS.DEFAULT_NOMU_QA,
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = _G.STRINGS.CAT_NOMU_QA,
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = _G.STRINGS.TSUNDERE_NOMU_QA,
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = _G.STRINGS.CUTE_NOMU_QA,
+        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GetMergedBuiltin(_G.STRINGS.CAT_NOMU_QA),
+        [_G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GetMergedBuiltin(_G.STRINGS.TSUNDERE_NOMU_QA),
+        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GetMergedBuiltin(_G.STRINGS.CUTE_NOMU_QA),
     }
     local is_legacy = false
     if not scheme_node.source_template and not scheme_node.backup_data then
         is_legacy = true
-        scheme_node.source_template = _G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME
-        scheme_node.backup_data = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
+        if BUILTIN_LOOKUP[scheme_node.name] then
+            scheme_node.source_template = scheme_node.name
+            scheme_node.backup_data = DeepCopy(BUILTIN_LOOKUP[scheme_node.name])
+        else
+            scheme_node.source_template = _G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME
+            scheme_node.backup_data = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
+        end
     end
     local source_name = scheme_node.source_template or scheme_node.name
     local source_data = BUILTIN_LOOKUP[source_name] or _G.STRINGS.DEFAULT_NOMU_QA
@@ -213,20 +236,28 @@ _G.NOMU_QA.LoadData = function()
 
         local BUILTIN_SCHEMES = {
             { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME, source = _G.STRINGS.DEFAULT_NOMU_QA },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME, source = _G.STRINGS.CAT_NOMU_QA },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME, source = _G.STRINGS.TSUNDERE_NOMU_QA },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME, source = _G.STRINGS.CUTE_NOMU_QA }
+            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME, source = GetMergedBuiltin(_G.STRINGS.CAT_NOMU_QA) },
+            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME, source = GetMergedBuiltin(_G.STRINGS.TSUNDERE_NOMU_QA) },
+            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME, source = GetMergedBuiltin(_G.STRINGS.CUTE_NOMU_QA) }
         }
 
         local schemes = _G.NOMU_QA.DATA.SCHEMES
         if schemes then
             for i, template in ipairs(BUILTIN_SCHEMES) do
                 if not schemes[i] or schemes[i].name ~= template.name then
-                    local new_scheme = { name = template.name, data = DeepCopy(template.source), version = _G.NOMU_QA.VERSION }
+                    local new_scheme = { 
+                        name = template.name, 
+                        data = DeepCopy(template.source), 
+                        version = _G.NOMU_QA.VERSION,
+                        source_template = template.name,
+                        backup_data = DeepCopy(template.source)
+                    }
                     if not schemes[i] then schemes[i] = new_scheme else table.insert(schemes, i, new_scheme) end
                 else
                     schemes[i].data = DeepCopy(template.source)
                     schemes[i].name = template.name
+                    schemes[i].source_template = template.name
+                    schemes[i].backup_data = DeepCopy(template.source)
                 end
             end
             for i, scheme in ipairs(schemes) do if i > 4 then _G.NOMU_QA.UpdateScheme(scheme) end end
@@ -235,7 +266,12 @@ _G.NOMU_QA.LoadData = function()
         local current = _G.NOMU_QA.DATA.CURRENT_SCHEME
         if current then
             for _, template in ipairs(BUILTIN_SCHEMES) do
-                if current.name == template.name then current.data = DeepCopy(template.source) break end
+                if current.name == template.name then 
+                    current.data = DeepCopy(template.source)
+                    current.source_template = template.name
+                    current.backup_data = DeepCopy(template.source)
+                    break 
+                end
             end
             _G.NOMU_QA.ApplyScheme(current)
         end

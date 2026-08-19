@@ -5,6 +5,7 @@ GLOBAL.STRINGS.NOMU_QA = {
     MEASURE_WORD = '个',
     HOUNDFIRE = '火焰',
     SKETCH = '草图',
+    IA_SKETCH = '草图',
     SKETCH_POLAR = '草图',
     TOADSTOOL_CAP = '蟾蜍洞穴',
     ICEFISHING_HOLE = '冰钓洞',
@@ -604,20 +605,23 @@ ENV = {
         FORMATS = {
             SINGLE = '这里有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
             DEFAULT = '这里有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
+
             NAMED = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED_THIS = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这个名为 {NAME}{SHOW_ME}{DISTANCE}。',
 
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             
             FISH_SHOAL = '这里有群 {FISH}，共有 {NUM}条 {FISH}{SHOW_ME}{DISTANCE}！',
 
-            STATE_EQUAL = '这里有 {TOTAL}个 {NAME}，目前全都{ADJ}{SHOW_ME}{DISTANCE}。',
+            STATE_EQUAL = '这里有 {TOTAL}个 {NAME}，目前全都 {ADJ}{SHOW_ME}{DISTANCE}。',
             STATE_DESCRIBE = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 {ADJ}{SHOW_ME}{DISTANCE}。',
 
-            STATE_THIS = '这里有 {TOTAL}个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
-            STATE_THIS_SINGLE = '这里有 1个 {NAME}，其中这个{ADJ}{SHOW_ME}{DISTANCE}。',
+            STATE_THIS = '这里有 {TOTAL}个 {NAME}，其中这个 {ADJ}{SHOW_ME}{DISTANCE}。',
+            STATE_THIS_SINGLE = '这里有 1个 {NAME}，其中这个 {ADJ}{SHOW_ME}{DISTANCE}。',
 
             STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个有 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}。',
             STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 是空的{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY_THIS = '这里有 {TOTAL}个 {NAME}，其中这个是 空的{SHOW_ME}{DISTANCE}。',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -683,13 +687,13 @@ ENV = {
                     MUSHROOMFARM_STAGE4 = "长得快爆满啦",
 
                     STUMP = "变成树桩了",
-                    SAPLING = "还是小树苗",
-                    SHORT = "才刚刚长出来",
+                    SAPLING = "是小树苗",
+                    SHORT = "才刚刚长出",
                     NORMAL = "长得正茂盛",
                     TALL = "长得高高的",
                     BOULDER = "已经变成矿床了",
                     ANCIENT_READY = "结满了果实",
-                    ANCIENT_EMPTY = "光秃秃的没有果实",
+                    ANCIENT_EMPTY = "没有果实",
                     MARBLE_TREE = "是由大理石构成的",
 
                     TROPHYSCALE_EMPTY = '是空空的',
@@ -1093,8 +1097,7 @@ BLOOMNESS = {
                     STAGE_5 = '感觉要谢了！',
                 },
                 SYMBOL = {
-                    EMOJI = 'flower',
-                    TEXT = '绽放状态'
+                    TEXT = '绽放值'
                 }
             }
         }
