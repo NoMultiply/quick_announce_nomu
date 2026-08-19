@@ -3258,24 +3258,16 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             local item_display_name = GetEntityName(held_item, false)
             local stack_size = held_item.replica and held_item.replica.stackable and held_item.replica.stackable:StackSize() or 1
 
-            local fmt_name = (count_prefab > 1 or not qa.FORMATS.STORAGE_HAS_SINGLE) and "STORAGE_HAS" or "STORAGE_HAS_SINGLE"
-            return Announce(subfmt(qa.FORMATS[fmt_name] or qa.FORMATS.STORAGE_HAS, {
+            return Announce(subfmt(qa.FORMATS.STORAGE_HAS, {
                 TOTAL = count_prefab,
                 NAME = prefab_name,
                 NUM = stack_size,
                 ITEM = item_display_name,
                 SHOW_ME = show_me,
                 DISTANCE = dist_str
-            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", fmt_name))
+            }), entity:HasTag('player'), debug_str, GetStatementLoc("ENV", "STORAGE_HAS"))
         else
-            local fmt_name
-            if count_prefab > 1 then
-                fmt_name = qa.FORMATS.STORAGE_EMPTY_THIS and "STORAGE_EMPTY_THIS" or "STORAGE_EMPTY"
-            else
-                fmt_name = qa.FORMATS.STORAGE_EMPTY_THIS_SINGLE and "STORAGE_EMPTY_THIS_SINGLE" 
-                    or (qa.FORMATS.STORAGE_EMPTY_THIS and "STORAGE_EMPTY_THIS" or "STORAGE_EMPTY")
-            end
-
+            -- 统计空的数量
             local empty_count = 0
             for _, v in ipairs(entities) do
                 if v.prefab == "gelblob_storage" and v.entity:IsVisible() then
@@ -3284,6 +3276,11 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
                         empty_count = empty_count + 1
                     end
                 end
+            end
+
+            local fmt_name = "STORAGE_EMPTY"
+            if empty_count == 1 and qa.FORMATS.STORAGE_EMPTY_THIS then
+                fmt_name = "STORAGE_EMPTY_THIS"
             end
 
             return Announce(subfmt(qa.FORMATS[fmt_name], {
