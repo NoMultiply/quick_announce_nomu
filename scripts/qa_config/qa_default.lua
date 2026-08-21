@@ -607,7 +607,7 @@ ENV = {
             DEFAULT = '这里有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
 
             NAMED = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
-            NAMED_THIS = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这个名为 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED_THIS = '这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这个 名为 {NAME}{SHOW_ME}{DISTANCE}。',
 
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             
