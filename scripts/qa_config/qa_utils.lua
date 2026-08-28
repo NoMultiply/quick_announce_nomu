@@ -1,5 +1,27 @@
 GLOBAL.QA_UTILS = {
+    IsAltPressed = function()
+        local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
+        if mode == 1 then
+            return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
+        elseif mode == 2 then
+            return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
+        else
+            return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
+                or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
+        end
+    end,
 
+    IsShiftPressed = function()
+        local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.SHIFT_MODE) or 1
+        if mode == 1 then
+            return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
+        elseif mode == 2 then
+            return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
+        else
+            return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
+                or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
+        end
+    end,
 
     GetWorldType = function()
         if not GLOBAL.TheWorld then return "SURFACE" end

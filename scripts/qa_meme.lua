@@ -2,12 +2,21 @@ if not GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM then
     return
 end
 
+
+local oldNetworking_Say = GLOBAL.Networking_Say
+GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+    if type(message) == "string" and string.match(message, "%[Meme:.-%]") then
+        message = message .. "\n "
+    end
+    return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+end
+
 local LIST = {
     List_0 = {}, -- 收藏分类
     List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
     List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
 }
-for i = 1, 165 do table.insert(LIST.List_1, "zayu_"..i) end
+for i = 1, 180 do table.insert(LIST.List_1, "zayu_"..i) end
 for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
 for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
 for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
@@ -84,10 +93,7 @@ table.insert(Assets, Asset("IMAGE", "images/meme/meme_hd.tex"))
 
 -- 悬浮预览功能
 GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, atlas, is_anim)
-    -- 先检查表情是否有效
-    if not VALID_MEME_NAMES[meme_name] then
-        return nil
-    end
+    if not VALID_MEME_NAMES[meme_name] then return nil end
 
     local Image = GLOBAL.require("widgets/image")
     local UIAnim = GLOBAL.require("widgets/uianim")
@@ -103,6 +109,7 @@ GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, a
             meme_widget.hover_preview = nil
         end
     end
+
     local function ShowHover()
         if GLOBAL.NOMU_QA.DATA.DISABLE_MEME_PREVIEW then return end
         if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then return end
@@ -121,8 +128,7 @@ GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, a
         else
             if GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name] then
                 hp = top_parent:AddChild(Image("images/meme/meme_hd.xml", meme_name..".tex", meme_name..".tex"))
-                local hd_scale = 0.80
-                hp:SetScale(hd_scale * ui_scale, hd_scale * ui_scale, hd_scale * ui_scale)
+                hp:SetScale(0.80 * ui_scale, 0.80 * ui_scale, 0.80 * ui_scale)
             else
                 hp = top_parent:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
                 hp:SetScale(1.80 * ui_scale, 1.80 * ui_scale, 1.80 * ui_scale)
@@ -132,12 +138,8 @@ GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, a
         hp:MoveToFront()
         if dummy_tracker.inst:IsValid() then
             local w_pos = dummy_tracker:GetWorldPosition()
-            local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
-
-            if is_hd then
-                local hd_offset_x = 45
-                local hd_offset_y = 38
-                hp:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+            if not is_anim and GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name] then
+                hp:SetPosition(w_pos.x + 45, w_pos.y + 38, w_pos.z)
             else
                 hp:SetPosition(w_pos:Get())
             end
@@ -147,31 +149,17 @@ GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, a
 
     meme_widget.inst:ListenForEvent("onremove", HideHover)
     dummy_tracker.inst:ListenForEvent("onremove", HideHover)
-    meme_widget:SetOnGainFocus(function()
-        meme_widget.ui_focus = true
-        ShowHover()
-    end)
-    meme_widget:SetOnLoseFocus(function()
-        meme_widget.ui_focus = false
-        if not meme_widget.manual_hover then
-            HideHover()
-        end
-    end)
+    meme_widget:SetOnGainFocus(function() meme_widget.ui_focus = true; ShowHover() end)
+    meme_widget:SetOnLoseFocus(function() meme_widget.ui_focus = false; if not meme_widget.manual_hover then HideHover() end end)
 
     dummy_tracker.inst:DoPeriodicTask(0, function()
         if not meme_widget.inst:IsValid() or not dummy_tracker.inst:IsValid() then
-            HideHover()
-            return
+            HideHover(); return
         end
         if meme_widget.hover_preview and meme_widget.hover_preview.inst:IsValid() then
             local w_pos = dummy_tracker:GetWorldPosition()
-
-            local is_hd = GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name]
-            if is_hd then
-                local hd_offset_x = 45
-                local hd_offset_y = 38
-                
-                meme_widget.hover_preview:SetPosition(w_pos.x + hd_offset_x, w_pos.y + hd_offset_y, w_pos.z)
+            if not is_anim and GLOBAL.NOMU_QA.HD_MEMES and GLOBAL.NOMU_QA.HD_MEMES[meme_name] then
+                meme_widget.hover_preview:SetPosition(w_pos.x + 45, w_pos.y + 38, w_pos.z)
             else
                 meme_widget.hover_preview:SetPosition(w_pos:Get())
             end
@@ -182,227 +170,132 @@ GLOBAL.NOMU_QA.AttachHoverZoom = function(parent_root, meme_widget, meme_name, a
             if not meme_widget.ui_focus then HideHover() end
             return
         end
+
         local mouse_pos = GLOBAL.TheInput:GetScreenPosition()
         local widget_pos = meme_widget:GetWorldPosition()
-        local ui_scale = GLOBAL.TheFrontEnd:GetHUDScale()
-        local threshold = 35 * ui_scale
-        local dx = mouse_pos.x - widget_pos.x
-        local dy = mouse_pos.y - widget_pos.y
+        local threshold = 35 * GLOBAL.TheFrontEnd:GetHUDScale()
+        local dx, dy = mouse_pos.x - widget_pos.x, mouse_pos.y - widget_pos.y
         if dx*dx + dy*dy <= threshold*threshold then
-            if not meme_widget.manual_hover then
-                meme_widget.manual_hover = true
-                ShowHover()
-            end
+            if not meme_widget.manual_hover then meme_widget.manual_hover = true; ShowHover() end
         else
             if meme_widget.manual_hover then
                 meme_widget.manual_hover = false
-                if not meme_widget.ui_focus then
-                    HideHover()
-                end
+                if not meme_widget.ui_focus then HideHover() end
             end
         end
     end)
     return dummy_tracker
 end
 
--- 局内聊天框
-AddClassPostConstruct("widgets/redux/chatline", function(self)
+local function InjectMemeHover(self, is_lobby)
     local Image = GLOBAL.require("widgets/image")
     local UIAnim = GLOBAL.require("widgets/uianim")
 
-    self.meme_alpha = 1
-
-    local old_SetChatData = self.SetChatData
-    function self:SetChatData(...)
-        if old_SetChatData then old_SetChatData(self, ...) end
-        self:UpdateMemeDisplay()
-    end
-
-    local old_UpdateAlpha = self.UpdateAlpha
-    function self:UpdateAlpha(alpha, ...)
-        if old_UpdateAlpha then old_UpdateAlpha(self, alpha, ...) end
-        if self.meme then
-            if self.meme.isanim then
-                self.meme:GetAnimState():SetMultColour(1, 1, 1, alpha)
-            else
-                self.meme:SetFadeAlpha(alpha)
-            end
-            self.meme_alpha = alpha
-        end
-    end
-
-    function self:UpdateMemeDisplay()
-        local is_skin_announcement = self.type == (GLOBAL.ChatTypes and GLOBAL.ChatTypes.SkinAnnouncement or 4)
-        local str = nil
-        if not is_skin_announcement then
-            str = self.message and self.message:GetString()
-        end
-        local meme_name = str and string.match(str, "%[Meme:(.-)%]")
-
-        -- 判空
-        if meme_name and not VALID_MEME_NAMES[meme_name] then
-            meme_name = nil  -- 无效表情当作普通文本处理
-        end
-
-        if self.current_meme_name == meme_name then
-            if meme_name then
-                if self.message then self.message:Hide() end
-            else
-                if self.message and not is_skin_announcement then self.message:Show() end
-            end
-            return
-        end
-        self.current_meme_name = meme_name
-
-        if self.meme then
-            self.meme:Kill()
-            self.meme = nil
-        end
-        if self.meme_dummy_tracker then
-            self.meme_dummy_tracker:Kill()
-            self.meme_dummy_tracker = nil
-        end
-
-        if meme_name then
-            if self.message then self.message:Hide() end
-            local name = meme_name
-            if name:sub(1, 4) == "gif_" then
-                self.meme = self.root:AddChild(UIAnim())
-                self.meme:GetAnimState():SetBank(name)
-                self.meme:GetAnimState():SetBuild(name)
-                self.meme:GetAnimState():PlayAnimation("idle", true)
-                self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
-                self.meme:GetAnimState():SetMultColour(1, 1, 1, self.meme_alpha)
-                self.meme.isanim = true
-                self.meme.atlas = nil
-
-                self.meme:SetPosition(-268, -8)
-            else
-                local prefix = name:match("^(.*)_%d+")
-                local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
-                self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
-                self.meme:SetFadeAlpha(self.meme_alpha)
-                self.meme.isanim = false
-                self.meme.atlas = atlas
-
-                local img_w, img_h = self.meme:GetSize()
-                self.meme:SetPosition(-294 + (img_w * 0.4) / 2, -8)
-            end
-            
-            self.meme:SetScale(.4, .4, .4)
-            if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                self.meme:SetRegionSize(100, 100)
-            end
-            self.meme:SetClickable(true)
-            self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
-        else
-            if self.message and not is_skin_announcement then
-                self.message:Show()
-            end
-        end
-    end
-end)
-
--- 选人界面聊天框
-AddClassPostConstruct("widgets/redux/lobbychatline", function(self)
-    local Image = GLOBAL.require("widgets/image")
-    local UIAnim = GLOBAL.require("widgets/uianim")
+    self.meme_alpha = self.meme_alpha or 1
 
     local old_SetChatData = self.SetChatData
     if old_SetChatData then
-        function self:SetChatData(...)
-            old_SetChatData(self, ...)
+        self.SetChatData = function(w, ...)
+            old_SetChatData(w, ...)
+            w:UpdateMemeDisplay()
+        end
+    elseif is_lobby and self.message then
+        local old_SetString = self.message.SetString
+        self.message.SetString = function(msg_self, str, ...)
+            if old_SetString then old_SetString(msg_self, str, ...) end
             self:UpdateMemeDisplay()
         end
-    else
-        if self.message then
-            local old_SetString = self.message.SetString
-            self.message.SetString = function(msg_self, str, ...)
-                if old_SetString then old_SetString(msg_self, str, ...) end
+        local old_SetTruncatedString = self.message.SetTruncatedString
+        if old_SetTruncatedString then
+            self.message.SetTruncatedString = function(msg_self, str, ...)
+                old_SetTruncatedString(msg_self, str, ...)
                 self:UpdateMemeDisplay()
-            end
-            local old_SetTruncatedString = self.message.SetTruncatedString
-            if old_SetTruncatedString then
-                self.message.SetTruncatedString = function(msg_self, str, ...)
-                    old_SetTruncatedString(msg_self, str, ...)
-                    self:UpdateMemeDisplay()
-                end
             end
         end
     end
 
-    function self:UpdateMemeDisplay()
-        if not self.message then return end
-        local str = self.message:GetString()
+    if not is_lobby then
+        local old_UpdateAlpha = self.UpdateAlpha
+        self.UpdateAlpha = function(w, alpha, ...)
+            if old_UpdateAlpha then old_UpdateAlpha(w, alpha, ...) end
+            if w.meme then
+                if w.meme.isanim then w.meme:GetAnimState():SetMultColour(1, 1, 1, alpha)
+                else w.meme:SetFadeAlpha(alpha) end
+                w.meme_alpha = alpha
+            end
+        end
+    end
+
+    self.UpdateMemeDisplay = function(w)
+        local is_skin_announcement = not is_lobby and w.type == (GLOBAL.ChatTypes and GLOBAL.ChatTypes.SkinAnnouncement or 4)
+        local str = (not is_skin_announcement and w.message) and w.message:GetString() or nil
         local meme_name = str and string.match(str, "%[Meme:(.-)%]")
 
-        -- 判空
-        if meme_name and not VALID_MEME_NAMES[meme_name] then
-            meme_name = nil
-        end
+        if meme_name and not VALID_MEME_NAMES[meme_name] then meme_name = nil end
 
-        if self.current_meme_name == meme_name then
-            if meme_name then
-                if self.message then self.message:Hide() end
-            else
-                if self.message then self.message:Show() end
+        if w.current_meme_name == meme_name then
+            if w.message then
+                if meme_name then w.message:Hide()
+                elseif not is_skin_announcement then w.message:Show() end
             end
             return
         end
-        self.current_meme_name = meme_name
+        w.current_meme_name = meme_name
 
-        if self.meme then
-            self.meme:Kill()
-            self.meme = nil
-        end
-        if self.meme_dummy_tracker then
-            self.meme_dummy_tracker:Kill()
-            self.meme_dummy_tracker = nil
-        end
+        if w.meme then w.meme:Kill(); w.meme = nil end
+        if w.meme_dummy_tracker then w.meme_dummy_tracker:Kill(); w.meme_dummy_tracker = nil end
 
         if meme_name then
-            self.message:Hide()
-            local name = meme_name
+            if w.message then w.message:Hide() end
             
-            local msg_x, msg_y = self.message:GetPosition():Get()
-            local w, h = self.message:GetRegionSize()
-            
-            if name:sub(1, 4) == "gif_" then
-                self.meme = self.root:AddChild(UIAnim())
-                self.meme:GetAnimState():SetBank(name)
-                self.meme:GetAnimState():SetBuild(name)
-                self.meme:GetAnimState():PlayAnimation("idle", true)
-                self.meme:GetAnimState():SetTime(GLOBAL.GetTime())
-                self.meme.isanim = true
-                self.meme.atlas = nil
-
-                self.meme:SetPosition(msg_x - w/2 + 100, msg_y - 12)
+            if meme_name:sub(1, 4) == "gif_" then
+                w.meme = w.root:AddChild(UIAnim())
+                w.meme:GetAnimState():SetBank(meme_name)
+                w.meme:GetAnimState():SetBuild(meme_name)
+                w.meme:GetAnimState():PlayAnimation("idle", true)
+                w.meme:GetAnimState():SetTime(GLOBAL.GetTime())
+                if not is_lobby then w.meme:GetAnimState():SetMultColour(1, 1, 1, w.meme_alpha) end
+                w.meme.isanim = true
+                w.meme.atlas = nil
             else
-                local prefix = name:match("^(.*)_%d+")
-                local atlas = prefix ~= nil and Prefix_Atlas_Map[prefix] or "images/meme/"..name..".xml"
-                self.meme = self.root:AddChild(Image(atlas, name..".tex", name..".tex"))
-                self.meme.isanim = false
-                self.meme.atlas = atlas
-
-                local img_w, img_h = self.meme:GetSize()
-                self.meme:SetPosition((msg_x - w/2 + 72) + (img_w * 0.35) / 2, msg_y - 12)
+                local prefix = meme_name:match("^(.*)_%d+")
+                local atlas = Prefix_Atlas_Map[prefix] or "images/meme/"..meme_name..".xml"
+                w.meme = w.root:AddChild(Image(atlas, meme_name..".tex", meme_name..".tex"))
+                if not is_lobby then w.meme:SetFadeAlpha(w.meme_alpha) end
+                w.meme.isanim = false
+                w.meme.atlas = atlas
             end
             
-            self.meme:SetScale(0.35, 0.35, 0.35)
-            if self.extra_line_count then
-                self.extra_line_count = self.extra_line_count + 1
+            -- 自适应排版
+            if is_lobby then
+                local mx, my = w.message:GetPosition():Get()
+                local mw = w.message:GetRegionSize()
+                if w.meme.isanim then
+                    w.meme:SetPosition(mx - mw/2 + 100, my - 12)
+                else
+                    w.meme:SetPosition((mx - mw/2 + 72) + (w.meme:GetSize() * 0.35) / 2, my - 12)
+                end
+                w.meme:SetScale(0.35)
+                if w.extra_line_count then w.extra_line_count = w.extra_line_count + 1 end
+            else
+                if w.meme.isanim then
+                    w.meme:SetPosition(-268, -8)
+                else
+                    w.meme:SetPosition(-294 + (w.meme:GetSize() * 0.4) / 2, -8)
+                end
+                w.meme:SetScale(0.4)
             end
-            if self.meme.isanim and type(self.meme.SetRegionSize) == "function" then
-                self.meme:SetRegionSize(100, 100)
-            end
-            self.meme:SetClickable(true)
-            self.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(self.root, self.meme, name, self.meme.atlas, self.meme.isanim)
+
+            if w.meme.isanim and type(w.meme.SetRegionSize) == "function" then w.meme:SetRegionSize(100, 100) end
+            w.meme:SetClickable(true)
+            w.meme_dummy_tracker = GLOBAL.NOMU_QA.AttachHoverZoom(w.root, w.meme, meme_name, w.meme.atlas, w.meme.isanim)
         else
-            if self.message then self.message:Show() end
+            if w.message and not is_skin_announcement then w.message:Show() end
         end
     end
 
-    if not old_SetChatData then
-        self:UpdateMemeDisplay()
-    end
-end)
+    if is_lobby and not old_SetChatData then self:UpdateMemeDisplay() end
+end
+
+AddClassPostConstruct("widgets/redux/chatline", function(self) InjectMemeHover(self, false) end)
+AddClassPostConstruct("widgets/redux/lobbychatline", function(self) InjectMemeHover(self, true) end)

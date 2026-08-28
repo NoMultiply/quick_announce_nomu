@@ -6,11 +6,46 @@ local Image = require "widgets/image"
 local TextButton = require "widgets/textbutton"
 local Text = require "widgets/text"
 local UIAnim = require "widgets/uianim"
+local PlayerBadge = require "widgets/playerbadge"
 
 -- 获取主文件暴露的局部函数和常量
 local DeepCopy = GLOBAL.NOMU_QA.DeepCopy
 local Announce = GLOBAL.NOMU_QA.Announce
 local VERSION = GLOBAL.NOMU_QA.VERSION
+
+-- ==========================================
+-- 通用 UI 辅助构建函数
+-- ==========================================
+local function MakeListItem(name, w, h)
+    local item = Widget(name)
+    item.backing = item:AddChild(TEMPLATES.ListItemBackground(w, h, function() end))
+    item.backing.move_on_click = true
+    item.text = item:AddChild(Text(GLOBAL.BODYTEXTFONT, 20, nil, GLOBAL.UICOLOURS.WHITE))
+    item.focus_forward = item.backing
+    return item
+end
+
+local function MakeHoverBtn(parent, text, size, x, color, hover_color)
+    local btn = parent:AddChild(TextButton())
+    btn:SetFont(GLOBAL.CHATFONT)
+    btn:SetTextSize(size)
+    btn:SetText(text)
+    btn:SetPosition(x, 0, 0)
+    btn:SetTextColour(color or {1, 1, 1, 1})
+    btn:SetTextFocusColour(hover_color or {1, 1, 1, 1})
+    btn:Hide()
+    return btn
+end
+
+local function BindHoverActions(item, btns)
+    function item:OnGainFocus()
+        for _, b in ipairs(btns) do if b then b:Show() end end
+    end
+    function item:OnLoseFocus()
+        for _, b in ipairs(btns) do if b then b:Hide() end end
+    end
+end
+-- ==========================================
 
 local NoMuScreen = Class(Screen, function(self, name, nomu_parent, width, height, title)
     Screen._ctor(self, name)
@@ -23,7 +58,6 @@ local NoMuScreen = Class(Screen, function(self, name, nomu_parent, width, height
     self.root:SetVAnchor(ANCHOR_MIDDLE)
     self.root:SetPosition(0, 0)
 
-    -- 标准化按钮添加方法
     self.AddButton = function(x, y, w, h, text, fn)
         local button = self.root:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
         button:SetFont(CHATFONT)
@@ -39,10 +73,13 @@ local NoMuScreen = Class(Screen, function(self, name, nomu_parent, width, height
         return button
     end
 
-    -- 切换按钮添加方法
     self.AddToggle = function(x, y, w, h, key, text_on, text_off, on_toggle)
         return self.AddButton(x, y, w, h, function() return GLOBAL.NOMU_QA.DATA[key] and text_on or text_off end, function()
-            if on_toggle then on_toggle() else GLOBAL.NOMU_QA.DATA[key] = not GLOBAL.NOMU_QA.DATA[key] end
+            if on_toggle then 
+                on_toggle() 
+            else 
+                GLOBAL.NOMU_QA.DATA[key] = not GLOBAL.NOMU_QA.DATA[key] 
+            end
             GLOBAL.NOMU_QA.SaveData()
         end)
     end
@@ -50,9 +87,14 @@ end)
 
 function NoMuScreen:Close()
     if self.EM_all_widgets then
-        for _, v in ipairs(self.EM_all_widgets) do if v and v.Kill then v:Kill() end end
+        for _, v in ipairs(self.EM_all_widgets) do 
+            if v and v.Kill then v:Kill() end 
+        end
     end
-    if self.EM_input then self.EM_input:Remove(); self.EM_input = nil end
+    if self.EM_input then 
+        self.EM_input:Remove()
+        self.EM_input = nil 
+    end
     if self.nomu_parent then self.nomu_parent:Show() end
     TheFrontEnd:PopScreen(self)
 end
@@ -101,7 +143,10 @@ function NoMuList:Refresh(list_data, override)
         apply_fn = function(_, w, data)
             w.data = data
             w.nomu_list_item:Hide()
-            if not data then w.focus_forward = nil; return end
+            if not data then 
+                w.focus_forward = nil
+                return 
+            end
             w.focus_forward = w.nomu_list_item
             w.nomu_list_item:Show()
             w.nomu_list_item:SetInfo(data)
@@ -128,12 +173,10 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     self.EM_emojis = {}
     local S = STRINGS.NOMU_QA.EMOJI_MENU
 
-    local target_textbox = nil
-    if mode == "chat" and self.chat_edit then target_textbox = self.chat_edit
-    elseif mode == "input_string" and self.config_input then target_textbox = self.config_input.textbox
-    elseif mode == "rename_position" and self.rename then target_textbox = self.rename.textbox
-    elseif mode == "lobby_chat" and self.chatbox then target_textbox = self.chatbox.textbox
-    end
+    local target_textbox = (mode == "chat" and self.chat_edit) 
+                        or (mode == "input_string" and self.config_input and self.config_input.textbox) 
+                        or (mode == "rename_position" and self.rename and self.rename.textbox) 
+                        or (mode == "lobby_chat" and self.chatbox and self.chatbox.textbox)
 
     self.RestoreInputFocus = function()
         if target_textbox then target_textbox:SetEditing(true) end
@@ -154,40 +197,47 @@ local function CreateEmojiAndPhraseMenu(self, mode)
 
     local function build_bg()
         local bg_parent = (mode == "chat" and self.screen_root) or ((mode == "input_string" or mode == "rename_position") and self.root) or self
-        self.EM_bg = bg_parent:AddChild(TEMPLATES.RectangleWindow(360, 380, "", nil, nil, ""))
+        self.EM_bg = bg_parent:AddChild(Widget("EM_bg"))
+        
+        local width, height = 360, 380
+        local atlas = resolvefilepath(CRAFTING_ATLAS)
+
+        local function AddTex(tex, w, h, x, y, clickable)
+            local img = self.EM_bg:AddChild(Image(atlas, tex))
+            img:ScaleToSize(w, h); img:SetPosition(x, y)
+            if clickable == false then img:SetClickable(false) end
+            return img
+        end
+
+        local fill = AddTex("backing.tex", width + 10, height + 18, 0, 0)
+        fill:SetTint(1, 1, 1, 0.5) 
+        AddTex("side.tex", -26, -(height - 20), -width/2 - 8, 1)
+        AddTex("side.tex", 26, height - 20, width/2 + 8, 1, false)
+        AddTex("top.tex", width + 34, 38, 0, height/2 + 10)
+        AddTex("bottom.tex", width + 34, 38, 0, -height/2 - 8, false)
         
         if mode == "chat" then self.EM_bg:SetPosition(-320, 320, 0); self.EM_bg:MoveToFront()
         elseif mode == "input_string" then self.EM_bg:SetPosition(400, 0, 0); self.EM_bg:MoveToFront()
         elseif mode == "lobby_chat" then self.EM_bg:SetPosition(390, 310, 0); self.EM_bg:MoveToFront()
         else self.EM_bg:SetPosition(400, 20, 0) end
-        
-        self.EM_bg:SetBackgroundTint(80/255, 61/255, 39/255, 0.9)
+
         table.insert(self.EM_all_widgets, self.EM_bg)
 
         self.EM_menu_root = self.EM_bg:AddChild(Widget("menu_root"))
-        self.EM_menu_root:SetPosition(0, 0, 0)
-
         self.EM_page_1 = self.EM_bg:AddChild(Widget("page_1"))
-        self.EM_page_2 = self.EM_bg:AddChild(Widget("page_2")); self.EM_page_2:Hide()
-        self.EM_page_3 = self.EM_bg:AddChild(Widget("page_3")); self.EM_page_3:Hide()
+        self.EM_page_2 = self.EM_bg:AddChild(Widget("page_2"))
+        self.EM_page_3 = self.EM_bg:AddChild(Widget("page_3"))
+        self.EM_page_4 = self.EM_bg:AddChild(Widget("page_4"))
 
-        -- 封装标签切换与记忆逻辑
         local function SwitchToTab(tab_idx)
-            if not GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM and tab_idx == 3 then
-                tab_idx = 1
-            end
+            if not GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM and tab_idx == 3 then tab_idx = 1 end
             GLOBAL.NOMU_QA.LAST_EMOJI_TAB = tab_idx
 
-            self.EM_page_1:Hide()
-            self.EM_page_2:Hide()
-            self.EM_page_3:Hide()
-
-            if tab_idx == 1 then
-                self.EM_page_1:Show()
-            elseif tab_idx == 2 then
-                self.EM_page_2:Show()
-            elseif tab_idx == 3 then
-                self.EM_page_3:Show()
+            for i = 1, 4 do
+                if i == tab_idx then self["EM_page_"..i]:Show() else self["EM_page_"..i]:Hide() end
+            end
+            if tab_idx == 4 and self.EM_player_list then
+                self.EM_player_list:Refresh(GLOBAL.TheNet:GetClientTable() or {})
             end
         end
         self.SwitchToTab = SwitchToTab
@@ -209,6 +259,10 @@ local function CreateEmojiAndPhraseMenu(self, mode)
             self.EM_btn_2 = AddTabBtn(60, 160, S.TAB_PHRASE, 2)
         end
 
+        self.EM_btn_2:SetOnClick(function()
+            SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB == 2 and 4 or 2)
+        end)
+
         -- ===== Tab 1: Emoji =====
         if #self.EM_emojis == 0 then
             local function AddEmojiBtn(char)
@@ -220,7 +274,9 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 table.insert(self.EM_emojis, textbtn)
             end
             
-            for _, v in pairs(GLOBAL.EMOJI_ITEMS or {}) do if v.data and v.data.utf8_str then AddEmojiBtn(v.data.utf8_str) end end
+            for _, v in pairs(GLOBAL.EMOJI_ITEMS or {}) do 
+                if v.data and v.data.utf8_str then AddEmojiBtn(v.data.utf8_str) end 
+            end
             for _, v in ipairs(controller_emojis) do AddEmojiBtn(v) end
 
             local space_x, space_y, row_buttons, y_offset = 35, 35, 10, 125
@@ -238,15 +294,9 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         end
 
         self.EM_str_list = self.EM_page_2:AddChild(NoMuList(function()
-            local item = Widget('freq-list-item')
-            item.backing = item:AddChild(TEMPLATES.ListItemBackground(320, 40, function() end))
-            item.text = item:AddChild(Text(GLOBAL.BODYTEXTFONT, 20, nil, GLOBAL.UICOLOURS.WHITE))
-            item.delete = item:AddChild(TextButton())
-            item.delete:SetFont(GLOBAL.CHATFONT); item.delete:SetTextSize(20); item.delete:SetText(GLOBAL.STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-            item.delete:SetPosition(140, 0, 0); item.delete:SetTextColour({1,0,0,1}); item.delete:Hide()
-            
-            function item:OnGainFocus() item.delete:Show() end
-            function item:OnLoseFocus() item.delete:Hide() end
+            local item = MakeListItem('freq-list-item', 320, 40)
+            item.delete = MakeHoverBtn(item, GLOBAL.STRINGS.NOMU_QA.BUTTON_TEXT_DELETE, 20, 140, {1,0,0,1})
+            BindHoverActions(item, {item.delete})
             
             item.SetInfo = function(_, data)
                 item.text:SetString(#data.freq > 45 and string.sub(data.freq, 1, 45) .. "..." or data.freq)
@@ -259,7 +309,6 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                     end
                 end)
             end
-            item.focus_forward = item.backing
             return item
         end, 0, 20, 320, 40, 1, 5))
 
@@ -286,7 +335,6 @@ local function CreateEmojiAndPhraseMenu(self, mode)
 
         -- ===== Tab 3: Meme 表情包 =====
         if GLOBAL.NOMU_QA.ENABLE_MEME_SYSTEM then
-            -- 读取记忆中的分类和翻页
             local current_tab = GLOBAL.NOMU_QA.LAST_MEME_TAB or 0 
             local current_cat_page = GLOBAL.NOMU_QA.LAST_MEME_CAT_PAGE or 1
             local cats_per_page = 5
@@ -297,55 +345,28 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 item.btn:SetNormalScale(0.45, 0.45, 0.45); item.btn:SetFocusScale(0.5, 0.5, 0.5)
 
                 item.fav_marker = item:AddChild(Text(GLOBAL.UIFONT, 25, "★"))
-                item.fav_marker:SetColour(1, 0.8, 0.1, 1)
-                item.fav_marker:SetPosition(22, 22)
-                item.fav_marker:SetClickable(false)
-                item.fav_marker:Hide()
+                item.fav_marker:SetColour(1, 0.8, 0.1, 1); item.fav_marker:SetPosition(22, 22); item.fav_marker:SetClickable(false); item.fav_marker:Hide()
                 
                 local old_OnMouseButton = item.btn.OnMouseButton
                 item.btn.OnMouseButton = function(self_btn, button, down, x, y)
-                    -- 中键收藏/取消收藏逻辑
-                    if button == GLOBAL.MOUSEBUTTON_MIDDLE and not down then
-                        if item.data then
-                            local name = item.data.name
-                            local favs = GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}
-                            local found_idx = nil
-                            for i, v in ipairs(favs) do
-                                if v == name then found_idx = i; break end
-                            end
-                            if found_idx then
-                                table.remove(favs, found_idx)
-                                item.fav_marker:Hide()
-                            else
-                                table.insert(favs, 1, name)
-                                item.fav_marker:Show()
-                            end
-                            GLOBAL.NOMU_QA.DATA.MEME_FAVS = favs
-                            GLOBAL.NOMU_QA.SaveData()
-                            
-                            if current_tab == 0 and item.refresh_fn then 
-                                item.refresh_fn() 
-                            end
-                        end
+                    if button == GLOBAL.MOUSEBUTTON_MIDDLE and not down and item.data then
+                        local name = item.data.name
+                        local favs = GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}
+                        local found_idx = nil
+                        for i, v in ipairs(favs) do if v == name then found_idx = i; break end end
+                        if found_idx then table.remove(favs, found_idx); item.fav_marker:Hide()
+                        else table.insert(favs, 1, name); item.fav_marker:Show() end
+                        GLOBAL.NOMU_QA.DATA.MEME_FAVS = favs; GLOBAL.NOMU_QA.SaveData()
+                        if current_tab == 0 and item.refresh_fn then item.refresh_fn() end
                         return true
                     end
                     
-                    -- 右键发送悄悄话表情逻辑
-                    if button == GLOBAL.MOUSEBUTTON_RIGHT and not down then
-                        if item.data then
-                            SendMemeChatMessage(item.data.name, true)
-                            if self.EM_bg then self.EM_bg:Hide() end
-
-                            if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
-                                if type(self.Close) == "function" then
-                                    self:Close()
-                                else
-                                    GLOBAL.TheFrontEnd:PopScreen(self)
-                                end
-                            else
-                                self.RestoreInputFocus()
-                            end
-                        end
+                    if button == GLOBAL.MOUSEBUTTON_RIGHT and not down and item.data then
+                        SendMemeChatMessage(item.data.name, true)
+                        if self.EM_bg then self.EM_bg:Hide() end
+                        if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                            if type(self.Close) == "function" then self:Close() else GLOBAL.TheFrontEnd:PopScreen(self) end
+                        else self.RestoreInputFocus() end
                         return true
                     end
                     
@@ -358,51 +379,29 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                     item.btn:SetTextures(data.atlas or ("images/meme/" .. data.name .. ".xml"), data.name .. ".tex", data.name .. ".tex", nil, data.name .. ".tex")
 
                     local img_w, img_h = item.btn:GetSize()
-                    local base_scale = 0.45
-                    local max_size = 58
-                    
+                    local final_scale, max_size = 0.45, 58
                     if img_w and img_h then
-                        local final_scale = base_scale
-
                         if img_w * final_scale > max_size then final_scale = max_size / img_w end
                         if img_h * final_scale > max_size then final_scale = max_size / img_h end
-
                         item.btn:SetPosition(0, 0)
                         item.btn:SetNormalScale(final_scale, final_scale, final_scale)
                         item.btn:SetFocusScale(final_scale * 1.15, final_scale * 1.15, final_scale * 1.15)
-
-                        if item.btn.image then
-                            item.btn.image:SetScale(final_scale, final_scale, final_scale)
-                        end
+                        if item.btn.image then item.btn.image:SetScale(final_scale, final_scale, final_scale) end
                     end
 
                     local is_fav = false
-                    for _, v in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do
-                        if v == data.name then
-                            is_fav = true
-                            break
-                        end
-                    end
+                    for _, v in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do if v == data.name then is_fav = true; break end end
                     if is_fav then item.fav_marker:Show() else item.fav_marker:Hide() end
 
                     item.btn:SetOnClick(function()
                         SendMemeChatMessage(data.name, false)
                         if self.EM_bg then self.EM_bg:Hide() end
-
                         if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
-                            if type(self.Close) == "function" then
-                                self:Close()
-                            else
-                                GLOBAL.TheFrontEnd:PopScreen(self)
-                            end
-                        else
-                            self.RestoreInputFocus()
-                        end
+                            if type(self.Close) == "function" then self:Close() else GLOBAL.TheFrontEnd:PopScreen(self) end
+                        else self.RestoreInputFocus() end
                     end)
                 end
-
-                item.focus_forward = item.btn
-                return item
+                item.focus_forward = item.btn; return item
             end, 0, -15, 65, 65, 5, 4))
 
             local function RefreshMemes()
@@ -410,8 +409,7 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 local grid_data = {}
                 
                 if current_tab == 0 then
-                    local favs = GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}
-                    for _, name in ipairs(favs) do
+                    for _, name in ipairs(GLOBAL.NOMU_QA.DATA.MEME_FAVS or {}) do
                         local prefix = name:match("^(.*)_%d+")
                         local atlas = (prefix and GLOBAL.NOMU_QA.Prefix_Atlas_Map and GLOBAL.NOMU_QA.Prefix_Atlas_Map[prefix]) or "images/meme/"..name..".xml"
                         table.insert(grid_data, { name = name, atlas = atlas, prefix = prefix })
@@ -425,114 +423,82 @@ local function CreateEmojiAndPhraseMenu(self, mode)
                 
                 if self.EM_meme_grid.scroll_lists and self.EM_meme_grid.scroll_lists.widgets_to_update then
                     for _, w in ipairs(self.EM_meme_grid.scroll_lists.widgets_to_update) do
-                        if w.nomu_list_item then
-                            w.nomu_list_item.refresh_fn = RefreshMemes
-                        end
+                        if w.nomu_list_item then w.nomu_list_item.refresh_fn = RefreshMemes end
                     end
                 end
             end
 
             self.EM_meme_cat_btns = {}
-            
             local function RefreshCategoryButtons()
-                for _, btn in ipairs(self.EM_meme_cat_btns) do
-                    btn:Kill()
-                end
+                for _, btn in ipairs(self.EM_meme_cat_btns) do btn:Kill() end
                 self.EM_meme_cat_btns = {}
 
                 local total_meme_lists = 0
-                while GLOBAL.NOMU_QA.MEME_LIST_DATA["List_" .. total_meme_lists] do
-                    total_meme_lists = total_meme_lists + 1
-                end
+                while GLOBAL.NOMU_QA.MEME_LIST_DATA["List_" .. total_meme_lists] do total_meme_lists = total_meme_lists + 1 end
                 local total_cat_pages = math.max(1, math.ceil(total_meme_lists / cats_per_page))
 
                 if total_cat_pages > 1 then
-                    local prev_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_square_normal.tex", "button_carny_square_hover.tex", "button_carny_square_disabled.tex", "button_carny_square_down.tex"))
-                    prev_btn:SetPosition(-170, 126); prev_btn:ForceImageSize(28, 28) 
-                    prev_btn:SetFont(GLOBAL.CHATFONT); prev_btn.text:SetColour(0, 0, 0, 1); prev_btn:SetTextSize(18)
-                    prev_btn:SetText("<")
-                    prev_btn:SetOnClick(function()
-                        current_cat_page = current_cat_page - 1
-                        if current_cat_page < 1 then current_cat_page = total_cat_pages end
-                        GLOBAL.NOMU_QA.LAST_MEME_CAT_PAGE = current_cat_page
-                        RefreshCategoryButtons()
-                    end)
-                    table.insert(self.EM_meme_cat_btns, prev_btn)
-
-                    local next_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_square_normal.tex", "button_carny_square_hover.tex", "button_carny_square_disabled.tex", "button_carny_square_down.tex"))
-                    next_btn:SetPosition(170, 126); next_btn:ForceImageSize(28, 28) 
-                    next_btn:SetFont(GLOBAL.CHATFONT); next_btn.text:SetColour(0, 0, 0, 1); next_btn:SetTextSize(18)
-                    next_btn:SetText(">")
-                    next_btn:SetOnClick(function()
-                        current_cat_page = current_cat_page + 1
-                        if current_cat_page > total_cat_pages then current_cat_page = 1 end
-                        GLOBAL.NOMU_QA.LAST_MEME_CAT_PAGE = current_cat_page
-                        RefreshCategoryButtons()
-                    end)
-                    table.insert(self.EM_meme_cat_btns, next_btn)
+                    local function AddPageBtn(text, x, step)
+                        local btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_square_normal.tex", "button_carny_square_hover.tex", "button_carny_square_disabled.tex", "button_carny_square_down.tex"))
+                        btn:SetPosition(x, 126); btn:ForceImageSize(28, 28) 
+                        btn:SetFont(GLOBAL.CHATFONT); btn.text:SetColour(0, 0, 0, 1); btn:SetTextSize(18); btn:SetText(text)
+                        btn:SetOnClick(function()
+                            current_cat_page = current_cat_page + step
+                            if current_cat_page < 1 then current_cat_page = total_cat_pages elseif current_cat_page > total_cat_pages then current_cat_page = 1 end
+                            GLOBAL.NOMU_QA.LAST_MEME_CAT_PAGE = current_cat_page; RefreshCategoryButtons()
+                        end)
+                        table.insert(self.EM_meme_cat_btns, btn)
+                    end
+                    AddPageBtn("<", -170, -1); AddPageBtn(">", 170, 1)
                 end
 
                 local start_idx = (current_cat_page - 1) * cats_per_page
                 local end_idx = math.min(start_idx + cats_per_page - 1, total_meme_lists - 1)
-                local visible_count = end_idx - start_idx + 1
-
-                local btn_width = 56
-                local btn_spacing = 6
-                local total_width = visible_count * btn_width + (visible_count - 1) * btn_spacing
-                local start_x = -total_width / 2 + btn_width / 2
+                local start_x = -(end_idx - start_idx + 1) * 62 / 2 + 28
 
                 for i = start_idx, end_idx do
-                    local list_key = "List_" .. i
-                    local title = GLOBAL.NOMU_QA.MEME_LIST_DATA[list_key] and GLOBAL.NOMU_QA.MEME_LIST_DATA[list_key].title or tostring(i)
-                    local sub_btn
-                    
-                    if i == 0 then
-                        sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_hover.tex", "button_carny_long_down.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
-                    else
-                        sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
-                    end
-                    
-                    local offset_x = start_x + (i - start_idx) * (btn_width + btn_spacing)
-                    sub_btn:SetPosition(offset_x, 126); sub_btn:ForceImageSize(btn_width, 28)
-                    
-                    sub_btn:SetFont(GLOBAL.CHATFONT); sub_btn:SetTextSize(15)
-                    sub_btn:SetText(title)
+                    local title = GLOBAL.NOMU_QA.MEME_LIST_DATA["List_"..i] and GLOBAL.NOMU_QA.MEME_LIST_DATA["List_"..i].title or tostring(i)
 
-                    if i == 0 then
-                        sub_btn:SetTextColour({0.2, 0.8, 0.2, 1})
-                        sub_btn:SetTextFocusColour({0.2, 0.8, 0.2, 1})
-                        if sub_btn.SetTextSelectedColour then 
-                            sub_btn:SetTextSelectedColour({0.2, 0.8, 0.2, 1}) 
-                        end
-                        sub_btn.text:SetColour(0.2, 0.8, 0.2, 1)
-                    else
-                        sub_btn:SetTextColour({0, 0, 0, 1})
-                        sub_btn:SetTextFocusColour({0, 0, 0, 1})
-                        if sub_btn.SetTextSelectedColour then 
-                            sub_btn:SetTextSelectedColour({0, 0, 0, 1}) 
-                        end
-                        sub_btn.text:SetColour(0, 0, 0, 1)
-                    end
+                    local sub_btn = self.EM_page_3:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
+                    
+                    sub_btn:SetPosition(start_x + (i - start_idx) * 62, 126); sub_btn:ForceImageSize(56, 28)
+                    sub_btn:SetFont(GLOBAL.CHATFONT); sub_btn:SetTextSize(15); sub_btn:SetText(title)
 
-                    if current_tab == i then
-                        sub_btn.image:SetTint(0.8, 0.8, 0.8, 1) 
-                    end
+                    local col = (i == 0) and {0.2, 0.8, 0.2, 1} or {0, 0, 0, 1}
+                    sub_btn:SetTextColour(col); sub_btn:SetTextFocusColour(col); sub_btn.text:SetColour(unpack(col))
+                    if sub_btn.SetTextSelectedColour then sub_btn:SetTextSelectedColour(col) end
+                    if current_tab == i then sub_btn.image:SetTint(0.8, 0.8, 0.8, 1) end
 
                     sub_btn:SetOnClick(function() 
-                        current_tab = i
-                        GLOBAL.NOMU_QA.LAST_MEME_TAB = i
-                        RefreshMemes() 
-                        RefreshCategoryButtons()
+                        current_tab = i; GLOBAL.NOMU_QA.LAST_MEME_TAB = i
+                        RefreshMemes(); RefreshCategoryButtons()
                     end)
                     table.insert(self.EM_meme_cat_btns, sub_btn)
                 end
             end
-
-            RefreshCategoryButtons()
-            RefreshMemes()
+            RefreshCategoryButtons(); RefreshMemes()
         end
 
-        -- 初始化时恢复到上次记忆的一级标签
+        -- ===== Tab 4: 玩家选择列表 =====
+        local pw, ph = 300, 44
+        self.EM_player_list = self.EM_page_4:AddChild(NoMuList(function()
+            local item = MakeListItem('player-list-item', pw, ph)
+            item.characterBadge = item:AddChild(PlayerBadge("", GLOBAL.DEFAULT_PLAYER_COLOUR, false, 0))
+            item.characterBadge:SetScale(0.55); item.characterBadge:SetPosition(-pw / 2 + 25, 0, 0)
+
+            item.text:SetHAlign(GLOBAL.ANCHOR_LEFT); item.text:SetRegionSize(pw - 60, ph); item.text:SetPosition(30, 0, 0)
+
+            item.SetInfo = function(_, client)
+                item.text:SetString(client.name); item.text:SetColour(unpack(client.colour or GLOBAL.DEFAULT_PLAYER_COLOUR))
+                item.characterBadge:Set(client.prefab or "", client.colour or GLOBAL.DEFAULT_PLAYER_COLOUR, client.performance ~= nil, client.userflags or 0, client.base_skin)
+                item.backing:SetOnClick(function()
+                    InsertText("@" .. client.name .. " "); SwitchToTab(2); self.RestoreInputFocus()
+                end)
+            end
+            return item
+        end, 0, 10, pw, ph, 1, 6))
+
+        RefreshPhraseList()
         SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB or 1)
     end
 
@@ -551,17 +517,8 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     menu:SetOnClick(function()
         self.RestoreInputFocus()
         if self.EM_bg then 
-            if self.EM_bg.shown then 
-                self.EM_bg:Hide() 
-            else 
-                self.EM_bg:Show() 
-                if self.SwitchToTab then
-                    self.SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB or 1)
-                end
-            end 
-        else 
-            build_bg() 
-        end
+            if self.EM_bg.shown then self.EM_bg:Hide() else self.EM_bg:Show(); if self.SwitchToTab then self.SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB or 1) end end 
+        else build_bg() end
     end)
 
     self.EM_menu = menu
@@ -570,27 +527,21 @@ local function CreateEmojiAndPhraseMenu(self, mode)
     if not self.EM_input then
         self.EM_input = GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             if not down then return false end
+            local is_bg_shown = self.EM_bg and self.EM_bg.shown
+            local is_menu_focus = self.EM_menu and self.EM_menu.focus
+
             if button == GLOBAL.MOUSEBUTTON_LEFT then
-                if self.EM_bg and self.EM_bg.shown and not (self.EM_menu and self.EM_menu.focus) and not self.EM_bg.focus then
+                if is_bg_shown and not is_menu_focus and not self.EM_bg.focus then
                     self.EM_bg:Hide(); self.RestoreInputFocus(); return true 
                 end
             elseif button == GLOBAL.MOUSEBUTTON_RIGHT then
-                if (mode == "chat" or mode == "input_string" or mode == "rename_position" or mode == "lobby_chat") and self.EM_menu and self.EM_menu.focus then
-                    if self.EM_bg and self.EM_bg.shown then 
-                        self.EM_bg:Hide(); self.RestoreInputFocus() 
-                    else 
-                        if not self.EM_bg then 
-                            build_bg() 
-                        else 
-                            self.EM_bg:Show() 
-                            if self.SwitchToTab then
-                                self.SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB or 1)
-                            end
-                        end 
-                    end
+                if (mode == "chat" or mode == "input_string" or mode == "rename_position" or mode == "lobby_chat") and is_menu_focus then
+                    if is_bg_shown then self.EM_bg:Hide(); self.RestoreInputFocus() 
+                    elseif not self.EM_bg then build_bg() 
+                    else self.EM_bg:Show(); if self.SwitchToTab then self.SwitchToTab(GLOBAL.NOMU_QA.LAST_EMOJI_TAB or 1) end end
                     return true 
                 end
-                if self.EM_bg and self.EM_bg.shown and not self.EM_bg.focus then
+                if is_bg_shown and not self.EM_bg.focus then
                     self.EM_bg:Hide(); self.RestoreInputFocus(); return true 
                 end
             end
@@ -603,11 +554,7 @@ local function GetMergedBuiltin(target_source)
     if target_source and target_source ~= GLOBAL.STRINGS.DEFAULT_NOMU_QA then
         local function MergeTables(dst, src)
             for k, v in pairs(src) do
-                if type(v) == "table" and type(dst[k]) == "table" then
-                    MergeTables(dst[k], v)
-                else
-                    dst[k] = type(v) == "table" and DeepCopy(v) or v
-                end
+                if type(v) == "table" and type(dst[k]) == "table" then MergeTables(dst[k], v) else dst[k] = type(v) == "table" and DeepCopy(v) or v end
             end
         end
         MergeTables(merged, target_source)
@@ -620,22 +567,13 @@ local GetInputString = Class(NoMuScreen, function(self, nomu_parent, title, valu
     NoMuScreen._ctor(self, "GetInputString", nomu_parent, width or 280, 130)
     
     self.config_label = self.root:AddChild(Text(BODYTEXTFONT, 32))
-    self.config_label:SetString(title)
-    self.config_label:SetHAlign(ANCHOR_MIDDLE)
-    self.config_label:SetRegionSize(200, 40)
-    self.config_label:SetPosition(0, 40)
+    self.config_label:SetString(title); self.config_label:SetHAlign(ANCHOR_MIDDLE); self.config_label:SetRegionSize(200, 40); self.config_label:SetPosition(0, 40)
     
     self.config_input = self.root:AddChild(TEMPLATES.StandardSingleLineTextEntry("", width or 200, 40))
-    self.config_input.textbox:SetTextLengthLimit(limit or 50)
-    self.config_input.textbox:SetString(tostring(value))
-    self.config_input:SetPosition(0, 0, 0)
+    self.config_input.textbox:SetTextLengthLimit(limit or 50); self.config_input.textbox:SetString(tostring(value)); self.config_input:SetPosition(0, 0, 0)
     
-    self.AddButton(-80, -40, 100, 40, STRINGS.NOMU_QA.BUTTON_TEXT_APPLY, function() 
-        callback(self.config_input.textbox:GetLineEditString())
-        self:Close() 
-    end)
+    self.AddButton(-80, -40, 100, 40, STRINGS.NOMU_QA.BUTTON_TEXT_APPLY, function() callback(self.config_input.textbox:GetLineEditString()); self:Close() end)
     self.AddButton(80, -40, 100, 40, STRINGS.NOMU_QA.BUTTON_TEXT_CLOSE, function() self:Close() end)
-
     CreateEmojiAndPhraseMenu(self, "input_string")
 end)
 
@@ -647,24 +585,15 @@ local ConfirmDialog = Class(NoMuScreen, function(self, nomu_parent, title, callb
     self.AddButton(50, -20, 100, 40, STRINGS.NOMU_QA.BUTTON_TEXT_NO, function() self:Close() end)
 end)
 
--- 操作选择弹窗（点击 "..." 时弹出）
+-- 操作选择弹窗
 local ActionMenuDialog = Class(NoMuScreen, function(self, nomu_parent, title, on_copy, on_reset)
     NoMuScreen._ctor(self, "ActionMenuDialog", nomu_parent, 360, 130)
     local title_txt = self.root:AddChild(Text(BODYTEXTFONT, 26, title or STRINGS.NOMU_QA.TITLE_ACTION_MENU))
-    title_txt:SetPosition(0, 30)
-    title_txt:SetRegionSize(320, 30)
+    title_txt:SetPosition(0, 30); title_txt:SetRegionSize(320, 30)
     
-    self.AddButton(-110, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_COPY_TO, function()
-        self:Close()
-        if on_copy then on_copy() end
-    end)
-    self.AddButton(0, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_RESET, function()
-        self:Close()
-        if on_reset then on_reset() end
-    end)
-    self.AddButton(110, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_CLOSE, function()
-        self:Close()
-    end)
+    self.AddButton(-110, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_COPY_TO, function() self:Close(); if on_copy then on_copy() end end)
+    self.AddButton(0, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_RESET, function() self:Close(); if on_reset then on_reset() end end)
+    self.AddButton(110, -25, 95, 38, STRINGS.NOMU_QA.BUTTON_TEXT_CLOSE, function() self:Close() end)
 end)
 
 -- 角色选择器面板
@@ -674,15 +603,11 @@ local CharacterPicker = Class(NoMuScreen, function(self, nomu_parent, callback)
     NoMuScreen._ctor(self, "CharacterPicker", nomu_parent, width, height + 10)
     
     self.character_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('character-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(iw, ih, function() end))
-        item.backing.move_on_click = true
-        item.text = item:AddChild(Text(BODYTEXTFONT, 26, nil, UICOLOURS.WHITE))
+        local item = MakeListItem('character-list-item', iw, ih)
         item.SetInfo = function(_, character)
             item.text:SetString(character == 'DEFAULT' and STRINGS.NOMU_QA.TITLE_TEXT_MAPPING_DEFAULT or STRINGS.NAMES[character:upper()] or character:upper())
             item.backing:SetOnClick(function() callback(character); self:Close() end)
         end
-        item.focus_forward = item.backing
         return item
     end, 0, 0, iw, ih, math.floor(width / iw), math.floor((height - 80) / ih)))
     
@@ -693,7 +618,7 @@ local CharacterPicker = Class(NoMuScreen, function(self, nomu_parent, callback)
     self.character_list:Refresh(character_list)
 end)
 
--- 词库管理面板 (屏蔽词/整行屏蔽/文本替换/自定义名称) 
+-- 词库管理面板
 local QAWordManagementPanel = Class(NoMuScreen, function(self, nomu_parent)
     local dy = 35
     NoMuScreen._ctor(self, "QAWordManagementPanel", nomu_parent, 860, 490)
@@ -701,7 +626,6 @@ local QAWordManagementPanel = Class(NoMuScreen, function(self, nomu_parent)
     self.h_line = self.root:AddChild(Image("images/global_redux.xml", "item_divider.tex"))
     self.h_line:SetScale(1.0, 1); self.h_line:SetPosition(0, 25)
 
-    -- 通用区域构建逻辑抽象
     local function BuildSection(title_str, toggle_key, btn_text, input1, input2, data_key, x, y, w, fmt_fn)
         self.root:AddChild(Text(BODYTEXTFONT, 28, title_str)):SetPosition(x, y)
         self.AddToggle(x - 65, y - dy, 120, dy, toggle_key, STRINGS.NOMU_QA.EMOJI_MENU.ON, STRINGS.NOMU_QA.EMOJI_MENU.OFF)
@@ -723,14 +647,10 @@ local QAWordManagementPanel = Class(NoMuScreen, function(self, nomu_parent)
         end)
         
         local list_ui = self.root:AddChild(NoMuList(function()
-            local item = Widget(data_key..'-item')
-            item.backing = item:AddChild(TEMPLATES.ListItemBackground(w, 40, function() end))
-            item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
-            item.delete = item:AddChild(TextButton())
-            item.delete:SetFont(CHATFONT); item.delete:SetTextSize(20); item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-            item.delete:SetPosition(w/2 - 40, 0, 0); item.delete:SetTextColour({1,0,0,1}); item.delete:Hide()
-            function item:OnGainFocus() item.delete:Show() end
-            function item:OnLoseFocus() item.delete:Hide() end
+            local item = MakeListItem(data_key..'-item', w, 40)
+            item.delete = MakeHoverBtn(item, STRINGS.NOMU_QA.BUTTON_TEXT_DELETE, 20, w/2 - 40, {1,0,0,1})
+            BindHoverActions(item, {item.delete})
+            
             item.SetInfo = function(_, data)
                 item.text:SetString(fmt_fn(data.val))
                 item.delete:SetOnClick(function()
@@ -738,7 +658,6 @@ local QAWordManagementPanel = Class(NoMuScreen, function(self, nomu_parent)
                     GLOBAL.NOMU_QA.SaveData(); self["Refresh"..data_key](self)
                 end)
             end
-            item.focus_forward = item.backing
             return item
         end, x, y - 2*dy - 50, w, 40, 1, 3))
         
@@ -764,19 +683,14 @@ local SchemeTemplatePicker = Class(NoMuScreen, function(self, nomu_parent, callb
     local iw, ih = 200, 40
     local width, height = iw + 40, 80 + ih * 5
     NoMuScreen._ctor(self, "SchemeTemplatePicker", nomu_parent, width, height + 10)
-    
     self.root:AddChild(Text(BODYTEXTFONT, 28, STRINGS.NOMU_QA.TITLE_TEXT_CHOOSE_TEMPLATE)):SetPosition(0, height / 2 - 25)
     
     self.scheme_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('scheme-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(iw, ih, function() end))
-        item.backing.move_on_click = true
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
+        local item = MakeListItem('scheme-list-item', iw, ih)
         item.SetInfo = function(_, scheme) 
             item.text:SetString(scheme.name)
             item.backing:SetOnClick(function() callback(scheme); self:Close() end) 
         end
-        item.focus_forward = item.backing
         return item
     end, 0, -10, iw, ih, 1, 5))
     
@@ -800,23 +714,18 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
         TheFrontEnd:PushScreen(GetInputString(nil, STRINGS.NOMU_QA.BUTTON_TEXT_NEW_SCHEME, '', function(value)
             if not value or value == "" then return end
             TheFrontEnd:PushScreen(SchemeTemplatePicker(nil, function(ts) 
-                table.insert(GLOBAL.NOMU_QA.DATA.SCHEMES, { name=value, data=DeepCopy(ts.data), version=VERSION, source_template=ts.source_template or ts.name, backup_data=DeepCopy(ts.data) })
+                -- 彻底移除了 backup_data=DeepCopy(ts.data)
+                table.insert(GLOBAL.NOMU_QA.DATA.SCHEMES, { name=value, data=DeepCopy(ts.data), version=VERSION, source_template=ts.source_template or ts.name })
                 GLOBAL.NOMU_QA.SaveData(); self:RefreshSchemeList(); self:RefreshScheme(#GLOBAL.NOMU_QA.DATA.SCHEMES) 
             end))
         end))
     end)
 
     self.scheme_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('scheme-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(200, 40, function() end)); item.backing.move_on_click = true
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
+        local item = MakeListItem('scheme-list-item', 200, 40)
+        item.rename = MakeHoverBtn(item, STRINGS.NOMU_QA.BUTTON_TEXT_RENAME, 20, -70, {0,1,0,1})
+        item.delete = MakeHoverBtn(item, STRINGS.NOMU_QA.BUTTON_TEXT_DELETE, 20, 70, {1,0,0,1})
         
-        item.delete = item:AddChild(TextButton()); item.delete:SetFont(CHATFONT); item.delete:SetTextSize(20); item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-        item.delete:SetPosition(70, 0, 0); item.delete:SetTextFocusColour({1,1,1,1}); item.delete:SetTextColour({1,0,0,1}); item.delete:Hide()
-        
-        item.rename = item:AddChild(TextButton()); item.rename:SetFont(CHATFONT); item.rename:SetTextSize(20); item.rename:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_RENAME)
-        item.rename:SetPosition(-70, 0, 0); item.rename:SetTextFocusColour({1,1,1,1}); item.rename:SetTextColour({0,1,0,1}); item.rename:Hide()
-
         function item:OnGainFocus() item.delete:Show(); if not item.no_rename then item.rename:Show() end end
         function item:OnLoseFocus() item.delete:Hide(); if not item.no_rename then item.rename:Hide() end end
 
@@ -834,11 +743,12 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                             GetMergedBuiltin(GLOBAL.STRINGS.CUTE_NOMU_QA) 
                         }
                         GLOBAL.NOMU_QA.DATA.SCHEMES[data.idx].data = DeepCopy(defs[data.idx])
-                        GLOBAL.NOMU_QA.DATA.SCHEMES[data.idx].backup_data = DeepCopy(defs[data.idx])
+                        -- 移除 backup_data
                         GLOBAL.NOMU_QA.SaveData(); self:RefreshScheme(data.idx) 
                     end)) 
                 end)
             else
+                item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
                 item.delete:SetOnClick(function()
                     TheFrontEnd:PushScreen(ConfirmDialog(nil, STRINGS.NOMU_QA.TITLE_TEXT_SURE_TO_DELETE, function() 
                         table.remove(GLOBAL.NOMU_QA.DATA.SCHEMES, data.idx); GLOBAL.NOMU_QA.SaveData()
@@ -853,7 +763,6 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                 end)
             end
         end
-        item.focus_forward = item.backing
         return item
     end, sx + 100, -55, 200, 40, 1, 9))
 
@@ -877,19 +786,7 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.vertical_line:SetRotation(90); self.vertical_line:SetScale(1, 0.57)
 
     sx = sx + 260
-    self.title_text_editing = self.root:AddChild(Text(BODYTEXTFONT, 32))
-    self.title_text_editing:SetPosition(sx + 300, sy)
-
-    self.sync_toggle_btn = self.AddButton(sx + 490, sy, 180, 40, function()
-        if not self.scheme then return STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON end
-        return self.scheme.skip_sync and STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_OFF or STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON
-    end, function()
-        if not self.scheme then return end
-        self.scheme.skip_sync = not self.scheme.skip_sync
-        GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx].skip_sync = self.scheme.skip_sync
-        GLOBAL.NOMU_QA.SaveData()
-    end)
-    self.sync_toggle_btn:Hide()
+    self.title_text_editing = self.root:AddChild(Text(BODYTEXTFONT, 32)); self.title_text_editing:SetPosition(sx + 300, sy)
     
     local function save_and_apply() 
         GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx] = DeepCopy(self.scheme)
@@ -916,59 +813,38 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.root:AddChild(Text(BODYTEXTFONT, 32, STRINGS.NOMU_QA.TITLE_TEXT_FUNC)):SetPosition(sx + 60, sy - dy)
 
     self.func_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('func-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(120, 40, function() end)); item.backing.move_on_click = true
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
+        local item = MakeListItem('func-list-item', 120, 40)
         item.SetInfo = function(_, func) 
             item.text:SetString(STRINGS.NOMU_QA.FUNC[func])
             item.backing:SetOnClick(function() self:RefreshFunc(func) end) 
         end
-        item.focus_forward = item.backing; return item
+        return item
     end, sx + 60, -20, 120, 40, 1, 9))
 
     sx = sx + 160
     self.title_text_format = self.root:AddChild(Text(BODYTEXTFONT, 32))
     self.title_text_format:SetPosition(sx + 210, sy - dy)
     
-    self.format_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('format-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(420, 40, function() end)); item.backing.move_on_click = true
+    -- 抽取格式列表和映射列表项共用 UI
+    local function CreateSettingListItem(name, val_str_fn, action_title, save_cb_path, get_default_val_fn)
+        local item = MakeListItem(name, 420, 40)
+        item.text:SetRegionSize(360, 40); item.text:SetHAlign(ANCHOR_LEFT); item.text:SetPosition(-15, 0, 0)
+        item.more_btn = MakeHoverBtn(item, "...", 26, 185, {0.3, 0.7, 1, 1}, {1, 1, 1, 1})
+        BindHoverActions(item, {item.more_btn})
 
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
-        item.text:SetRegionSize(360, 40)
-        item.text:SetHAlign(ANCHOR_LEFT)
-        item.text:SetPosition(-15, 0, 0)
-
-        item.more_btn = item:AddChild(TextButton())
-        item.more_btn:SetFont(CHATFONT); item.more_btn:SetTextSize(26)
-        item.more_btn:SetText("...")
-        item.more_btn:SetPosition(185, 0, 0)
-        item.more_btn:SetTextFocusColour({1, 1, 1, 1})
-        item.more_btn:SetTextColour({0.3, 0.7, 1, 1})
-        item.more_btn:Hide()
-
-        function item:OnGainFocus() item.more_btn:Show() end
-        function item:OnLoseFocus() item.more_btn:Hide() end
-
-        item.SetInfo = function(_, format)
-            item.text:SetString(format.name .. ': ' .. format.value)
-            
+        item.SetInfo = function(_, data)
+            item.text:SetString(val_str_fn(data))
             item.backing:SetOnClick(function() 
-                TheFrontEnd:PushScreen(GetInputString(nil, STRINGS.NOMU_QA.FUNC[self.scheme_func] .. '-' .. format.name, format.value, function(value) 
-                    self.scheme.data[self.scheme_func].FORMATS[format.name] = value
+                TheFrontEnd:PushScreen(GetInputString(nil, action_title(data), data.value, function(value) 
+                    save_cb_path(data, value)
                     save_and_apply(); self:RefreshFunc() 
                 end, 256, 420)) 
             end)
-
             item.more_btn:SetOnClick(function()
-                TheFrontEnd:PushScreen(ActionMenuDialog(nil, format.name, function()
+                TheFrontEnd:PushScreen(ActionMenuDialog(nil, action_title(data), function()
                     TheFrontEnd:PushScreen(SchemeTemplatePicker(nil, function(target_scheme)
-                        if not target_scheme.data[self.scheme_func] then target_scheme.data[self.scheme_func] = { FORMATS = {}, MAPPINGS = {} } end
-                        if not target_scheme.data[self.scheme_func].FORMATS then target_scheme.data[self.scheme_func].FORMATS = {} end
-                        
-                        target_scheme.data[self.scheme_func].FORMATS[format.name] = format.value
+                        save_cb_path(data, data.value, target_scheme)
                         GLOBAL.NOMU_QA.SaveData()
-                        
                         if GLOBAL.ThePlayer and GLOBAL.ThePlayer.components.talker then
                             GLOBAL.ThePlayer.components.talker:Say(GLOBAL.subfmt(STRINGS.NOMU_QA.MESSAGE_COPY_FORMAT_SUCCEED, { NAME = target_scheme.name }))
                         end
@@ -982,18 +858,29 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
                     }
                     local source_name = self.scheme.source_template or self.scheme.name
                     local source_data = BUILTIN_LOOKUP[source_name] or GLOBAL.STRINGS.DEFAULT_NOMU_QA
-                    
-                    local default_val = source_data[self.scheme_func] and source_data[self.scheme_func].FORMATS and source_data[self.scheme_func].FORMATS[format.name]
-                    
+                    local default_val = get_default_val_fn(data, source_data)
                     if default_val then
-                        self.scheme.data[self.scheme_func].FORMATS[format.name] = default_val
-                        save_and_apply()
-                        self:RefreshFunc()
+                        save_cb_path(data, default_val)
+                        save_and_apply(); self:RefreshFunc()
                     end
                 end))
             end)
         end
-        item.focus_forward = item.backing; return item
+        return item
+    end
+
+    self.format_list = self.root:AddChild(NoMuList(function()
+        return CreateSettingListItem('format-list-item', 
+            function(d) return d.name .. ': ' .. d.value end,
+            function(d) return STRINGS.NOMU_QA.FUNC[self.scheme_func] .. '-' .. d.name end,
+            function(d, val, target_scheme)
+                local t = target_scheme or self.scheme
+                if not t.data[self.scheme_func] then t.data[self.scheme_func] = { FORMATS = {}, MAPPINGS = {} } end
+                if not t.data[self.scheme_func].FORMATS then t.data[self.scheme_func].FORMATS = {} end
+                t.data[self.scheme_func].FORMATS[d.name] = val
+            end,
+            function(d, source_data) return source_data[self.scheme_func] and source_data[self.scheme_func].FORMATS and source_data[self.scheme_func].FORMATS[d.name] end
+        )
     end, sx + 210, sy - 3.5 * dy, 420, 40, 1, 3))
 
     self.btn_mapping = self.AddButton(sx + 210, sy - 5 * dy, 200, 40, STRINGS.NOMU_QA.BUTTON_TEXT_MAPPING, function()
@@ -1006,79 +893,36 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     if not GLOBAL.NOMU_QA.DATA.CHARACTER_SPECIFIC then self.btn_mapping:Disable() end
 
     self.mapping_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('mapping-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(420, 40, function() end)); item.backing.move_on_click = true
-
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
-        item.text:SetRegionSize(360, 40)
-        item.text:SetHAlign(ANCHOR_LEFT)
-        item.text:SetPosition(-15, 0, 0)
-
-        item.more_btn = item:AddChild(TextButton())
-        item.more_btn:SetFont(CHATFONT); item.more_btn:SetTextSize(26)
-        item.more_btn:SetText("...")
-        item.more_btn:SetPosition(185, 0, 0)
-        item.more_btn:SetTextFocusColour({1, 1, 1, 1})
-        item.more_btn:SetTextColour({0.3, 0.7, 1, 1})
-        item.more_btn:Hide()
-
-        function item:OnGainFocus() item.more_btn:Show() end
-        function item:OnLoseFocus() item.more_btn:Hide() end
-
-        item.SetInfo = function(_, mapping)
-            item.text:SetString(mapping.category .. '-' .. mapping.name .. ': ' .. mapping.value)
-            
-            item.backing:SetOnClick(function() 
-                TheFrontEnd:PushScreen(GetInputString(nil, mapping.category .. '-' .. mapping.name, mapping.value, function(val) 
-                    self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name] = val
-                    save_and_apply(); self:RefreshFunc() 
-                end, 256, 420)) 
-            end)
-
-            item.more_btn:SetOnClick(function()
-                TheFrontEnd:PushScreen(ActionMenuDialog(nil, mapping.category .. '-' .. mapping.name, function()
-                    TheFrontEnd:PushScreen(SchemeTemplatePicker(nil, function(target_scheme)
-                        if not target_scheme.data[self.scheme_func] then target_scheme.data[self.scheme_func] = { FORMATS = {}, MAPPINGS = {} } end
-                        if not target_scheme.data[self.scheme_func].MAPPINGS then target_scheme.data[self.scheme_func].MAPPINGS = {} end
-                        if not target_scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping] then target_scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping] = {} end
-                        if not target_scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category] then target_scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category] = {} end
-                        
-                        target_scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name] = mapping.value
-                        GLOBAL.NOMU_QA.SaveData()
-                        
-                        if GLOBAL.ThePlayer and GLOBAL.ThePlayer.components.talker then
-                            GLOBAL.ThePlayer.components.talker:Say(GLOBAL.subfmt(STRINGS.NOMU_QA.MESSAGE_COPY_MAPPING_SUCCEED, { NAME = target_scheme.name }))
-                        end
-                    end))
-                end, function()
-                    local BUILTIN_LOOKUP = {
-                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = GLOBAL.STRINGS.DEFAULT_NOMU_QA,
-                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CAT_NOMU_QA),
-                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.TSUNDERE_NOMU_QA),
-                        [GLOBAL.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GetMergedBuiltin(GLOBAL.STRINGS.CUTE_NOMU_QA),
-                    }
-                    local source_name = self.scheme.source_template or self.scheme.name
-                    local source_data = BUILTIN_LOOKUP[source_name] or GLOBAL.STRINGS.DEFAULT_NOMU_QA
-                    
-                    local default_val = nil
-                    if source_data[self.scheme_func] and source_data[self.scheme_func].MAPPINGS then
-                        if source_data[self.scheme_func].MAPPINGS[self.scheme_mapping] and source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category] then
-                            default_val = source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name]
-                        end
-                        if not default_val and source_data[self.scheme_func].MAPPINGS.DEFAULT and source_data[self.scheme_func].MAPPINGS.DEFAULT[mapping.category] then
-                            default_val = source_data[self.scheme_func].MAPPINGS.DEFAULT[mapping.category][mapping.name]
-                        end
+        return CreateSettingListItem('mapping-list-item', 
+            function(d) return d.category .. '-' .. d.name .. ': ' .. d.value end,
+            function(d) return d.category .. '-' .. d.name end,
+            function(d, val, target_scheme)
+                local t = target_scheme or self.scheme
+                if not t.data[self.scheme_func] then t.data[self.scheme_func] = { FORMATS = {}, MAPPINGS = {} } end
+                if not t.data[self.scheme_func].MAPPINGS then t.data[self.scheme_func].MAPPINGS = {} end
+                if not t.data[self.scheme_func].MAPPINGS[self.scheme_mapping] then t.data[self.scheme_func].MAPPINGS[self.scheme_mapping] = {} end
+                if not t.data[self.scheme_func].MAPPINGS[self.scheme_mapping][d.category] then t.data[self.scheme_func].MAPPINGS[self.scheme_mapping][d.category] = {} end
+                t.data[self.scheme_func].MAPPINGS[self.scheme_mapping][d.category][d.name] = val
+            end,
+            function(d, source_data)
+                local val = nil
+                if source_data[self.scheme_func] and source_data[self.scheme_func].MAPPINGS then
+                    if self.scheme_mapping ~= 'DEFAULT' and source_data[self.scheme_func].MAPPINGS[self.scheme_mapping] and source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][d.category] then
+                        val = source_data[self.scheme_func].MAPPINGS[self.scheme_mapping][d.category][d.name]
                     end
-
-                    if default_val then
-                        self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping][mapping.category][mapping.name] = default_val
-                        save_and_apply()
-                        self:RefreshFunc()
+                end
+                if not val and self.scheme_mapping ~= 'DEFAULT' then
+                    if self.scheme.data[self.scheme_func] and self.scheme.data[self.scheme_func].MAPPINGS and self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT and self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT[d.category] then
+                        val = self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT[d.category][d.name]
                     end
-                end))
-            end)
-        end
-        item.focus_forward = item.backing; return item
+                end
+                if not val and source_data[self.scheme_func] and source_data[self.scheme_func].MAPPINGS and source_data[self.scheme_func].MAPPINGS.DEFAULT and source_data[self.scheme_func].MAPPINGS.DEFAULT[d.category] then
+                    val = source_data[self.scheme_func].MAPPINGS.DEFAULT[d.category][d.name]
+                end
+
+                return val
+            end
+        )
     end, sx + 210, sy - 8 * dy, 420, 40, 1, 5))
 
     self:RefreshSchemeList(); self:RefreshScheme(1)
@@ -1096,15 +940,6 @@ function QACustomizePanel:RefreshScheme(idx)
     self.scheme = DeepCopy(GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx])
     self.title_text_editing:SetString(STRINGS.NOMU_QA.TITLE_TEXT_EDITING .. self.scheme.name)
 
-    if self.sync_toggle_btn then
-        if self.scheme_idx > 4 then
-            self.sync_toggle_btn:Show()
-            self.sync_toggle_btn:SetText(self.scheme.skip_sync and STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_OFF or STRINGS.NOMU_QA.BUTTON_TEXT_SYNC_ON)
-        else
-            self.sync_toggle_btn:Hide()
-        end
-    end
-
     local fl = {}
     if not self.scheme.data then self.scheme.data = {} end
 
@@ -1117,11 +952,8 @@ function QACustomizePanel:RefreshScheme(idx)
     end
 
     for func_id in pairs(self.scheme.data) do
-        if not added_funcs[func_id] then
-            table.insert(fl, func_id)
-        end
+        if not added_funcs[func_id] then table.insert(fl, func_id) end
     end
-
     self.func_list:Refresh(fl); self:RefreshFunc(fl[1], 'DEFAULT')
 end
 
@@ -1181,14 +1013,10 @@ local QAPanel = Class(Widget, function(self)
     AddBtn(-120, sy - dy, 200, dy, STRINGS.NOMU_QA.BUTTON_TEXT_CUSTOMIZE, function() TheFrontEnd:PushScreen(QACustomizePanel(self)) end)
 
     self.freq_list = self.root:AddChild(NoMuList(function()
-        local item = Widget('freq-list-item')
-        item.backing = item:AddChild(TEMPLATES.ListItemBackground(200, 40, function() end)); item.backing.move_on_click = true
-        item.text = item:AddChild(Text(BODYTEXTFONT, 20, nil, UICOLOURS.WHITE))
-        item.delete = item:AddChild(TextButton()); item.delete:SetFont(CHATFONT); item.delete:SetTextSize(20); item.delete:SetText(STRINGS.NOMU_QA.BUTTON_TEXT_DELETE)
-        item.delete:SetPosition(80, 0, 0); item.delete:SetTextColour({1,0,0,1}); item.delete:Hide()
-        
-        function item:OnGainFocus() item.delete:Show() end
-        function item:OnLoseFocus() item.delete:Hide() end
+        local item = MakeListItem('freq-list-item', 200, 40)
+        item.delete = MakeHoverBtn(item, STRINGS.NOMU_QA.BUTTON_TEXT_DELETE, 20, 80, {1,0,0,1})
+        BindHoverActions(item, {item.delete})
+
         item.SetInfo = function(_, data)
             item.text:SetString(data.freq)
             item.backing:SetOnClick(function() Announce(data.freq); if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE then self:Hide() end end)
@@ -1198,7 +1026,7 @@ local QAPanel = Class(Widget, function(self)
                 end)) 
             end)
         end
-        item.focus_forward = item.backing; return item
+        return item
     end, -220, 0, 200, 40, 2, 7)) 
 
     AddBtn(-330, -170, 195, dy, STRINGS.NOMU_QA.BUTTON_TEXT_WORD_MANAGE, function() TheFrontEnd:PushScreen(QAWordManagementPanel(self)) end)

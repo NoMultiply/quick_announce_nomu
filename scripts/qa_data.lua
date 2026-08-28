@@ -31,24 +31,7 @@ local function escape_pattern(text)
 end
 _G.NOMU_QA.escape_pattern = escape_pattern
 
--- 提取字符串中的所有占位符并排序，用于比对
-local function GetPlaceholders(str)
-    local placeholders = {}
-    if type(str) == "string" then
-        for p in str:gmatch("{(.-)}") do placeholders[p] = true end
-    end
-    local sorted = {}
-    for p in pairs(placeholders) do table.insert(sorted, p) end
-    table.sort(sorted)
-    return table.concat(sorted, ",")
-end
-
-local function IsPlaceholderMatch(str1, str2)
-    return GetPlaceholders(str1) == GetPlaceholders(str2)
-end
-
 local DEFAULT_SCHEME = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
-local MAX_HISTORY_POSITION = 20
 
 -- 初始化 NOMU_QA 核心配置数据
 _G.NOMU_QA.DATA = {
@@ -96,47 +79,6 @@ _G.NOMU_QA.DATA = {
 }
 _G.NOMU_QA.SCHEME = DEFAULT_SCHEME
 
--- 数据同步系统
-local function SyncSchemeData(user_data, backup_data, source_data, is_legacy)
-    if not source_data or type(source_data) ~= "table" then return end
-    for k, v in pairs(source_data) do
-        if type(v) == "table" then
-            if type(user_data[k]) ~= "table" then user_data[k] = {} end
-            if not is_legacy and type(backup_data[k]) ~= "table" then backup_data[k] = {} end
-            SyncSchemeData(user_data[k], backup_data[k], v, is_legacy)
-        else
-            if is_legacy then
-                if user_data[k] == nil or not IsPlaceholderMatch(user_data[k], v) then user_data[k] = v end
-            else
-                if backup_data[k] ~= v then
-                    local is_user_customized = (user_data[k] ~= backup_data[k])
-                    if is_user_customized then
-                        if not IsPlaceholderMatch(user_data[k], v) then user_data[k] = v end
-                    else
-                        user_data[k] = v
-                    end
-                    backup_data[k] = v 
-                else
-                    if user_data[k] == nil or not IsPlaceholderMatch(user_data[k], v) then user_data[k] = v end
-                end
-            end
-        end
-    end
-
-    local keys_to_remove = {}
-    for k, _ in pairs(user_data) do
-        if source_data[k] == nil then
-            if type(source_data) == "table" and source_data.DEFAULT == nil then
-                table.insert(keys_to_remove, k)
-            end
-        end
-    end
-    for _, k in ipairs(keys_to_remove) do
-        user_data[k] = nil
-        if not is_legacy and type(backup_data) == "table" then backup_data[k] = nil end
-    end
-end
-
 local function MergeTables(dst, src)
     for k, v in pairs(src) do
         if type(v) == "table" and type(dst[k]) == "table" then
@@ -155,40 +97,12 @@ local function GetMergedBuiltin(target_source)
     return merged
 end
 
-_G.NOMU_QA.UpdateScheme = function(scheme_node)
-    if not scheme_node or not scheme_node.data then return end
-
-    if scheme_node.skip_sync then return end
-    
-    local BUILTIN_LOOKUP = {
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME] = _G.STRINGS.DEFAULT_NOMU_QA,
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME] = GetMergedBuiltin(_G.STRINGS.CAT_NOMU_QA),
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME] = GetMergedBuiltin(_G.STRINGS.TSUNDERE_NOMU_QA),
-        [_G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME] = GetMergedBuiltin(_G.STRINGS.CUTE_NOMU_QA),
-    }
-    local is_legacy = false
-    if not scheme_node.source_template and not scheme_node.backup_data then
-        is_legacy = true
-        if BUILTIN_LOOKUP[scheme_node.name] then
-            scheme_node.source_template = scheme_node.name
-            scheme_node.backup_data = DeepCopy(BUILTIN_LOOKUP[scheme_node.name])
-        else
-            scheme_node.source_template = _G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME
-            scheme_node.backup_data = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
-        end
-    end
-    local source_name = scheme_node.source_template or scheme_node.name
-    local source_data = BUILTIN_LOOKUP[source_name] or _G.STRINGS.DEFAULT_NOMU_QA
-    SyncSchemeData(scheme_node.data, scheme_node.backup_data, source_data, is_legacy)
-end
-
 _G.NOMU_QA.ApplyScheme = function(scheme)
     if not scheme then return end
     if not scheme.data then
         print("[NoMu QA] 检测到方案数据丢失，已自动修复坏档！")
         scheme.data = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
     end
-    _G.NOMU_QA.UpdateScheme(scheme)
     _G.NOMU_QA.SCHEME = scheme.data
 end
 
@@ -249,18 +163,15 @@ _G.NOMU_QA.LoadData = function()
                         name = template.name, 
                         data = DeepCopy(template.source), 
                         version = _G.NOMU_QA.VERSION,
-                        source_template = template.name,
-                        backup_data = DeepCopy(template.source)
+                        source_template = template.name
                     }
                     if not schemes[i] then schemes[i] = new_scheme else table.insert(schemes, i, new_scheme) end
                 else
                     schemes[i].data = DeepCopy(template.source)
                     schemes[i].name = template.name
                     schemes[i].source_template = template.name
-                    schemes[i].backup_data = DeepCopy(template.source)
                 end
             end
-            for i, scheme in ipairs(schemes) do if i > 4 then _G.NOMU_QA.UpdateScheme(scheme) end end
         end
 
         local current = _G.NOMU_QA.DATA.CURRENT_SCHEME
@@ -269,7 +180,6 @@ _G.NOMU_QA.LoadData = function()
                 if current.name == template.name then 
                     current.data = DeepCopy(template.source)
                     current.source_template = template.name
-                    current.backup_data = DeepCopy(template.source)
                     break 
                 end
             end

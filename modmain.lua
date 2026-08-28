@@ -66,7 +66,7 @@ modimport('scripts/qa_config/qa_tsundere.lua')
 modimport('scripts/qa_config/qa_cute.lua')
 modimport('scripts/qa_config/qa_utils.lua')
 modimport('scripts/qa_data.lua')
-
+modimport('scripts/qa_debug.lua')
 -- 提取常用工具函数到本地变量，提高访问效率
 local DeepCopy = GLOBAL.NOMU_QA.DeepCopy
 local escape_pattern = GLOBAL.NOMU_QA.escape_pattern
@@ -83,55 +83,20 @@ local QUNNIAO_ON = ModManager:GetMod("workshop-3161117403") ~= nil
 -- ============================================================================
 -- [3] 按键管理与核心辅助工具
 -- ============================================================================
-
-----------------------------------------
--- 3.1 组合键检测
-----------------------------------------
-
--- 检测 Alt 键是否按下（支持多种模式配置）
-local function IsAltPressed()
-    local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.ALT_MODE) or 1
-    if mode == 1 then
-        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
-    elseif mode == 2 then
-        return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
-    else
-        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT)
-            or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LALT)
-    end
-end
-
--- 检测 Shift 键是否按下（支持多种模式配置）
-local function IsShiftPressed()
-    local mode = (GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.SHIFT_MODE) or 1
-    if mode == 1 then
-        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
-    elseif mode == 2 then
-        return GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
-    else
-        return GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_TRADE)
-            or GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LSHIFT)
-    end
-end
-
 ----------------------------------------
 -- 3.2 Insight 信息清洗
 ----------------------------------------
 
--- 清理 Insight 模组返回的富文本字符串，移除标签并替换为本地化名称
 local function CleanInsightString(clean_info)
     if not clean_info or clean_info == "" then return "" end
 
-    -- 替换 <prefab=xxx> 标签为本地化名称
     clean_info = clean_info:gsub("<prefab=([^>]+)>", function(prefab)
     local upper_prefab = string.upper(prefab)
-    -- 依次查找：模组自定义词库 -> 游戏官方词库 -> 原文
-    return LOCAL_STRINGS[upper_prefab]
+    return LOCAL_STRINGS[upper_prefab] 
         or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
         or prefab
     end)
 
-    -- 替换 <string=xxx.yyy> 标签为对应的 STRINGS 值
     clean_info = clean_info:gsub("<string=([^>]+)>", function(str_path)
         local current = GLOBAL.STRINGS
         for field in str_path:gmatch("[^%.]+") do
@@ -145,7 +110,6 @@ local function CleanInsightString(clean_info)
         return type(current) == "string" and current or str_path
     end)
 
-    -- 移除温度标签和其他所有 HTML 风格标签
     clean_info = clean_info:gsub("<temperature=([^>]+)>", "%1")
     clean_info = clean_info:gsub("</?%a+[^>]*>", "")
 
@@ -166,11 +130,9 @@ local function CheckAnims(animState, anim_list)
     end
     return false
 end
-
-----------------------------------------
+-------------------------------------
 -- 3.4 实体名称获取与自定义名称
 ----------------------------------------
-
 -- 应用自定义预制物名称
 local function ApplyCustomName(prefab, fallback_name)
     if not GLOBAL.NOMU_QA.DATA.ENABLE_CUSTOM_PREFAB_NAME
@@ -191,13 +153,16 @@ end
 -- 统一获取实体名称
 local function GetEntityName(entity, force_basic)
     if not entity then
-        return GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME,
-               GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME,
-               false
+        return GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME, GLOBAL.STRINGS.NOMU_QA.UNKNOWN_NAME, false
     end
 
     local actual_prefab = tostring(entity.prefabnameoverride or entity.nameoverride or entity.prefab)
-    local base_prefab_name = GLOBAL.STRINGS.NAMES[string.upper(actual_prefab)] or actual_prefab
+
+    local upper_prefab = string.upper(actual_prefab)
+    
+    local base_prefab_name = LOCAL_STRINGS[upper_prefab] 
+        or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab])) 
+        or actual_prefab
 
     local raw_name = ""
     if not force_basic and entity.GetDisplayName and type(entity.GetDisplayName) == "function" then
@@ -207,13 +172,10 @@ local function GetEntityName(entity, force_basic)
     else
         raw_name = entity.name or ""
     end
+    
     local original_display_name = string.match(raw_name, "[^\n]+") or raw_name
-
-    local is_missing = false
-    if original_display_name == "" or string.find(string.upper(original_display_name), "MISSING") or string.find(string.upper(base_prefab_name), "MISSING") then
-        is_missing = true
-        original_display_name = base_prefab_name
-    end
+    local is_missing = (original_display_name == "" or string.find(string.upper(original_display_name), "MISSING") or string.find(string.upper(base_prefab_name), "MISSING"))
+    if is_missing then original_display_name = base_prefab_name end
 
     local display_name = original_display_name
     local final_prefab_name = base_prefab_name
@@ -224,81 +186,42 @@ local function GetEntityName(entity, force_basic)
         return sinkhole_name, sinkhole_name, false
     end
 
-    if entity.replica and entity.replica.named and entity.replica.named._name then
-        local custom_name = entity.replica.named._name:value()
-        if custom_name and custom_name ~= "" then
-            is_player_named = true
-            if string.find(raw_name, custom_name, 1, true) then
-                display_name = string.gsub(raw_name, "\n", " ")
-            else
-                local adj = entity.GetAdjective and entity:GetAdjective() or ""
-                display_name = adj ~= "" and (adj .. custom_name) or custom_name
-                display_name = string.gsub(display_name, "\n", " ")
-            end
-        end
-    elseif entity.replica and entity.replica.writeable and entity.replica.writeable._text then
-        local custom_text = entity.replica.writeable._text:value()
-        if custom_text and custom_text ~= "" then
-            is_player_named = true
-            if string.find(raw_name, custom_text, 1, true) then
-                display_name = string.gsub(raw_name, "\n", " ")
-            else
-                local adj = entity.GetAdjective and entity:GetAdjective() or ""
-                display_name = adj ~= "" and (adj .. custom_text) or custom_text
-                display_name = string.gsub(display_name, "\n", " ")
-            end
+    local custom_name = entity.replica and (
+        (entity.replica.named and entity.replica.named._name and entity.replica.named._name:value()) or 
+        (entity.replica.writeable and entity.replica.writeable._text and entity.replica.writeable._text:value())
+    )
+    if custom_name and custom_name ~= "" then
+        is_player_named = true
+        if string.find(raw_name, custom_name, 1, true) then
+            display_name = string.gsub(raw_name, "\n", " ")
+        else
+            local adj = entity.GetAdjective and entity:GetAdjective() or ""
+            display_name = string.gsub(adj ~= "" and (adj .. custom_name) or custom_name, "\n", " ")
         end
     end
 
     local custom_qa_name, has_custom = ApplyCustomName(actual_prefab, base_prefab_name)
     local qa_hardcoded_name = GLOBAL.STRINGS.NOMU_QA[string.upper(actual_prefab)]
-
     local broad_category_name = GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES and GLOBAL.STRINGS.NOMU_QA.BROAD_CATEGORIES[string.upper(actual_prefab)]
 
     if has_custom then
         final_prefab_name = custom_qa_name
-        if not is_player_named then
-            display_name = custom_qa_name
-        end
+        display_name = is_player_named and display_name or custom_qa_name
     elseif qa_hardcoded_name then
-        if is_missing then
+        local l_ori, l_qa = string.lower(original_display_name), string.lower(qa_hardcoded_name)
+        if is_missing or string.find(l_ori, l_qa, 1, true) or qa_hardcoded_name == original_display_name then
             final_prefab_name = qa_hardcoded_name
-            if not is_player_named then
-                display_name = qa_hardcoded_name
-            end
+            display_name = is_player_named and display_name or (is_missing and qa_hardcoded_name or original_display_name)
         else
-            local lower_ori = string.lower(original_display_name)
-            local lower_qa = string.lower(qa_hardcoded_name)
-
-            if string.find(lower_ori, lower_qa, 1, true) then
-                final_prefab_name = qa_hardcoded_name
-                if not is_player_named then
-                    display_name = original_display_name
-                end
-            elseif qa_hardcoded_name ~= original_display_name then
-                final_prefab_name = original_display_name
-                if not is_player_named then
-                    display_name = qa_hardcoded_name
-                    is_player_named = true
-                end
-            else
-                final_prefab_name = qa_hardcoded_name
-                if not is_player_named then
-                    display_name = original_display_name
-                end
-            end
+            final_prefab_name = original_display_name
+            if not is_player_named then display_name = qa_hardcoded_name; is_player_named = true end
         end
     else
         final_prefab_name = base_prefab_name
-        if not is_player_named then
-            display_name = original_display_name
-        end
+        display_name = is_player_named and display_name or original_display_name
     end
 
-    if broad_category_name then
-        final_prefab_name = broad_category_name
-    end
-
+    if broad_category_name then final_prefab_name = broad_category_name end
     return display_name, final_prefab_name, is_player_named
 end
 
@@ -336,11 +259,6 @@ local function Announce(message, no_whisper, debug_info, statement_loc)
         end
     end
 
-    -- 去除多余空白字符
-    message = message:gsub("[ \t\r\n]+", " ")
-                     :gsub("^[ \t\r\n]+", "")
-                     :gsub("[ \t\r\n]+$", "")
-
     -- 判断是否为私聊（Ctrl 键切换）
     local whisper = GLOBAL.NOMU_QA.DATA.DEFAULT_WHISPER ~= GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL)
     if no_whisper then
@@ -349,7 +267,6 @@ local function Announce(message, no_whisper, debug_info, statement_loc)
 
     local sent = false
 
-    -- 1. 发送正常的宣告消息
     if message ~= "" then
         local prefix = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
         if prefix == nil or prefix == "" then
@@ -359,33 +276,33 @@ local function Announce(message, no_whisper, debug_info, statement_loc)
         sent = true
     end
 
-    -- 2. 调试模式
     if GLOBAL.NOMU_QA.DATA.DEBUG_MODE then
-        local debug_parts = {}
-        if debug_info and debug_info ~= "" then
-            table.insert(debug_parts, debug_info)
+        local loc_tag = ""
+        if statement_loc and statement_loc ~= "" then
+            loc_tag = statement_loc:find("%[语句:") and statement_loc or string.format("[语句:%s]", statement_loc)
         end
+
+        local final_debug_str = ""
+        if loc_tag ~= "" then
+            final_debug_str = loc_tag .. " "
+        end
+        if debug_info and debug_info ~= "" then
+            final_debug_str = final_debug_str .. debug_info
+        end
+
         if CURRENT_HUD_DEBUG_STR and CURRENT_HUD_DEBUG_STR ~= "" then
-            table.insert(debug_parts, CURRENT_HUD_DEBUG_STR)
+            local first_line, rest = string.match(final_debug_str, "^([^\n]*)(\n.*)$")
+            if first_line then
+                final_debug_str = first_line .. " " .. CURRENT_HUD_DEBUG_STR .. rest
+            else
+                final_debug_str = final_debug_str .. " " .. CURRENT_HUD_DEBUG_STR
+            end
             CURRENT_HUD_DEBUG_STR = nil
         end
-        if statement_loc and statement_loc ~= "" then
-            local loc_tag = statement_loc:find("%[语句:") and statement_loc or string.format("[语句:%s]", statement_loc)
-            table.insert(debug_parts, loc_tag)
-        end
 
-        if #debug_parts > 0 then
-            local full_debug_str = table.concat(debug_parts, " ")
-            print("[NOMU_QA 调试信息] " .. full_debug_str)
-
-            if GLOBAL.ThePlayer then
-                -- 延迟 0.15 秒宣告
-                GLOBAL.ThePlayer:DoTaskInTime(0.15, function()
-                    GLOBAL.TheNet:Say("[调试] " .. full_debug_str, whisper)
-                end)
-            else
-                GLOBAL.TheNet:Say("[调试] " .. full_debug_str, whisper)
-            end
+        if final_debug_str ~= "" then
+            print("==================================================")
+            print("[NOMU_QA 调试信息] " .. final_debug_str)
         end
     end
 
@@ -441,226 +358,118 @@ end
 ----------------------------------------
 -- 3.7 Show Me 模组兼容处理
 ----------------------------------------
-
--- Show Me 信息缓存
 local SHOW_ME_CACHE = nil
 
-local function GetShowMePatterns()
+local function IsBannedShowMeLine(str, target_name)
+    if str == target_name then return true end
+    if str:find("󰀉") then return true end
+
     if not SHOW_ME_CACHE then
         SHOW_ME_CACHE = {
-            bad_prefab  = (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab:"):gsub("\n", ""),
-            bad_bank    = (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank:"):gsub("\n", ""),
-            bad_build   = (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build:"):gsub("\n", ""),
-            bad_mod     = (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod:"):gsub("\n", ""),
             lmb_pattern = GLOBAL.STRINGS.LMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.LMB)),
             rmb_pattern = GLOBAL.STRINGS.RMB and ("^%s*" .. escape_pattern(GLOBAL.STRINGS.RMB))
         }
     end
-    return SHOW_ME_CACHE
+    
+    local p = SHOW_ME_CACHE
+    if (p.lmb_pattern and str:find(p.lmb_pattern)) or (p.rmb_pattern and str:find(p.rmb_pattern)) then
+        return true
+    end
+
+    local filters = GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS
+    if filters then
+        for _, bad_word in ipairs(filters) do
+            if bad_word ~= "" and str:find(bad_word) then return true end
+        end
+    end
+    return false
 end
 
--- 解析并过滤包裹/礼物内部物品
 local function ParseBundleLine(str)
-    if not str or str == "" then return nil end
-
-    if str:match("^%s*%d+[%d%.]*%s*$") then
-        return nil
-    end
-
-    local clean_str = str:gsub("^%s*%d+%s*[:%.、%-]%s*", "")
-    if clean_str == "" or clean_str:match("^%s*%d+[%d%.]*%s*$") then
-        return nil
-    end
+    local clean_str = str and str:gsub("^%s*%d+%s*[:%.、%-]%s*", ""):match("^(.-)%s*$")
+    if not clean_str or clean_str:match("^%d+[%d%.]*$") then return nil end
 
     local name, count = clean_str:match("^(.-)%s*%(%s*(%d+)%s*%)%s*$")
-    if not name then
-        name, count = clean_str:match("^(.-)%s*[xX*×]%s*(%d+)%s*$")
-    end
+    if not name then name, count = clean_str:match("^(.-)%s*[xX*×]%s*(%d+)%s*$") end
 
-    if name and name ~= "" then
-        count = tonumber(count) or 1
-        return count > 1 and (name .. " x" .. tostring(count)) or name
-    end
-
-    return clean_str
+    return name and name ~= "" and (tonumber(count) > 1 and name .. " x" .. count or name) or clean_str
 end
 
 local function GetShowMeString(target, qa, start_line, end_line, p3, p4)
-    if not target then
-        return ""
-    end
+    if not target then return "" end
 
-    -- 获取 Show Bundle 全局对象
     local SB = GLOBAL.rawget(GLOBAL, "SB")
-
-    local is_gift = target:HasTag('unwrappable')
-        or target:HasTag('bundle')
-        or target:HasTag('gift')
-        or target.prefab == 'gift'
-        or target.prefab == 'bundle'
-        or (target.replica and target.replica.unwrappable ~= nil)
+    local is_gift = target:HasTag('unwrappable') or target:HasTag('bundle') or target:HasTag('gift') 
+        or target.prefab == 'gift' or target.prefab == 'bundle' 
+        or (target.replica and target.replica.unwrappable ~= nil) 
         or (SB and SB.supported_items and SB.supported_items[target.prefab] ~= nil)
-
-    local has_health = target:HasTag('_health')
-        or (target.replica and target.replica.health ~= nil)
-        or target:HasTag('health')
-
-    -- 获取 Show Bundle 数据
+        
+    local has_health = target:HasTag('_health') or target:HasTag('health') or (target.replica and target.replica.health ~= nil)
     local showbundle_data = target.showbundle_itemdata
-    local has_showbundle = (showbundle_data ~= nil and type(showbundle_data) == "table" and next(showbundle_data) ~= nil)
+    local has_showbundle = type(showbundle_data) == "table" and next(showbundle_data) ~= nil
 
-    if not SHOW_ME_ON and not has_showbundle then
-        return ""
-    end
-
-    if not (GLOBAL.NOMU_QA.DATA.SHOW_ME == 1
-        or (GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 and (is_gift or has_health or has_showbundle))) then
+    local show_me_mode = GLOBAL.NOMU_QA.DATA.SHOW_ME
+    if (not SHOW_ME_ON and not has_showbundle) or not (show_me_mode == 1 or (show_me_mode == 2 and (is_gift or has_health or has_showbundle))) then
         return ""
     end
 
     local items = {}
-
-    -- Show Me / Insight 文本
     if SHOW_ME_ON then
         items = GLOBAL.QA_UTILS.ParseHoverText(start_line, end_line, p3, p4) or {}
-
-        -- 兼容 Insight 模组数据
-        if target and GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight then
-            local insight_cache = GLOBAL.ThePlayer.replica.insight.entity_data
-            if insight_cache and insight_cache[target] then
-                local insight_info = insight_cache[target].information
-                if insight_info and insight_info ~= "" then
-                    local clean_info = CleanInsightString(insight_info)
-                    local insight_lines = string.split(clean_info, '\n')
-                    for _, line in ipairs(insight_lines) do
-                        table.insert(items, line)
-                    end
-                end
-            end
+        local insight_data = GLOBAL.ThePlayer and GLOBAL.ThePlayer.replica.insight and GLOBAL.ThePlayer.replica.insight.entity_data and GLOBAL.ThePlayer.replica.insight.entity_data[target]
+        if insight_data and insight_data.information and insight_data.information ~= "" then
+            for line in CleanInsightString(insight_data.information):gmatch("[^\r\n]+") do table.insert(items, line) end
         end
-
-        if is_gift and #items == 0 and GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls and GLOBAL.ThePlayer.HUD.controls.hover then
-            local hover = GLOBAL.ThePlayer.HUD.controls.hover
-            if hover.insightText and hover.insightText.raw_text then
-                local clean_info = CleanInsightString(hover.insightText.raw_text)
-                for line in clean_info:gmatch("[^\r\n]+") do
-                    table.insert(items, line)
-                end
-            elseif hover.text and hover.text.GetString then
-                local hover_str = hover.text:GetString() or ""
-                for line in hover_str:gmatch("[^\r\n]+") do
-                    table.insert(items, line)
-                end
-            end
+        local hover = GLOBAL.ThePlayer and GLOBAL.ThePlayer.HUD and GLOBAL.ThePlayer.HUD.controls and GLOBAL.ThePlayer.HUD.controls.hover
+        if is_gift and #items == 0 and hover then
+            local hover_str = (hover.insightText and hover.insightText.raw_text and CleanInsightString(hover.insightText.raw_text)) or (hover.text and hover.text.GetString and hover.text:GetString()) or ""
+            for line in hover_str:gmatch("[^\r\n]+") do table.insert(items, line) end
         end
     end
 
-    -- 过滤无效/不需要的行
-    local filtered = {}
-    local patterns = GetShowMePatterns()
-    local found_health_line = false
+    local filtered, found_health_line = {}, false
     local target_display_name = (target.GetBasicDisplayName and target:GetBasicDisplayName()) or target.name or ""
 
     for _, str in ipairs(items) do
-        if str and str:match("[^ \t\r\n]") then
-            local is_name_line = (target_display_name ~= "" and str == target_display_name)
-
-            local is_banned = is_name_line
-                or str:find(patterns.bad_prefab, 1, true)
-                or str:find(patterns.bad_bank, 1, true)
-                or str:find(patterns.bad_build, 1, true)
-                or str:find(patterns.bad_mod, 1, true)
-                or (patterns.lmb_pattern and str:find(patterns.lmb_pattern))
-                or (patterns.rmb_pattern and str:find(patterns.rmb_pattern))
-
-            if not is_banned
-                and GLOBAL.NOMU_QA.DATA.ENABLE_SHOWME_FILTER
-                and GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS then
-                for _, bad_word in ipairs(GLOBAL.NOMU_QA.DATA.SHOWME_FILTERS) do
-                    if bad_word and bad_word ~= "" and str:find(bad_word) then
-                        is_banned = true
-                        break
-                    end
+        if str:match("[^ \t\r\n]") and not IsBannedShowMeLine(str, target_display_name) then
+            if show_me_mode == 2 and has_health and not is_gift then
+                if not found_health_line and str:find("%d+[%d%,%.]*%s*/%s*%d+[%d%,%.]*") then
+                    found_health_line = true
+                    table.insert(filtered, "󰀍 " .. str)
                 end
-            end
-
-            if not is_banned and GLOBAL.NOMU_QA.DATA.SHOW_ME == 2 then
-                if has_health and not is_gift then
-                    if found_health_line then
-                        is_banned = true
-                    else
-                        if string.find(str, "%d+[%d%,%.]*%s*/%s*%d+[%d%,%.]*") then
-                            found_health_line = true
-                            str = "󰀍 " .. str
-                        else
-                            is_banned = true
-                        end
-                    end
-                end
-            end
-
-            if not is_banned then
-                if is_gift then
-                    local parsed_bundle_line = ParseBundleLine(str)
-                    if parsed_bundle_line then
-                        table.insert(filtered, parsed_bundle_line)
-                    end
-                else
-                    table.insert(filtered, str)
-                end
+            else
+                local line = str
+                if line then table.insert(filtered, line) end
             end
         end
     end
 
-    -- 读取 Show Bundle 模组
     if is_gift and #filtered == 0 and has_showbundle then
         for _, info in pairs(showbundle_data) do
             if type(info) == "table" and info.prefab then
-                local prefab = info.prefab
                 local stack = tonumber(info.stack or info.count or info.num) or 1
-                local upper_prefab = string.upper(tostring(prefab))
-                local item_name = LOCAL_STRINGS[upper_prefab]
-                    or (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab]))
-                    or tostring(prefab)
-                item_name = ApplyCustomName(prefab, item_name)
-
-                local str_item = stack > 1 and (item_name .. " x" .. tostring(stack)) or item_name
-                table.insert(filtered, str_item)
+                local item_name = ApplyCustomName(info.prefab, LOCAL_STRINGS[string.upper(info.prefab)] or GLOBAL.STRINGS.NAMES[string.upper(info.prefab)] or tostring(info.prefab))
+                local parsed_line = stack > 1 and (item_name .. "x" .. stack) or item_name
+                table.insert(filtered, parsed_line)
             end
         end
     end
 
-    -- 农场植物特殊处理：最多保留前两行
-    if target:HasTag("farm_plant") then
-        local s = {}
-        for i = 1, math.min(#filtered, 2) do
-            table.insert(s, filtered[i])
-        end
-        filtered = s
-    end
+    -- 农场植物保留前两行
+    if target:HasTag("farm_plant") then while #filtered > 2 do table.remove(filtered) end end
 
-    -- 拼接结果，超长截断
     if #filtered > 0 then
-        local MAX_LEN = 120
         local joined_str = ""
-
-        for i, line in ipairs(filtered) do
-            local separator = (joined_str == "") and "" or ", "
-            local next_len = #joined_str + #separator + #line
-
-            if next_len <= MAX_LEN then
-                joined_str = joined_str .. separator .. line
-            else
-                if #joined_str + 3 <= MAX_LEN then
-                    joined_str = joined_str .. "..."
-                end
-                break
+        for _, line in ipairs(filtered) do
+            local add = (joined_str == "" and "" or ", ") .. line
+            if #joined_str + #add > 125 then 
+                return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str .. "..." }) 
             end
+            joined_str = joined_str .. add
         end
-
         return subfmt(GetMapping(qa, 'WORDS', 'SHOW_ME'), { SHOW_ME = joined_str })
     end
-
+    
     return ""
 end
 
@@ -679,7 +488,6 @@ local BASIC_PICKABLES = {
     lilybush = true, nightrosebush = true, rosebush = true,
     coffeebush = true, rock_limpet = true
 }
-
 
 -- 统一动画状态配置表：将动画名映射到逻辑状态
 local ANIM_STATE_CONFIG = {
@@ -724,6 +532,7 @@ local ANIM_STATE_CONFIG = {
         { state = "TALL",    anims = {"idle_tall", "sway1_loop_tall", "sway2_loop_tall", "idle_old", "sway1_loop_old", "sway2_loop_old"} }
     },
     spiderden = {
+        { state = 1, anims = {"cocoon_small", "cocoon_small_hit", "frozen_small", "frozen_loop_pst_small", "cocoon_small_bedazzled"} },
         { state = 2, anims = {"cocoon_medium", "cocoon_medium_hit", "frozen_medium", "frozen_loop_pst_medium", "cocoon_medium_bedazzled", "grow_small_to_medium"} },
         { state = 3, anims = {"cocoon_large", "cocoon_large_hit", "frozen_large", "frozen_loop_pst_large", "cocoon_large_bedazzled", "grow_medium_to_large", "cocoon_sleep_loop"} }
     },
@@ -779,8 +588,7 @@ end
 
 local function GetSpiderDenStat(ent)
     if not ent then return nil end
-
-    -- 暗影棋子特殊处理
+    -- 暗影棋子
     if ent:HasTag("shadowchesspiece") then
         if ent:HasTag("smallepic") then
             return "L2"
@@ -792,8 +600,7 @@ local function GetSpiderDenStat(ent)
     end
 
     if not ent:HasTag("spiderden") then return nil end
-
-    local level = 1
+    local level = nil
     if ent:HasTag("tent") then
         level = 3
     elseif ent.prefab == "spiderden_2" then
@@ -801,9 +608,9 @@ local function GetSpiderDenStat(ent)
     elseif ent.prefab == "spiderden_3" then
         level = 3
     else
-        level = GetStateFromAnimConfig("spiderden", ent.AnimState, 1)
+        level = GetStateFromAnimConfig("spiderden", ent.AnimState, nil)
     end
-
+    if not level then return nil end
     return "L" .. tostring(level) .. (ent:HasTag("bedazzled") and "_BEDAZZLED" or "")
 end
 
@@ -938,8 +745,8 @@ local function HandleExternalMods(HUD, status, widget)
 
                 -- 向上遍历查找文本内容和组件名
                 while curr and curr ~= HUD.controls.insight_menu do
-                    if curr.componentName then
-                        comp_name = curr.componentName
+                    if curr.componentName then 
+                        comp_name = curr.componentName 
                         item_detail = curr -- 保存找到的 Insight 项 UI 控件对象
                     end
                     if curr.data and curr.data.componentName then comp_name = curr.data.componentName end
@@ -964,12 +771,12 @@ local function HandleExternalMods(HUD, status, widget)
                         if cmp then
                             local insight_rep = GLOBAL.ThePlayer.replica.insight
                             local special_data = insight_rep.world_data and insight_rep.world_data.special_data and insight_rep.world_data.special_data[item_detail.componentName]
-
+                            
                             local describer = special_data and (
                                 (special_data.prefably and GLOBAL.Insight.prefab_descriptors and GLOBAL.Insight.prefab_descriptors[cmp] and GLOBAL.Insight.prefab_descriptors[cmp].StatusAnnouncementsDescribe) or
                                 (GLOBAL.Insight.descriptors and GLOBAL.Insight.descriptors[cmp] and GLOBAL.Insight.descriptors[cmp].StatusAnnouncementsDescribe)
                             )
-
+                            
                             if describer then
                                 return false
                             end
@@ -1845,42 +1652,15 @@ local HUD_CLICK_HANDLERS = {
 
 -- HUD 鼠标点击总入口
 local function OnHUDMouseButton(HUD)
-    local status = HUD.controls.status
+    local status = HUD.controls and HUD.controls.status
     local widget = GLOBAL.TheInput:GetHUDEntityUnderMouse()
 
-    -- 在调试模式下，向上遍历组件树，提取对应的UI/徽章英文代码
     if GLOBAL.NOMU_QA.DATA.DEBUG_MODE and widget and widget.widget then
-        local curr = widget.widget
-        local ui_code = curr.name or "Unknown"
-        local found = false
-        while curr do
-            if status then
-                for k, v in pairs(status) do
-                    if v == curr and type(k) == "string" then
-                        ui_code = k
-                        found = true
-                        break
-                    end
-                end
-            end
-            if not found and HUD.controls then
-                for k, v in pairs(HUD.controls) do
-                    if v == curr and type(k) == "string" then
-                        ui_code = k
-                        found = true
-                        break
-                    end
-                end
-            end
-            if found then break end
-            curr = curr.parent
-        end
-        CURRENT_HUD_DEBUG_STR = "[UI代码: " .. tostring(ui_code) .. "]"
-
-        -- 利用零延迟任务，判定该 UI 点击是否被任何宣告逻辑处理
+        CURRENT_HUD_DEBUG_STR = GLOBAL.NOMU_QA.GetUIDebugString(widget, status, HUD.controls)
+        
+        -- 利用零延迟任务判定 UI 点击是否被拦截
         if GLOBAL.ThePlayer then
             GLOBAL.ThePlayer:DoTaskInTime(0, function()
-                -- 如果该变量没有被 Announce() 函数消耗，说明这是一个未适配的 UI
                 if CURRENT_HUD_DEBUG_STR then
                     print("[NOMU_QA 未适配UI] " .. CURRENT_HUD_DEBUG_STR)
                     CURRENT_HUD_DEBUG_STR = nil
@@ -1891,16 +1671,16 @@ local function OnHUDMouseButton(HUD)
         CURRENT_HUD_DEBUG_STR = nil
     end
 
+    -- 执行实际的宣告点击分发
     for _, handler in ipairs(HUD_CLICK_HANDLERS) do
         if handler(HUD, status, widget) then
-            CURRENT_HUD_DEBUG_STR = nil -- 已被上面的有效逻辑拦截
+            CURRENT_HUD_DEBUG_STR = nil
             return true
         end
     end
 
     return false
 end
-
 -- ============================================================================
 -- [6] 物品配方、容器与制作栏相关方法
 -- ============================================================================
@@ -2023,7 +1803,7 @@ end
 -- 6.2 配方宣告核心函数
 ----------------------------------------
 
--- 统一的配方宣告入口（处理已缓存、可制作、缺材料等各种情况）
+-- 统一的配方宣告入口
 local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_ingredient_type)
     if not recipe then return end
 
@@ -2130,7 +1910,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
         if num_missing <= 0 then
             -- 材料充足
             fmts.INGREDIENT = ingredient_name
-
+            
             if is_catalyst then
                 return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE_CATALYST, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE_CATALYST"))
             else
@@ -2138,7 +1918,7 @@ local function AnnounceMergedRecipe(recipe, builder, inventory, owner, specific_
                 fmts.TOTAL_NUM = num_found
                 fmts.REQ_NUM = actual_needed
                 fmts.CRAFT_COUNT = craft_count
-
+                
                 return Announce(subfmt(qa_const.FORMATS.CRAFT_HAVE, fmts), nil, debug_str, GetStatementLoc("CONSTRUCTION_AND_TRADE", "CRAFT_HAVE"))
             end
         else
@@ -2197,7 +1977,7 @@ end
 -- 6.3 物品数量统计与容器遍历
 ----------------------------------------
 
--- 预制物别名映射（不同变体视为同一种物品）
+-- 预制物别名映射
 local ITEM_PREFAB_ALIAS = {
     driftwood_small1 = "driftwood_small1",
     driftwood_tall   = "driftwood_small1",
@@ -2510,9 +2290,8 @@ local function AnnounceItem(slot, classname)
     end
 
     -- 调试信息
-    local cont_name = container and (container.inst and (container.inst == ThePlayer and "inventory" or container.inst.prefab) or container.type or "inventory") or "无"
     local slot_name = classname == 'equipslot' and tostring(slot.equipslot) or ("inv_" .. tostring(slot.num))
-    local debug_txt = string.format("[物品代码: %s] [容器代码: %s] [槽位代码: %s]", tostring(item.prefab), cont_name, slot_name)
+    local debug_txt = GLOBAL.NOMU_QA.GetContainerSlotDebugString(item, container and container.inst, slot_name, classname)
 
     return Announce(result_str, nil, debug_txt, GetStatementLoc("ITEM", fmt_loc_key))
 end
@@ -2766,49 +2545,6 @@ end
 -- ============================================================================
 -- [7] 环境实体探测与世界交互逻辑
 -- ============================================================================
-
-----------------------------------------
--- 7.1 模组来源与资产缓存
-----------------------------------------
-
-local PREFAB_MOD_CACHE, BUILD_CACHE = {}, {}
-
--- 获取预制物所属模组的友好名称
-local function GetModNameForPrefab(prefab)
-    if not prefab then return false end
-    if PREFAB_MOD_CACHE[prefab] ~= nil then return PREFAB_MOD_CACHE[prefab] end
-
-    for _, modname in ipairs(GLOBAL.KnownModIndex:GetModNames()) do
-        local pre = GLOBAL.Prefabs["MOD_" .. modname]
-        if pre ~= nil and table.contains(pre.deps, prefab) then
-            PREFAB_MOD_CACHE[prefab] = GLOBAL.KnownModIndex:GetModFancyName(modname)
-            return PREFAB_MOD_CACHE[prefab]
-        end
-    end
-
-    PREFAB_MOD_CACHE[prefab] = false
-    return false
-end
-
--- 获取实体的 Bank/Build 资产信息（带缓存）
-local function GetBuildCached(inst)
-    if not inst or not inst.entity or not inst.prefab then return nil, nil end
-    if BUILD_CACHE[inst.prefab] then
-        return BUILD_CACHE[inst.prefab].bank, BUILD_CACHE[inst.prefab].build
-    end
-
-    local str = inst.entity:GetDebugString()
-    if not str then return nil, nil end
-
-    local bank, build = str:match("bank: (.+) build: (.+) anim: ")
-    if bank and build then
-        BUILD_CACHE[inst.prefab] = { bank = bank, build = build }
-        return bank, build
-    end
-
-    return nil, nil
-end
-
 ----------------------------------------
 -- 7.2 实体特殊状态分发器
 ----------------------------------------
@@ -2892,9 +2628,9 @@ local function GetEntitySpecialState(entity, is_target)
     if entity:HasTag("fire") then return "FIRE" end
     if entity:HasTag("burnt") then return "BURNT" end
     if entity:HasTag("smolder") then return "SMOLDER" end
-    if entity.prefab == "lightninggoat" and entity:HasTag("charged") then return "GOAT_CHARGED" end
     if entity:HasTag("withered") then return "WITHERED" end
     if entity:HasTag("barren") then return "BARREN" end
+    if entity.prefab == "lightninggoat" and entity:HasTag("charged") then return "GOAT_CHARGED" end
 
     -- 作物/树木/蜘蛛巢状态
     local stat = GetGenericCropStat(entity) or GetTreeStat(entity) or GetSpiderDenStat(entity)
@@ -2964,7 +2700,9 @@ local function HandlePlayerClick(entity)
     local is_me_ghost = GLOBAL.ThePlayer:HasTag("playerghost")
     local is_ent_ghost = entity:HasTag("playerghost")
     local qa_formats = GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS
-    local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
+    
+    -- 获取玩家实体的调试信息
+    local debug_str = GLOBAL.NOMU_QA.GetEntityDebugString(entity)
 
     -- 点击自己
     if entity == GLOBAL.ThePlayer then
@@ -3056,8 +2794,7 @@ local function HandleEnvMiddleClick(entity)
     local qa = GLOBAL.NOMU_QA.SCHEME.ENV
     local mod_str = ""
     local safe_prefab = entity.prefab or "UNKNOWN"
-
-    local mod_name = GetModNameForPrefab(safe_prefab)
+    local mod_name = GLOBAL.NOMU_QA.GetModNameForPrefab(safe_prefab)
     if mod_name then
         mod_str = subfmt(GetMapping(qa, 'WORDS', 'MOD_INFO'), { MOD_NAME = mod_name })
     end
@@ -3080,7 +2817,7 @@ end
 
 GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     -- 仅在 HUD 界面 + Alt + Shift + 按下时触发
-    if not (IsDefaultScreen() and IsAltPressed() and IsShiftPressed() and down) then
+    if not (IsDefaultScreen() and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() and down) then
         return
     end
 
@@ -3202,7 +2939,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             if v_name == target_name then count_name = count_name + s end
 
             if target_state and GetEntitySpecialState(v, false) == target_state then
-                stat_count = stat_count + 1
+                stat_count = stat_count + s
             end
         end
     end
@@ -3225,7 +2962,7 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     -- 调试信息
-    local debug_str = string.format("[实体代码: %s]", tostring(entity.prefab))
+    local debug_str = GLOBAL.NOMU_QA.GetEntityDebugString(entity)
 
     -- Show Me 信息
     local start_line = #(string.split(entity:GetBasicDisplayName(), '\n')) + 1
@@ -3255,12 +2992,12 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     ---- 特殊预制物打断处理 ----
     if entity.prefab == "gelblob_storage" then
         local held_item = entity.takeitem and entity.takeitem:value()
-
+        
         if held_item ~= nil and held_item:IsValid() then
             -- 获取内部物品的名称和数量
             local item_display_name = GetEntityName(held_item, false)
             local stack_size = held_item.replica and held_item.replica.stackable and held_item.replica.stackable:StackSize() or 1
-
+            
             return Announce(subfmt(qa.FORMATS.STORAGE_HAS, {
                 TOTAL = count_prefab,
                 NAME = prefab_name,
@@ -3282,8 +3019,12 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             end
 
             local fmt_name = "STORAGE_EMPTY"
-            if empty_count == 1 and qa.FORMATS.STORAGE_EMPTY_THIS then
-                fmt_name = "STORAGE_EMPTY_THIS"
+            if count_prefab == 1 then
+                fmt_name = qa.FORMATS.STORAGE_EMPTY_THIS_SINGLE and "STORAGE_EMPTY_THIS_SINGLE" or "STORAGE_EMPTY_THIS"
+            elseif empty_count == count_prefab then
+                fmt_name = qa.FORMATS.STORAGE_EMPTY_EQUAL and "STORAGE_EMPTY_EQUAL" or "STORAGE_EMPTY"
+            elseif empty_count == 1 then
+                fmt_name = qa.FORMATS.STORAGE_EMPTY_THIS and "STORAGE_EMPTY_THIS" or "STORAGE_EMPTY"
             end
 
             return Announce(subfmt(qa.FORMATS[fmt_name], {
@@ -3376,8 +3117,14 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     end
 
     ---- 常规宣告（Fallback）----
-    if (is_player_named or (count_prefab > count_name and display_name ~= prefab_name)) then
-        local fmt_name = (count_name == 1 and qa.FORMATS.NAMED_THIS) and "NAMED_THIS" or "NAMED"
+    local actual_prefab = tostring(entity.prefabnameoverride or entity.nameoverride or entity.prefab)
+    if prefab_name ~= actual_prefab and display_name ~= prefab_name and (is_player_named or count_prefab > count_name) then
+        local fmt_name = "NAMED"
+        if count_prefab == 1 then
+            fmt_name = qa.FORMATS.NAMED_THIS_SINGLE and "NAMED_THIS_SINGLE" or "NAMED_THIS"
+        elseif count_name == 1 then
+            fmt_name = qa.FORMATS.NAMED_THIS and "NAMED_THIS" or "NAMED"
+        end
 
         if qa.FORMATS[fmt_name] then
             return Announce(subfmt(qa.FORMATS[fmt_name], {
@@ -3432,7 +3179,7 @@ local function InjectAltAccept(widget, logic_fn)
     local old_OnControl = widget.OnControl
 
     widget.OnControl = function(w, control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() then
+        if down and control == GLOBAL.CONTROL_ACCEPT and GLOBAL.QA_UTILS.IsAltPressed() then
             if logic_fn(w, ...) then return true end
         end
         if old_OnControl then return old_OnControl(w, control, down, ...) end
@@ -3446,7 +3193,7 @@ local function InjectAltShiftAccept(widget, logic_fn)
     local old_OnControl = widget.OnControl
 
     widget.OnControl = function(w, control, down, ...)
-        if down and control == GLOBAL.CONTROL_ACCEPT and IsAltPressed() and IsShiftPressed() then
+        if down and control == GLOBAL.CONTROL_ACCEPT and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() then
             if logic_fn(w, ...) then return true end
         end
         if old_OnControl then return old_OnControl(w, control, down, ...) end
@@ -3586,7 +3333,7 @@ AddClassPostConstruct('screens/playerhud', function(PlayerHud)
     local oldOnMouseButton = PlayerHud.OnMouseButton
 
     function PlayerHud:OnMouseButton(button, down, ...)
-        if button == MOUSEBUTTON_LEFT and down and IsAltPressed() then
+        if button == MOUSEBUTTON_LEFT and down and GLOBAL.QA_UTILS.IsAltPressed() then
             if OnHUDMouseButton(self) then return true end
         end
         return oldOnMouseButton(self, button, down, ...)
@@ -3700,7 +3447,7 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
             elseif classname == 'equipslot' then
                 local slot_pos_name = GetEquipSlotName(GLOBAL.NOMU_QA.SCHEME.ITEM, w.equipslot)
                 if slot_pos_name then
-                    local debug_str = string.format("[槽位代码: %s]", tostring(w.equipslot))
+                    local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, container and container.inst, w.equipslot, "equipslot")
                     return Announce(subfmt(
                         GLOBAL.NOMU_QA.SCHEME.ITEM.FORMATS.EQUIP_SLOT_EMPTY,
                         {
@@ -3719,10 +3466,8 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
                 local inst = container.inst
                 local cont_type = inst == GLOBAL.ThePlayer and "PLAYER"
                     or (inst and inst:HasTag("inlimbo") and "INV" or "CONTAINER")
-
-                local cont_code = tostring(inst and (inst == GLOBAL.ThePlayer and "inventory" or inst.prefab) or container.type or "inventory")
                 local ui_code = classname == "invslot" and "inv" or tostring(classname)
-                local debug_str = string.format("[容器代码: %s] [UI代码: %s]", cont_code, ui_code)
+                local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, inst, nil, ui_code)
 
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SPACE.FORMATS[cont_type], {
                     COUNT = container:GetNumSlots() - used_slots,
@@ -3742,7 +3487,7 @@ AddClassPostConstruct('widgets/giftitemtoast', function(self)
 
     function self:OnMouseButton(button, down, ...)
         local ret = oldOnMouseButton(self, button, down, ...)
-        if button == MOUSEBUTTON_LEFT and down and IsAltPressed() then
+        if button == MOUSEBUTTON_LEFT and down and GLOBAL.QA_UTILS.IsAltPressed() then
             local fmt_name = self.enabled and "CAN_OPEN" or "NEED_SCIENCE"
             Announce(GLOBAL.NOMU_QA.SCHEME.GIFT.FORMATS[fmt_name], nil, nil, GetStatementLoc("GIFT", fmt_name))
         end
@@ -3834,17 +3579,17 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
             if w.profileFlair and w.profileFlair.shown and w.profileFlair.focus and w.characterBadge then
                 local prefab = w.characterBadge.prefabname
                 local is_connecting = type(w.characterBadge.IsLoading) == "function" and w.characterBadge:IsLoading()
-
+                
                 if is_connecting then
                     -- 只要在加载，就是连接中
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING,
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CONNECTING, 
                         { NAME = w.displayName }
                     ), nil, nil, GetStatementLoc("PLAYER", "CONNECTING"))
                 elseif not prefab or prefab == "" then
                     -- 加载完成，但没有角色代码，说明在选人界面
                     return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING,
+                        GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.CHOOSING, 
                         { NAME = w.displayName }
                     ), nil, nil, GetStatementLoc("PLAYER", "CHOOSING"))
                 else
@@ -4336,7 +4081,6 @@ TheInput:AddKeyUpHandler(key_toggle, function()
     end
 end)
 
---兼容群鸟绘卷面板
 if QUNNIAO_ON then
     local state, m_util = GLOBAL.pcall(GLOBAL.require, "util/modutil")
     if state and type(m_util) == "table" and m_util.AddBindIcon then
@@ -4396,59 +4140,6 @@ if QUNNIAO_ON then
 end
 
 ----------------------------------------
--- 9.14 悬浮文本增强（显示模组名/资产信息）
-----------------------------------------
-
-AddClassPostConstruct("widgets/hoverer", function(hoverer)
-    local oldSetString = hoverer.text.SetString
-
-    hoverer.text.SetString = function(text, str, ...)
-        local show_mod = GLOBAL.NOMU_QA.DATA.SHOW_MOD_NAME
-        local asset_mode = GLOBAL.NOMU_QA.DATA.SHOW_ASSET_INFO
-
-        if not show_mod and (not asset_mode or asset_mode == 0) then
-            return oldSetString and oldSetString(text, str, ...)
-        end
-
-        -- 获取鼠标下的实体
-        local target = GLOBAL.TheInput:GetHUDEntityUnderMouse()
-        target = (target and target.widget and target.widget.parent ~= nil and target.widget.parent.item)
-            or GLOBAL.TheInput:GetWorldEntityUnderMouse()
-            or nil
-
-        if target and target.prefab then
-            str = str:gsub("[ \t\r\n]+$", "")
-
-            -- 附加模组名称
-            if show_mod then
-                local cached_mod = GetModNameForPrefab(target.prefab)
-                if cached_mod then
-                    str = str .. "\n" .. (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod: ") .. cached_mod
-                end
-            end
-
-            -- 附加资产信息
-            if asset_mode and asset_mode > 0 then
-                str = str .. (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "\nPrefab: ") .. target.prefab
-                if asset_mode == 2 then
-                    local bank, build = GetBuildCached(target)
-                    if bank and build then
-                        str = str .. (LOCAL_STRINGS.HOVER_BANK_PREFIX or "\nBank: anim/") .. bank
-                            .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
-                        str = str .. (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "\nBuild: anim/") .. build
-                            .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
-                    end
-                end
-            end
-        end
-
-        if oldSetString then
-            return oldSetString(text, str, ...)
-        end
-    end
-end)
-
-----------------------------------------
 -- 9.15 操作阻断（防止误触）
 ----------------------------------------
 
@@ -4459,7 +4150,7 @@ AddComponentPostInit("playercontroller", function(self)
         -- 在宣告快捷键按下时阻断主/副操作
         if GLOBAL.NOMU_QA.DATA.BLOCK_ACTION
             and (control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY) then
-            if IsDefaultScreen() and IsAltPressed() and IsShiftPressed() then
+            if IsDefaultScreen() and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() then
                 return true
             end
         end
@@ -4469,12 +4160,3 @@ AddComponentPostInit("playercontroller", function(self)
         end
     end
 end)
-
-
-local oldNetworking_Say = GLOBAL.Networking_Say
-GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-    if ENABLE_MEME_SYSTEM and type(message) == "string" and string.match(message, "%[Meme:.-%]") then
-        message = message .. "\n "
-    end
-    return oldNetworking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-end
