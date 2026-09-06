@@ -2824,6 +2824,10 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
     local ThePlayer = GLOBAL.ThePlayer
     local TheInput = GLOBAL.TheInput
 
+    if TheInput:GetHUDEntityUnderMouse() ~= nil then
+        return
+    end
+
     -- 获取鼠标下的实体
     local entity = ConsoleWorldEntityUnderMouse()
     if entity and (entity:HasTag("NOCLICK") or entity:HasTag("FX") or entity:HasTag("DECOR")) then
