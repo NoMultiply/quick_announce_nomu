@@ -480,20 +480,61 @@ local function CreateEmojiAndPhraseMenu(self, mode)
         end
 
         -- ===== Tab 4: 玩家选择列表 =====
-        local pw, ph = 300, 44
+        local pw, ph = 300, 46
         self.EM_player_list = self.EM_page_4:AddChild(NoMuList(function()
             local item = MakeListItem('player-list-item', pw, ph)
-            item.characterBadge = item:AddChild(PlayerBadge("", GLOBAL.DEFAULT_PLAYER_COLOUR, false, 0))
-            item.characterBadge:SetScale(0.55); item.characterBadge:SetPosition(-pw / 2 + 25, 0, 0)
+            item.focus_forward = nil
 
-            item.text:SetHAlign(GLOBAL.ANCHOR_LEFT); item.text:SetRegionSize(pw - 60, ph); item.text:SetPosition(30, 0, 0)
+            item.characterBadge = item:AddChild(PlayerBadge("", GLOBAL.DEFAULT_PLAYER_COLOUR, false, 0))
+            item.characterBadge:SetScale(0.55)
+            item.characterBadge:SetPosition(-pw / 2 + 25, 0, 0)
+
+            item.text:SetHAlign(GLOBAL.ANCHOR_LEFT)
+            item.text:SetRegionSize(pw - 130, 20)
+            item.text:SetPosition(-5, 9, 0)
+            item.text:SetSize(18)
+
+            item.kuid_btn = item:AddChild(TextButton())
+            item.kuid_btn:SetFont(GLOBAL.CHATFONT)
+            item.kuid_btn:SetTextSize(13)
+            item.kuid_btn:SetTextColour({0.75, 0.75, 0.75, 1})
+            item.kuid_btn:SetTextFocusColour(GLOBAL.UICOLOURS.GOLD)
+            if item.kuid_btn.text then
+                item.kuid_btn.text:SetHAlign(GLOBAL.ANCHOR_LEFT)
+                item.kuid_btn.text:SetRegionSize(pw - 130, 16)
+            end
+            item.kuid_btn:SetPosition(-5, -11, 0)
+            if S and S.TOOLTIP_KUID then
+                item.kuid_btn:SetHoverText(S.TOOLTIP_KUID)
+            end
 
             item.SetInfo = function(_, client)
-                item.text:SetString(client.name); item.text:SetColour(unpack(client.colour or GLOBAL.DEFAULT_PLAYER_COLOUR))
+                item.client = client
+                item.text:SetString(client.name)
+                item.text:SetColour(unpack(client.colour or GLOBAL.DEFAULT_PLAYER_COLOUR))
                 item.characterBadge:Set(client.prefab or "", client.colour or GLOBAL.DEFAULT_PLAYER_COLOUR, client.performance ~= nil, client.userflags or 0, client.base_skin)
-                item.backing:SetOnClick(function()
-                    InsertText("@" .. client.name .. " "); SwitchToTab(2); self.RestoreInputFocus()
+                local display_kuid = client.userid or ""
+                item.kuid_btn:SetText(display_kuid)
+
+                item.kuid_btn:SetOnClick(function()
+                    local qa_player = GLOBAL.NOMU_QA and GLOBAL.NOMU_QA.SCHEME and GLOBAL.NOMU_QA.SCHEME.PLAYER
+                    local fmt = (qa_player and qa_player.FORMATS and qa_player.FORMATS.KUID)
+                        or (GLOBAL.STRINGS.DEFAULT_NOMU_QA and GLOBAL.STRINGS.DEFAULT_NOMU_QA.PLAYER and GLOBAL.STRINGS.DEFAULT_NOMU_QA.PLAYER.FORMATS and GLOBAL.STRINGS.DEFAULT_NOMU_QA.PLAYER.FORMATS.KUID)
+                        or "{NAME} 的 KUID 是 {KUID}。"
+                    Announce(GLOBAL.subfmt(fmt, { NAME = client.name, KUID = display_kuid }))
+                    if GLOBAL.NOMU_QA.DATA.FREQ_AUTO_CLOSE and mode == "chat" then
+                        if type(self.Close) == "function" then self:Close() else GLOBAL.TheFrontEnd:PopScreen(self) end
+                    else
+                        self.RestoreInputFocus()
+                    end
                 end)
+
+                item.backing:SetOnClick(function()
+                    InsertText("@" .. client.name .. " ")
+                    SwitchToTab(2)
+                    self.RestoreInputFocus()
+                end)
+
             end
             return item
         end, 0, 10, pw, ph, 1, 6))
@@ -786,7 +827,8 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.vertical_line:SetRotation(90); self.vertical_line:SetScale(1, 0.57)
 
     sx = sx + 260
-    self.title_text_editing = self.root:AddChild(Text(BODYTEXTFONT, 32)); self.title_text_editing:SetPosition(sx + 300, sy)
+    self.title_text_editing = self.root:AddChild(Text(BODYTEXTFONT, 32))
+    self.title_text_editing:SetPosition(sx + 300, sy)
     
     local function save_and_apply() 
         GLOBAL.NOMU_QA.DATA.SCHEMES[self.scheme_idx] = DeepCopy(self.scheme)
@@ -815,7 +857,7 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     self.func_list = self.root:AddChild(NoMuList(function()
         local item = MakeListItem('func-list-item', 120, 40)
         item.SetInfo = function(_, func) 
-            item.text:SetString(STRINGS.NOMU_QA.FUNC[func])
+            item.text:SetString(STRINGS.NOMU_QA.FUNC[func] or func)
             item.backing:SetOnClick(function() self:RefreshFunc(func) end) 
         end
         return item
@@ -824,6 +866,64 @@ local QACustomizePanel = Class(NoMuScreen, function(self, nomu_parent)
     sx = sx + 160
     self.title_text_format = self.root:AddChild(Text(BODYTEXTFONT, 32))
     self.title_text_format:SetPosition(sx + 210, sy - dy)
+
+    self.scheme_settings_root = self.root:AddChild(Widget("scheme_settings_root"))
+    self.scheme_settings_root:SetPosition(sx + 210, 0)
+    self.scheme_settings_root:Hide()
+
+    local function get_scheme_p_text()
+        local p = self.scheme and self.scheme.custom_prefix
+        local fallback = GLOBAL.STRINGS.LMB
+        local label = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.BUTTON_TEXT_SCHEME_PREFIX)
+        return label .. tostring((p and p ~= "") and p or fallback)
+    end
+
+    local function get_scheme_s_text()
+        local sfx = self.scheme and self.scheme.custom_suffix
+        local fallback = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.DEFAULT_VALUE_HINT)
+        local label = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.BUTTON_TEXT_SCHEME_SUFFIX)
+        return label .. tostring((sfx and sfx ~= "") and sfx or fallback)
+    end
+
+    local function AddChildBtn(parent, x, y, w, h, text_val, fn)
+        local btn = parent:AddChild(ImageButton("images/global_redux.xml", "button_carny_long_normal.tex", "button_carny_long_hover.tex", "button_carny_long_disabled.tex", "button_carny_long_down.tex"))
+        btn:SetFont(CHATFONT)
+        btn:SetPosition(x, y, 0)
+        btn.text:SetColour(0, 0, 0, 1)
+        btn:SetTextSize(22)
+        btn:ForceImageSize(w, h)
+        btn:SetOnClick(function()
+            fn(btn)
+            if type(text_val) == 'function' then btn:SetText(text_val(btn)) end
+        end)
+        btn:SetText(type(text_val) == 'function' and text_val(btn) or text_val)
+        return btn
+    end
+
+    self.btn_scheme_prefix = AddChildBtn(self.scheme_settings_root, -105, 40, 200, 42, get_scheme_p_text, function()
+        local cur_p = self.scheme and self.scheme.custom_prefix or ""
+        TheFrontEnd:PushScreen(GetInputString(nil, STRINGS.NOMU_QA.TITLE_SCHEME_PREFIX , cur_p, function(val)
+            self.scheme.custom_prefix = (val and val ~= "") and val or nil
+            save_and_apply()
+            if self.btn_scheme_prefix then self.btn_scheme_prefix:SetText(get_scheme_p_text()) end
+        end, 30, 320))
+    end)
+
+    self.btn_scheme_suffix = AddChildBtn(self.scheme_settings_root, 105, 40, 200, 42, get_scheme_s_text, function()
+        local cur_s = self.scheme and self.scheme.custom_suffix or ""
+        TheFrontEnd:PushScreen(GetInputString(nil, STRINGS.NOMU_QA.TITLE_SCHEME_SUFFIX , cur_s, function(val)
+            self.scheme.custom_suffix = (val and val ~= "") and val or nil
+            save_and_apply()
+            if self.btn_scheme_suffix then self.btn_scheme_suffix:SetText(get_scheme_s_text()) end
+        end, 30, 320))
+    end)
+
+    -- 说明提示文本
+    local hint_txt = self.scheme_settings_root:AddChild(Text(BODYTEXTFONT, 20, STRINGS.NOMU_QA.HINT_SCHEME_SETTINGS))
+    hint_txt:SetPosition(0, -20)
+    hint_txt:SetRegionSize(420, 50)
+    hint_txt:SetColour(0.7, 0.7, 0.7, 1)
+    hint_txt:EnableWordWrap(true)
     
     -- 抽取格式列表和映射列表项共用 UI
     local function CreateSettingListItem(name, val_str_fn, action_title, save_cb_path, get_default_val_fn)
@@ -941,11 +1041,13 @@ function QACustomizePanel:RefreshScheme(idx)
     self.title_text_editing:SetString(STRINGS.NOMU_QA.TITLE_TEXT_EDITING .. self.scheme.name)
 
     local fl = {}
+    table.insert(fl, "SETTINGS")
+
     if not self.scheme.data then self.scheme.data = {} end
 
-    local added_funcs = {}
+    local added_funcs = { SETTINGS = true }
     for _, func_info in ipairs(GLOBAL.STRINGS.NOMU_QA.FUNC) do
-        if self.scheme.data[func_info.id] then
+        if func_info.id ~= "SETTINGS" and self.scheme.data[func_info.id] then
             table.insert(fl, func_info.id)
             added_funcs[func_info.id] = true
         end
@@ -959,10 +1061,41 @@ end
 
 function QACustomizePanel:RefreshFunc(func, mapping)
     self.scheme_func = func or self.scheme_func
-    self.title_text_format:SetString(GLOBAL.subfmt(STRINGS.NOMU_QA.TITLE_TEXT_FORMAT, { NAME = STRINGS.NOMU_QA.FUNC[self.scheme_func] }))
+
+    if self.scheme_func == "SETTINGS" then
+        self.title_text_format:SetString(STRINGS.NOMU_QA.TITLE_TEXT_SCHEME_SETTINGS)
+        self.format_list:Hide()
+        self.btn_mapping:Hide()
+        self.mapping_list:Hide()
+        if self.scheme_settings_root then
+            self.scheme_settings_root:Show()
+            if self.btn_scheme_prefix then
+                local p = self.scheme and self.scheme.custom_prefix
+                local fallback = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.DEFAULT_VALUE_HINT)
+                local label = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.BUTTON_TEXT_SCHEME_PREFIX)
+                self.btn_scheme_prefix:SetText(label .. tostring((p and p ~= "") and p or fallback))
+            end
+            if self.btn_scheme_suffix then
+                local sfx = self.scheme and self.scheme.custom_suffix
+                local fallback = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.DEFAULT_VALUE_HINT)
+                local label = (STRINGS.NOMU_QA and STRINGS.NOMU_QA.BUTTON_TEXT_SCHEME_SUFFIX)
+                self.btn_scheme_suffix:SetText(label .. tostring((sfx and sfx ~= "") and sfx or fallback))
+            end
+        end
+        return
+    end
+
+    if self.scheme_settings_root then
+        self.scheme_settings_root:Hide()
+    end
+    self.format_list:Show()
+
+    self.title_text_format:SetString(GLOBAL.subfmt(STRINGS.NOMU_QA.TITLE_TEXT_FORMAT, { NAME = STRINGS.NOMU_QA.FUNC[self.scheme_func] or self.scheme_func }))
     local fl, ml = {}, {}
-    for name, format in pairs(self.scheme.data[self.scheme_func].FORMATS) do table.insert(fl, { name = name, value = format }) end
-    if self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT then
+    if self.scheme.data[self.scheme_func] and self.scheme.data[self.scheme_func].FORMATS then
+        for name, format in pairs(self.scheme.data[self.scheme_func].FORMATS) do table.insert(fl, { name = name, value = format }) end
+    end
+    if self.scheme.data[self.scheme_func] and self.scheme.data[self.scheme_func].MAPPINGS and self.scheme.data[self.scheme_func].MAPPINGS.DEFAULT then
         self.scheme_mapping = mapping or self.scheme_mapping
         if not self.scheme.data[self.scheme_func].MAPPINGS[self.scheme_mapping] then self.scheme_mapping = 'DEFAULT' end
         self.mapping_list:Show(); self.btn_mapping:Show()
@@ -1035,7 +1168,6 @@ local QAPanel = Class(Widget, function(self)
     local right_grid = {
         { type="state", key="ALT_MODE", states={1,2,3}, texts={[1]=s.BUTTON_TEXT_ALT_MODE_1, [2]=s.BUTTON_TEXT_ALT_MODE_2, [3]=s.BUTTON_TEXT_ALT_MODE_3} },
         { type="state", key="SHIFT_MODE", states={1,2,3}, texts={[1]=s.BUTTON_TEXT_SHIFT_MODE_1, [2]=s.BUTTON_TEXT_SHIFT_MODE_2, [3]=s.BUTTON_TEXT_SHIFT_MODE_3} },
-        { type="prefix", w=400, span=2 },
         { type="toggle", key="BLOCK_ACTION", on=s.BUTTON_TEXT_BLOCK_ACTION_ON, off=s.BUTTON_TEXT_BLOCK_ACTION_OFF },
         { type="toggle", key="ANNOUNCE_ALL_MISSING_INGREDIENTS", on=s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_ON, off=s.BUTTON_TEXT_ANNOUNCE_ALL_MISSING_OFF },
         { type="toggle", key="DEFAULT_WHISPER", on=s.BUTTON_TEXT_DEFAULT_WHISPER_ON, off=s.BUTTON_TEXT_DEFAULT_WHISPER_OFF },
@@ -1058,20 +1190,7 @@ local QAPanel = Class(Widget, function(self)
         local btn_y = sy - r_row * dy
         local btn_w = v.w or 200
 
-        if v.type == "prefix" then
-            local prefix_btn
-            prefix_btn = AddBtn(220, btn_y, btn_w, dy, function()
-                local p = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
-                return s.BUTTON_TEXT_CUSTOM_PREFIX .. tostring((p == nil or p == "") and GLOBAL.STRINGS.LMB or p)
-            end, function()
-                local default_val = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
-                TheFrontEnd:PushScreen(GetInputString(self, s.TITLE_CUSTOM_PREFIX, (default_val == nil or default_val == "") and GLOBAL.STRINGS.LMB or default_val, function(val)
-                    GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX = val; GLOBAL.NOMU_QA.SaveData()
-                    if prefix_btn then prefix_btn:SetText(s.BUTTON_TEXT_CUSTOM_PREFIX .. tostring(val == "" and GLOBAL.STRINGS.LMB or val)) end
-                end, 30, 300))
-            end)
-            r_row = r_row + 1; r_col = 1
-        elseif v.type == "toggle" then
+        if v.type == "toggle" then
             AddToggleBtn(btn_x, btn_y, btn_w, dy, v.key, v.on, v.off)
             if r_col == 2 then r_row = r_row + 1; r_col = 1 else r_col = 2 end
         elseif v.type == "state" then

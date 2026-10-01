@@ -64,8 +64,7 @@ local function GetEntityDebugString(entity, extra_prefix)
     local raw_display = type(entity.GetDisplayName) == "function" and entity:GetDisplayName() or "无"
     local actual_prefab = tostring(entity.prefabnameoverride or entity.nameoverride or entity.prefab)
     local upper_prefab = string.upper(actual_prefab)
-    
-    -- 跨文件环境获取词库
+
     local LOCAL_STRINGS = GLOBAL.STRINGS.NOMU_QA or {}
     
     local raw_basic = (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab])) or actual_prefab
@@ -139,7 +138,7 @@ local function GetUIDebugString(widget, status_table, controls_table)
         tostring(ui_code), tostring(raw_name), tostring(parent_name), tostring(text_str), tostring(hover_str), sx, sy)
 end
 
-local function GetContainerSlotDebugString(item, container_inst, slot_name, ui_code)
+local function GetContainerSlotDebugString(item, container_inst, slot_name, ui_code, extra_info)
     if not (GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.DEBUG_MODE) then return nil end
 
     local debug_txt = ""
@@ -150,7 +149,8 @@ local function GetContainerSlotDebugString(item, container_inst, slot_name, ui_c
     if container_inst then
         local prefix = "[归属容器]"
         if ui_code then prefix = prefix .. string.format(" [UI代码: %s]", tostring(ui_code)) end
-        if not item and slot_name then prefix = prefix .. string.format(" [空槽位: %s]", tostring(slot_name)) end
+        if slot_name then prefix = prefix .. string.format(" [槽位: %s]", tostring(slot_name)) end
+        if extra_info then prefix = prefix .. " " .. tostring(extra_info) end
 
         local cont_debug = GetEntityDebugString(container_inst, prefix)
         if cont_debug then
@@ -177,31 +177,59 @@ AddClassPostConstruct("widgets/hoverer", function(hoverer)
             return oldSetString and oldSetString(text, str, ...)
         end
 
-        local target = GLOBAL.TheInput:GetHUDEntityUnderMouse()
-        target = (target and target.widget and target.widget.parent ~= nil and target.widget.parent.item)
-            or GLOBAL.TheInput:GetWorldEntityUnderMouse()
-            or nil
+        local hud_ent = GLOBAL.TheInput:GetHUDEntityUnderMouse()
+        local target = nil
+        local ing_prefab = nil
 
-        if target and target.prefab then
+        if hud_ent and hud_ent.widget then
+            local w = hud_ent.widget
+
+            if w.parent ~= nil and w.parent.item then
+                target = w.parent.item
+            else
+                local curr = w
+                while curr do
+                    if curr.ing then
+                        ing_prefab = curr.ing.texture or curr.ing.type or curr.ing.prefab
+                    elseif curr.ingtype then
+                        ing_prefab = curr.ingtype
+                    elseif curr.ingredient then
+                        ing_prefab = type(curr.ingredient) == "table" and (curr.ingredient.type or curr.ingredient.prefab) or curr.ingredient
+                    end
+
+                    if type(ing_prefab) == "string" then
+                        ing_prefab = ing_prefab:gsub("%.tex$", "")
+                        break
+                    end
+                    curr = curr.parent
+                end
+            end
+        else
+            target = GLOBAL.TheInput:GetWorldEntityUnderMouse()
+        end
+
+        local query_prefab = (target and target.prefab) or ing_prefab
+
+        if query_prefab then
             str = str:gsub("[ \t\r\n]+$", "")
 
             local HIDDEN_TAG = "󰀉" 
             local LOCAL_STRINGS = GLOBAL.STRINGS.NOMU_QA or {}
 
             if show_mod then
-                local cached_mod = GetModNameForPrefab(target.prefab)
+                local cached_mod = GetModNameForPrefab(query_prefab)
                 if cached_mod then
-                    str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.SHOW_MOD_PREFIX or "Mod: ") .. cached_mod
+                    str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.SHOW_MOD_PREFIX or "模组：") .. cached_mod
                 end
             end
 
             if asset_mode and asset_mode > 0 then
-                str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "Prefab: "):gsub("\n", "") .. target.prefab
-                if asset_mode == 2 then
+                str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "\n代码："):gsub("\n", "") .. query_prefab
+                if asset_mode == 2 and target then
                     local bank, build = GetBuildCached(target)
                     if bank and build then
-                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BANK_PREFIX or "Bank: anim/"):gsub("\n", "") .. bank .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
-                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "Build: anim/"):gsub("\n", "") .. build .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
+                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BANK_PREFIX or "\n动画：anim/"):gsub("\n", "") .. bank .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
+                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "\n贴图：anim/"):gsub("\n", "") .. build .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
                     end
                 end
             end

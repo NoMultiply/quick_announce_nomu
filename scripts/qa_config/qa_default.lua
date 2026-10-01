@@ -9,7 +9,6 @@ GLOBAL.STRINGS.NOMU_QA = {
     SKETCH_POLAR = '草图',
     TOADSTOOL_CAP = '蟾蜍洞穴',
     ICEFISHING_HOLE = '冰钓洞',
-    FISSURE_LOWER = '梦魇裂隙（遗迹内）',
     FISSURE = '梦魇裂隙',
     OCEAN_SHOAL = '鱼群',
     BEARD_SACK_1 = '胡子',
@@ -57,6 +56,7 @@ GLOBAL.STRINGS.NOMU_QA = {
 
     BROAD_CATEGORIES = {
         BIRDCORPSE = "死去的鸟",
+        FISSURE_LOWER = '梦魇裂隙（遗迹内）',
     },
 
 
@@ -145,8 +145,13 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_MEME_PREVIEW_ON = "表情预览（关）",
     BUTTON_TEXT_MEME_PREVIEW_OFF = "表情预览（开）",
 
-    BUTTON_TEXT_CUSTOM_PREFIX = '宣告前缀：',
-    TITLE_CUSTOM_PREFIX = '设置宣告前缀',
+    BUTTON_TEXT_SCHEME_PREFIX = '方案前缀：',
+    TITLE_SCHEME_PREFIX = '设置前缀',
+    BUTTON_TEXT_SCHEME_SUFFIX = '方案后缀：',
+    TITLE_SCHEME_SUFFIX = '设置后缀',
+    DEFAULT_VALUE_HINT = '无',
+    TITLE_TEXT_SCHEME_SETTINGS = '方案设置',
+    HINT_SCHEME_SETTINGS = '设置不会重置可以放心更改',
 
     BUTTON_TEXT_DISTANCE_ON = '距离显示（开）',
     BUTTON_TEXT_DISTANCE_OFF = '距离显示（关）',
@@ -218,9 +223,11 @@ EMOJI_MENU = {
         MEME_GIF = "动图",
         ON = "已开启",
         OFF = "已关闭",
+        TOOLTIP_KUID = STRINGS.LMB .. "宣告科雷ID",
     },
 
     FUNC = {
+        { id = 'SETTINGS', name = '设置' },
         { id = 'HEALTH', name = '生命值' },
         { id = 'SANITY', name = '精神值' },
         { id = 'STOMACH', name = '饥饿值' },
@@ -491,6 +498,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             PERF = '{NAME} 的网络连接 {STATUS}。{PING}',
             GREET = '你好呀，{NAME}。',
             PING = 'Ping: {PING}',
+            KUID = '{NAME} 的 科雷ID 是 {KUID}。',
             BADGE = '{NAME} 的头像是 {BADGE}。',
             BACKGROUND = '{NAME} 的背景是 {BACKGROUND}。',
             BODY = '{NAME} 的身体皮肤是 {BODY}。',
