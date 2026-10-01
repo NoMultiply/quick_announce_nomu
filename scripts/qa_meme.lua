@@ -14,18 +14,20 @@ end
 local LIST = {
     List_0 = {}, -- 收藏分类
     List_1 = {}, List_2 = {}, List_3 = {}, List_4 = {}, List_5 = {},
-    List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {}
+    List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {},
+    List_11 = {}
 }
-for i = 1, 180 do table.insert(LIST.List_1, "zayu_"..i) end
+for i = 1, 182 do table.insert(LIST.List_1, "zayu_"..i) end
 for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
 for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
-for i = 1, 67  do table.insert(LIST.List_4, "chaijun_"..i) end
-for i = 1, 70  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
+for i = 1, 165  do table.insert(LIST.List_4, "chaijun_"..i) end
+for i = 1, 78  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
 for i = 1, 80  do table.insert(LIST.List_6, "taff_"..i) end
 for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
 for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
 for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
 for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
+for i = 1, 69  do table.insert(LIST.List_11, "doro_"..i) end
 
 local LIST_DATA = {
     List_0 = { title = "收藏", atlas = nil, prefix = nil },
@@ -39,6 +41,7 @@ local LIST_DATA = {
     List_8 = { title = "喜羊羊", atlas = "images/meme/xiyy.xml", prefix = "xiyy" },
     List_9 = { title = "蜜桃猫", atlas = "images/meme/mtcat.xml", prefix = "mtcat" },
     List_10 = { title = "嘉然", atlas = "images/meme/jiaran.xml", prefix = "jiaran" },
+    List_11 = { title = "Doro", atlas = "images/meme/doro.xml", prefix = "doro" },
 }
 
 GLOBAL.NOMU_QA.MEME_LIST = LIST
@@ -55,7 +58,7 @@ GLOBAL.NOMU_QA.VALID_MEME_NAMES = VALID_MEME_NAMES
 -- 动态加载图集资源
 table.insert(Assets, Asset("ATLAS", "images/meme/meme_icon.xml"))
 table.insert(Assets, Asset("IMAGE", "images/meme/meme_icon.tex"))
-for i = 1, 10 do
+for i = 1, 11 do
     local data = LIST_DATA["List_"..i]
     if data and data.atlas then
         table.insert(Assets, Asset("ATLAS", data.atlas))
@@ -270,12 +273,52 @@ local function InjectMemeHover(self, is_lobby)
             if is_lobby then
                 local mx, my = w.message:GetPosition():Get()
                 local mw = w.message:GetRegionSize()
-                if w.meme.isanim then
-                    w.meme:SetPosition(mx - mw/2 + 100, my - 12)
-                else
-                    w.meme:SetPosition((mx - mw/2 + 72) + (w.meme:GetSize() * 0.35) / 2, my - 12)
+                local line_start_x = mx - mw * 0.5
+
+                local user_w = 0
+                local has_colon = false
+                if w.user and (not w.user.IsVisible or w.user:IsVisible()) then
+                    local user_str = w.user:GetString() or ""
+                    if user_str ~= "" then
+                        local uw, _ = w.user:GetRegionSize()
+                        user_w = uw or 0
+                        has_colon = string.find(user_str, "[:：]") ~= nil
+                    end
                 end
-                w.meme:SetScale(0.35)
+
+                local colon_w = 0
+                if w.colon and (not w.colon.IsVisible or w.colon:IsVisible()) and w.colon.GetRegionSize then
+                    local cw, _ = w.colon:GetRegionSize()
+                    colon_w = cw or 0
+                    has_colon = true
+                end
+
+                local spacing = has_colon and 16 or 28
+                local name_total_w = user_w + colon_w
+                local target_left_x = (name_total_w > 0) and (line_start_x + name_total_w + spacing) or (line_start_x + 12)
+
+                local scale = 0.35
+                w.meme:SetScale(scale)
+
+                if w.meme.isanim then
+                    local anim_half_w = 24
+                    if w.meme.GetAnimState and w.meme:GetAnimState().GetVisualBB then
+                        local x1, y1, x2, y2 = w.meme:GetAnimState():GetVisualBB()
+                        if x1 and x1 < 0 then
+                            anim_half_w = math.abs(x1) * scale
+                        end
+                    end
+                    w.meme:SetPosition(target_left_x + anim_half_w, my - 12)
+                else
+                    local sw = 140
+                    if w.meme.GetSize then
+                        local gw, _ = w.meme:GetSize()
+                        if gw and gw > 0 then sw = gw end
+                    end
+                    local img_half_w = sw * scale * 0.5
+                    w.meme:SetPosition(target_left_x + img_half_w, my - 12)
+                end
+
                 if w.extra_line_count then w.extra_line_count = w.extra_line_count + 1 end
             else
                 if w.meme.isanim then

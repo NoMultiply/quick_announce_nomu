@@ -268,11 +268,14 @@ local function Announce(message, no_whisper, debug_info, statement_loc)
     local sent = false
 
     if message ~= "" then
-        local prefix = GLOBAL.NOMU_QA.DATA.CUSTOM_PREFIX
-        if prefix == nil or prefix == "" then
-            prefix = GLOBAL.STRINGS.LMB
-        end
-        GLOBAL.TheNet:Say(prefix .. ' ' .. message, whisper)
+        local active_scheme = GLOBAL.NOMU_QA.ACTIVE_SCHEME or GLOBAL.NOMU_QA.DATA.CURRENT_SCHEME
+        local scheme_p = active_scheme and (active_scheme.custom_prefix or (active_scheme.data and active_scheme.data.CUSTOM_PREFIX))
+        local prefix = (scheme_p ~= nil and scheme_p ~= "") and scheme_p or GLOBAL.STRINGS.LMB
+
+        local scheme_s = active_scheme and (active_scheme.custom_suffix or (active_scheme.data and active_scheme.data.CUSTOM_SUFFIX))
+        local suffix = (scheme_s ~= nil and scheme_s ~= "") and scheme_s or ""
+
+        GLOBAL.TheNet:Say(prefix .. ' ' .. message .. suffix, whisper)
         sent = true
     end
 
@@ -313,7 +316,7 @@ end
 -- 3.6 方案映射与徽章宣告辅助
 ----------------------------------------
 
--- 根据当前角色和类别获取映射文本（支持角色专属配置）
+-- 根据当前角色和类别获取映射文本
 local function GetMapping(qa, category, key)
     local prefab = ThePlayer.prefab:upper()
     if GLOBAL.NOMU_QA.DATA.CHARACTER_SPECIFIC
@@ -330,15 +333,14 @@ local function AnnounceBadge(qa, current, max, category, qa_key, custom_fmt_key)
     local fmts = {
         CURRENT = math.floor(current + 0.5),
         MAX = max,
-        MESSAGE = GetMapping(qa, 'MESSAGE', category)
+        MESSAGE = GetMapping(qa, 'MESSAGE', category) or ""
     }
 
-    -- 优先使用拥有的表情符号，否则回退到文本符号
     local emoji_key = GetMapping(qa, 'SYMBOL', 'EMOJI')
-    if emoji_key and TheInventory:CheckOwnership('emoji_' .. emoji_key) then
+    if emoji_key and emoji_key ~= "" and TheInventory:CheckOwnership('emoji_' .. emoji_key) then
         fmts.SYMBOL = ':' .. emoji_key .. ':'
     else
-        fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT')
+        fmts.SYMBOL = GetMapping(qa, 'SYMBOL', 'TEXT') or ""
     end
 
     local fmt_key = custom_fmt_key or 'DEFAULT'
@@ -2092,7 +2094,7 @@ local function GetEquipSlotName(qa, equipslot)
         end
     end
 
-    return mapping[key] and GetMapping(qa, 'WORDS', mapping[key]) or nil
+    return (mapping[key] and GetMapping(qa, 'WORDS', mapping[key])) or tostring(equipslot)
 end
 
 -- 物品栏数量统计包装函数
@@ -2198,6 +2200,11 @@ local function AnnounceItem(slot, classname)
         fmts.IN_CONTAINER = subfmt(GetMapping(qa, 'WORDS', 'IN_CONTAINER'), {
             NAME = container_name
         })
+    end
+
+    if classname == 'equipslot' then
+        fmts.SLOT_CODE = tostring(slot.equipslot)
+        fmts.EQUIPSLOT = tostring(slot.equipslot)
     end
 
     -- 百分比信息
@@ -3423,9 +3430,10 @@ end)
 for _, classname in pairs({ 'invslot', 'equipslot' }) do
     AddClassPostConstruct('widgets/' .. classname, function(self)
         InjectAltShiftAccept(self, function(w)
-            local container = w.container
+            local container = (w.container == nil or w.container.type == "pack")
+                and GLOBAL.ThePlayer.replica.inventory
+                or w.container
 
-            -- 建筑工地容器特殊处理
             if container and container.inst and (
                 container.inst.prefab == "construction_container"
                 or container.inst.prefab == "construction_container_1x1"
@@ -3449,33 +3457,48 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
 
             -- 空装备槽位宣告
             elseif classname == 'equipslot' then
-                local slot_pos_name = GetEquipSlotName(GLOBAL.NOMU_QA.SCHEME.ITEM, w.equipslot)
-                if slot_pos_name then
-                    local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, container and container.inst, w.equipslot, "equipslot")
-                    return Announce(subfmt(
-                        GLOBAL.NOMU_QA.SCHEME.ITEM.FORMATS.EQUIP_SLOT_EMPTY,
-                        {
-                            PRONOUN = GetMapping(GLOBAL.NOMU_QA.SCHEME.ITEM, 'PRONOUN', 'I'),
-                            SLOT_POS = slot_pos_name,
-                            v = slot_pos_name
-                        }
-                    ), nil, debug_str, GetStatementLoc("ITEM", "EQUIP_SLOT_EMPTY"))
-                end
+                local slot_code = tostring(w.equipslot or "unknown")
+                local slot_pos_name = GetEquipSlotName(GLOBAL.NOMU_QA.SCHEME.ITEM, w.equipslot) or slot_code
+                local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(
+                    nil, 
+                    container and container.inst, 
+                    slot_code, 
+                    "equipslot", 
+                    string.format("[装备栏位代码: %s]", slot_code)
+                )
+
+                return Announce(subfmt(
+                    GLOBAL.NOMU_QA.SCHEME.ITEM.FORMATS.EQUIP_SLOT_EMPTY,
+                    {
+                        PRONOUN = GetMapping(GLOBAL.NOMU_QA.SCHEME.ITEM, 'PRONOUN', 'I'),
+                        SLOT_POS = slot_pos_name,
+                        v = slot_pos_name,
+                        SLOT_CODE = slot_code,
+                        EQUIPSLOT = slot_code,
+                        CODE = slot_code,
+                    }
+                ), nil, debug_str, GetStatementLoc("ITEM", "EQUIP_SLOT_EMPTY"))
 
             -- 容器剩余空间宣告
             elseif container and container.GetNumSlots and container.GetItems then
                 local used_slots = 0
                 for _ in pairs(container:GetItems()) do used_slots = used_slots + 1 end
+                local total_slots = container:GetNumSlots()
+                local free_slots = total_slots - used_slots
 
                 local inst = container.inst
                 local cont_type = inst == GLOBAL.ThePlayer and "PLAYER"
                     or (inst and inst:HasTag("inlimbo") and "INV" or "CONTAINER")
                 local ui_code = classname == "invslot" and "inv" or tostring(classname)
-                local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, inst, nil, ui_code)
+                local slot_name = w.num and ("slot_" .. tostring(w.num)) or (w.equipslot and tostring(w.equipslot)) or "empty_slot"
+                local extra_info = string.format("[容器容量: %d/%d]", free_slots, total_slots)
+                local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, inst, slot_name, ui_code, extra_info)
 
                 return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SPACE.FORMATS[cont_type], {
-                    COUNT = container:GetNumSlots() - used_slots,
-                    CONTAINER_NAME = get_container_name(inst)
+                    COUNT = free_slots,
+                    TOTAL = total_slots,
+                    CONTAINER_NAME = get_container_name(inst),
+                    CONTAINER_CODE = inst and inst.prefab or "unknown"
                 }), nil, debug_str, GetStatementLoc("SPACE", cont_type))
             end
         end)
@@ -3837,11 +3860,24 @@ HookClassAltAccept('widgets/redux/skilltreebuilder', function(self)
         if v.button and v.button.focus and v.status
             and self.skilltreedef and self.skilltreedef[k] and self.skilltreedef[k].title then
 
-            local fmt_name = v.status.activated and "ACTIVATED"
-                or (v.status.activatable and "CAN_ACTIVATE" or "NOT_ACTIVATED")
+            local node_def = self.skilltreedef[k]
+            local fmt_name = "NOT_ACTIVATED"
+            if v.status.lock or node_def.lock_open then
+                fmt_name = (v.status.lock_open == true) and "ACTIVATED" or "NOT_ACTIVATED"
+            elseif not node_def.infographic then
+                if v.status.activated then
+                    fmt_name = "ACTIVATED"
+                elseif v.status.activatable then
+                    fmt_name = "CAN_ACTIVATE"
+                else
+                    fmt_name = "NOT_ACTIVATED"
+                end
+            else
+                fmt_name = "ACTIVATED"
+            end
 
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SKILL_TREE.FORMATS[fmt_name], {
-                NAME = name, SKILL = self.skilltreedef[k].title
+                NAME = name, SKILL = node_def.title
             }), nil, nil, GetStatementLoc("SKILL_TREE", fmt_name))
         end
     end
