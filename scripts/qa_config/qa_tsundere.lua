@@ -227,13 +227,13 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             ME_GHOST = "喂，{NAME}！还不快拿告密的心来救我，笨蛋！",
             THEY_GHOST = "{NAME}，你这笨蛋站着别动，我这就去救你！",
             I_AM_HERE = "喂，{NAME}！我在这里，快跟上！",
-            I_AM_GHOST = "喂！我变成鬼魂了！你瞎了吗还不快拿心脏来救我！",
+            I_AM_GHOST = "喂！我变成鬼魂了！还不快拿心脏来救我！",
             ME_FISHING = '喂！{NAME}在钓鱼，闭嘴别把鱼吓跑了！',
             THEY_FISHING = '{NAME}那家伙在钓鱼，别钓上来什么破鞋子！',
             PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
             PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！',
             ME_FROZEN = "喂！{NAME} 被冻成冰块了！快想办法啊笨蛋！",
-            THEY_FROZEN = "你瞎了吗！{NAME} 都被冻住了还不快生火！"
+            THEY_FROZEN = "{NAME} 被冻住了！还不快生火！"
         },
         MAPPINGS = {
             DEFAULT = {
@@ -258,9 +258,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     SKILL_TREE = {
         FORMATS = {
-            ACTIVATED = '{NAME}已经点亮了『{SKILL}』。勉强夸你一句吧。',
-            CAN_ACTIVATE = '{NAME}可以去点『{SKILL}』了，别磨蹭！',
-            NOT_ACTIVATED = '{NAME}还没点『{SKILL}』，真是个笨蛋。',
+            ACTIVATED = '{NAME}已经点亮了技能『{SKILL}』。勉强夸你一句吧。',
+            CAN_ACTIVATE = '{NAME}可以去点『{SKILL}』技能了，别磨蹭！',
+            NOT_ACTIVATED = '{NAME}还没点『{SKILL}』技能，真是个笨蛋。',
             XP = '{NAME}还有{XP}点洞察没用。',
             DESC = '听好了，{NAME} 的『{SKILL}』技能可以<{DESC}>，别忘了啊笨蛋！',
         },
@@ -268,9 +268,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     SPACE = {
         FORMATS = {
-            PLAYER = "我的包里还有{COUNT}个空位，帮你拿点也可以啦。",
-            INV = "我的{CONTAINER_NAME}还有{COUNT}个空位，快装进去！",
-            CONTAINER = "这个{CONTAINER_NAME}还有{COUNT}个空位，瞎了吗自己看！"
+            PLAYER = "听好了，我的物品栏里还有{COUNT}个空位。",
+            INV = "听好了，我的{CONTAINER_NAME}还有{COUNT}个空位！",
+            CONTAINER = "听好了，这个{CONTAINER_NAME}还有{COUNT}个空位！"
         },
         MAPPINGS = {}
     },
@@ -287,7 +287,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                 MESSAGE = {
                     HEALTH_HIGH = "这头笨牛结实得很！（生命：{PCT}%）",
                     HEALTH_NORMAL = "牛的状态还凑合。（生命：{PCT}%）",
-                    HEALTH_LOW = "喂！牛快死了你瞎了吗！快给它加血！（生命：{PCT}%）",
+                    HEALTH_LOW = "喂！牛快死了！快给它加血！（生命：{PCT}%）",
 
                     HUNGER_FULL = "它吃撑了，别再喂了浪费食物！（饥饿：{VAL}）",
                     HUNGER_NORMAL = "这笨牛现在不饿。（饥饿：{VAL}）",
@@ -1095,7 +1095,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     FULL = '我非常健康，别咒我生病！',
                     HIGH = '切菜切到手了，好疼！',
                     MID = '我流血了……还不快给我包扎！',
-                    LOW = '我需要援助！你瞎了吗！',
+                    LOW = '我需要援助！',
                     EMPTY = '这就是结局了吗……救救我啊笨蛋！',
                 }
             },
