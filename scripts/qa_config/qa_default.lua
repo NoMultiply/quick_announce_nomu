@@ -223,7 +223,7 @@ EMOJI_MENU = {
         MEME_GIF = "动图",
         ON = "已开启",
         OFF = "已关闭",
-        TOOLTIP_KUID = STRINGS.LMB .. "宣告 KUID",
+        TOOLTIP_KUID = STRINGS.LMB .. "宣告科雷ID",
     },
 
     FUNC = {
