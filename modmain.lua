@@ -3430,9 +3430,7 @@ end)
 for _, classname in pairs({ 'invslot', 'equipslot' }) do
     AddClassPostConstruct('widgets/' .. classname, function(self)
         InjectAltShiftAccept(self, function(w)
-            local container = (w.container == nil or w.container.type == "pack")
-                and GLOBAL.ThePlayer.replica.inventory
-                or w.container
+            local container = w.container or GLOBAL.ThePlayer.replica.inventory
 
             if container and container.inst and (
                 container.inst.prefab == "construction_container"
@@ -3451,7 +3449,6 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
                     return true
                 end
 
-            -- 普通物品宣告
             elseif w.tile and w.tile.item then
                 return AnnounceItem(w, classname)
 
@@ -3487,14 +3484,19 @@ for _, classname in pairs({ 'invslot', 'equipslot' }) do
                 local free_slots = total_slots - used_slots
 
                 local inst = container.inst
-                local cont_type = inst == GLOBAL.ThePlayer and "PLAYER"
-                    or (inst and inst:HasTag("inlimbo") and "INV" or "CONTAINER")
+                local is_pack = (container.type == "pack") or (inst and (inst:HasTag("INLIMBO") or inst:HasTag("inlimbo")))
+                local cont_type = (inst == GLOBAL.ThePlayer) and "PLAYER"
+                    or (is_pack and "INV" or "CONTAINER")
+
                 local ui_code = classname == "invslot" and "inv" or tostring(classname)
                 local slot_name = w.num and ("slot_" .. tostring(w.num)) or (w.equipslot and tostring(w.equipslot)) or "empty_slot"
                 local extra_info = string.format("[容器容量: %d/%d]", free_slots, total_slots)
                 local debug_str = GLOBAL.NOMU_QA.GetContainerSlotDebugString(nil, inst, slot_name, ui_code, extra_info)
 
-                return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.SPACE.FORMATS[cont_type], {
+                local space_formats = GLOBAL.NOMU_QA.SCHEME.SPACE.FORMATS
+                local target_fmt = space_formats[cont_type] or space_formats.CONTAINER or space_formats.PLAYER
+
+                return Announce(subfmt(target_fmt, {
                     COUNT = free_slots,
                     TOTAL = total_slots,
                     CONTAINER_NAME = get_container_name(inst),
