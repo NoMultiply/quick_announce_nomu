@@ -57,18 +57,16 @@ local function FindUpvalue(fn, name, fn_filter, value_filter)
                     end
                 end
             elseif value_filter then -- 仅限定获取到的上值符合过滤条件
-                if type(upvalue) == "function" then
-                    local valueinfo = debug.getinfo(upvalue)
+                local valueinfo = type(upvalue) == "function" and debug.getinfo(upvalue)
 
-                    if (type(value_filter) == "string" and valueinfo and valueinfo.source:match(value_filter))
-                        or (type(value_filter) == "function" and value_filter(upvalue))
-                    then
-                        return TryToClose(level, upvalue, i ,fn)
-                    else -- 来源错误，递归查找
-                        local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, fn_filter, value_filter)
-                        if upupfn ~= nil then
-                            return TryToClose(level, upupvalue, upupi, upupfn)
-                        end
+                if (type(value_filter) == "string" and valueinfo and valueinfo.source:match(value_filter))
+                    or (type(value_filter) == "function" and value_filter(upvalue))
+                then
+                    return TryToClose(level, upvalue, i ,fn)
+                else -- 来源错误，递归查找
+                    local upupvalue, upupi, upupfn = FindUpvalue(upvalue, name, fn_filter, value_filter)
+                    if upupfn ~= nil then
+                        return TryToClose(level, upupvalue, upupi, upupfn)
                     end
                 end
             else -- 未限定文件，直接返回

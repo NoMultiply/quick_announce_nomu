@@ -2789,7 +2789,7 @@ local function HandleEnvMiddleClick(entity)
     if not GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_LCTRL) and entity:HasTag('player') then
         if entity == GLOBAL.ThePlayer then
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.PING, {
-                PING = GLOBAL.TheNet:GetAveragePing()
+                PING = GLOBAL.TheNet:GetPing()
             }), nil, nil, GetStatementLoc("PLAYER", "PING"))
         else
             return Announce(subfmt(GLOBAL.NOMU_QA.SCHEME.PLAYER.FORMATS.GREET, {
@@ -3595,7 +3595,7 @@ HookClassAltAccept('screens/playerstatusscreen', function(self)
                     NAME = w.displayName,
                     STATUS = status_str,
                     PING = (w.userid == GLOBAL.ThePlayer.userid
-                        and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() })
+                        and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetPing() })
                         )
                         or (GLOBAL.rawget(GLOBAL, "SayAboutYourPing_PlayerPings") and w.userid and GLOBAL.SayAboutYourPing_PlayerPings[w.userid]
                         and subfmt(qa.FORMATS.PING, { PING = GLOBAL.SayAboutYourPing_PlayerPings[w.userid] })
@@ -3726,7 +3726,7 @@ AddClassPostConstruct("widgets/redux/playerlist", function(self)
                                 Announce(subfmt(qa.FORMATS.PERF, {
                                     NAME = target_name, STATUS = status_str,
                                     PING = (widget_row.userid == GLOBAL.TheNet:GetUserID()
-                                        and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetAveragePing() })
+                                        and subfmt(qa.FORMATS.PING, { PING = GLOBAL.TheNet:GetPing() })
                                         or '')
                                 }), nil, nil, GetStatementLoc("PLAYER", "PERF"))
 
