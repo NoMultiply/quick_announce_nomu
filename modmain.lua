@@ -2933,9 +2933,10 @@ GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
             end
         elseif is_worm_boss_piece and v:HasTag("worm_boss_piece") then
             is_same_entity = true
-        elseif (ITEM_PREFAB_ALIAS and ITEM_PREFAB_ALIAS[entity.prefab]
-                and ITEM_PREFAB_ALIAS[entity.prefab] == ITEM_PREFAB_ALIAS[v.prefab])
-            or v.prefab == entity.prefab then
+        elseif v == entity or (entity.prefab ~= nil and
+                ((ITEM_PREFAB_ALIAS and ITEM_PREFAB_ALIAS[entity.prefab]
+                    and ITEM_PREFAB_ALIAS[entity.prefab] == ITEM_PREFAB_ALIAS[v.prefab])
+                or v.prefab == entity.prefab)) then
             is_same_entity = true
         end
 
