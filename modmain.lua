@@ -3653,7 +3653,7 @@ AddClassPostConstruct('screens/playerstatusscreen', function(self)
             end
         end
         for _, widget in ipairs(self.player_widgets) do
-            if widget.age and not widget.age.hovertext then
+            if widget.age and not widget.age.hovertext and widget.age:GetString() ~= "" then
                 widget.age:SetHoverText(LOCAL_STRINGS.HOVER_TEXT_ANNOUNCE)
             end
         end
