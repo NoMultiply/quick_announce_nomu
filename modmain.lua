@@ -1207,17 +1207,23 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
             if is_bwb_cave then
                 local rain_status = ""
                 if TheWorld.state.pop ~= 1 then
-                    local _, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
+                    local _, total_seconds, rain, unknown = GLOBAL.QA_UTILS.PredictRainStart()
                     if rain then
                         local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                         rain_status = subfmt(GetMapping(qa, 'BWB_WORDS', 'RAIN_APPROACH'), { DAYS = d, MINUTES = m, SECONDS = s })
+                    elseif unknown then
+                        rain_status = GetMapping(qa, 'BWB_WORDS', 'RAIN_UNKNOWN')
                     else
                         rain_status = GetMapping(qa, 'BWB_WORDS', 'RAIN_NONE')
                     end
                 else
                     local _, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
-                    local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                    rain_status = subfmt(GetMapping(qa, 'BWB_WORDS', 'RAIN_STOP'), { DAYS = d, MINUTES = m, SECONDS = s })
+                    if total_seconds then
+                        local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
+                        rain_status = subfmt(GetMapping(qa, 'BWB_WORDS', 'RAIN_STOP'), { DAYS = d, MINUTES = m, SECONDS = s })
+                    else
+                        rain_status = GetMapping(qa, 'BWB_WORDS', 'RAIN_UNKNOWN')
+                    end
                 end
 
                 local fog_status = ""
@@ -1249,19 +1255,27 @@ local function HandleEnvironmentAndTime(HUD, status, widget)
                 local fmt_key = "NO_RAIN"
 
                 if TheWorld.state.pop ~= 1 then
-                    local world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
+                    local world, total_seconds, rain, unknown = GLOBAL.QA_UTILS.PredictRainStart()
                     fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
                     if rain then
                         fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
                         qa_fmt = qa.FORMATS.START_RAIN
                         fmt_key = "START_RAIN"
+                    elseif unknown then
+                        qa_fmt = qa.FORMATS.UNKNOWN_RAIN
+                        fmt_key = "UNKNOWN_RAIN"
                     end
                 else
                     local world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
                     fmts.WORLD = is_winterland and GetMapping(qa, 'WORLD', 'WINTERLAND') or GetMapping(qa, 'WORLD', world)
-                    fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                    qa_fmt = qa.FORMATS.STOP_RAIN
-                    fmt_key = "STOP_RAIN"
+                    if total_seconds then
+                        fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
+                        qa_fmt = qa.FORMATS.STOP_RAIN
+                        fmt_key = "STOP_RAIN"
+                    else
+                        qa_fmt = qa.FORMATS.UNKNOWN_RAIN
+                        fmt_key = "UNKNOWN_RAIN"
+                    end
                 end
 
                 return Announce(subfmt(qa_fmt, fmts), nil, nil, GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", fmt_key))
