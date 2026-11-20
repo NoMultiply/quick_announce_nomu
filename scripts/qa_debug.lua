@@ -1,6 +1,11 @@
 if not GLOBAL.NOMU_QA then GLOBAL.NOMU_QA = {} end
 local PREFAB_MOD_CACHE, BUILD_CACHE = {}, {}
 
+local function GetDebugStrings()
+    local S = GLOBAL.STRINGS.NOMU_QA or {}
+    return S, S.DEBUG or {}
+end
+
 local function GetModNameForPrefab(prefab)
     if not prefab then return false end
     if PREFAB_MOD_CACHE[prefab] ~= nil then return PREFAB_MOD_CACHE[prefab] end
@@ -37,20 +42,22 @@ end
 
 local function GetEntityDebugString(entity, extra_prefix)
     if not (GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.DEBUG_MODE) then return nil end
-    if not entity then return "[实体不存在]" end
+    local LOCAL_STRINGS, D = GetDebugStrings()
+    local NONE = D.NONE or "无"
+    if not entity then return D.ENTITY_NOT_EXIST end
 
     local debug_str = entity.entity and type(entity.entity.GetDebugString) == "function" and entity.entity:GetDebugString() or ""
     
-    local tags = debug_str:match("Tags:%s*([^\n\r]*)") or "无"
+    local tags = debug_str:match("Tags:%s*([^\n\r]*)") or NONE
     tags = tags:gsub("%s*Prefab:.*$", ""):gsub("%s*AnimState:.*$", ""):gsub("^%s*(.-)%s*$", "%1")
-    if tags == "" then tags = "无" end
+    if tags == "" then tags = NONE end
 
-    local bank = debug_str:match("bank:%s*(%S+)") or "无"
-    local build = debug_str:match("build:%s*(%S+)") or "无"
-    local anim = debug_str:match("anim:%s*(%S+)") or "无"
-    local anim_str = (bank == "无" and build == "无" and anim == "无") and "无" or string.format("Bank: %s, Build: %s, Anim: %s", bank, build, anim)
+    local bank = debug_str:match("bank:%s*(%S+)") or NONE
+    local build = debug_str:match("build:%s*(%S+)") or NONE
+    local anim = debug_str:match("anim:%s*(%S+)") or NONE
+    local anim_str = (bank == NONE and build == NONE and anim == NONE) and NONE or string.format("Bank: %s, Build: %s, Anim: %s", bank, build, anim)
 
-    local guid = entity.GUID or "无"
+    local guid = entity.GUID or NONE
     local px, py, pz = 0, 0, 0
     if entity.Transform then px, py, pz = entity.Transform:GetWorldPosition() end
     local rep_list = {}
@@ -61,17 +68,16 @@ local function GetEntityDebugString(entity, extra_prefix)
     end
     table.sort(rep_list)
 
-    local raw_display = type(entity.GetDisplayName) == "function" and entity:GetDisplayName() or "无"
+    local raw_display = type(entity.GetDisplayName) == "function" and entity:GetDisplayName() or NONE
     local actual_prefab = tostring(entity.prefabnameoverride or entity.nameoverride or entity.prefab)
     local upper_prefab = string.upper(actual_prefab)
 
-    local LOCAL_STRINGS = GLOBAL.STRINGS.NOMU_QA or {}
-    
     local raw_basic = (GLOBAL.STRINGS.NAMES[upper_prefab] and tostring(GLOBAL.STRINGS.NAMES[upper_prefab])) or actual_prefab
-    local raw_qa = LOCAL_STRINGS[upper_prefab] or "无"
-    local raw_override = entity.nameoverride or "无"
+    local raw_qa = LOCAL_STRINGS[upper_prefab] or NONE
+    local raw_override = entity.nameoverride or NONE
     
-    return string.format("[代码: %s] %s[Display: %s] [Basic: %s] [QA: %s] [Override: %s]\n[Tags: %s]\n[AnimState: %s]\n[GUID: %s] [坐标: (%.2f, %.2f, %.2f)]\n[Replica: %s]",
+    local fmt = D.ENTITY_FMT
+    return string.format(fmt,
         tostring(entity.prefab),
         extra_prefix and (extra_prefix .. " ") or "",
         string.gsub(tostring(raw_display), "\n", " "),
@@ -79,13 +85,15 @@ local function GetEntityDebugString(entity, extra_prefix)
         string.gsub(tostring(raw_qa), "\n", " "),
         tostring(raw_override), tags, anim_str,
         tostring(guid), px, py, pz,
-        #rep_list > 0 and table.concat(rep_list, ", ") or "无"
+        #rep_list > 0 and table.concat(rep_list, ", ") or NONE
     )
 end
 
 local function GetUIDebugString(widget, status_table, controls_table)
     if not (GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.DEBUG_MODE) then return nil end
-    if not (widget and widget.widget) then return "[UI组件无效]" end
+    local _, D = GetDebugStrings()
+    local NONE = D.NONE
+    if not (widget and widget.widget) then return D.UI_INVALID end
     
     local original_w = widget.widget
     local curr = original_w
@@ -112,20 +120,20 @@ local function GetUIDebugString(widget, status_table, controls_table)
     end
 
     local raw_name = original_w.name or "Unknown"
-    local parent_name = (original_w.parent and original_w.parent.name) or "无"
+    local parent_name = (original_w.parent and original_w.parent.name) or NONE
     
-    local text_str = "无"
+    local text_str = NONE
     if type(original_w.GetString) == "function" then
         text_str = original_w:GetString()
     elseif original_w.text and type(original_w.text) == "table" and type(original_w.text.GetString) == "function" then
         text_str = original_w.text:GetString()
     end
     if type(text_str) == "string" then text_str = text_str:gsub("\n", " ") end
-    if text_str == "" then text_str = "无" end
+    if text_str == "" then text_str = NONE end
     
-    local hover_str = "无"
+    local hover_str = NONE
     if type(original_w.GetHoverText) == "function" then
-        hover_str = original_w:GetHoverText() or "无"
+        hover_str = original_w:GetHoverText() or NONE
     end
     
     local sx, sy = 0, 0
@@ -134,22 +142,24 @@ local function GetUIDebugString(widget, status_table, controls_table)
         if pos then sx, sy = pos.x, pos.y end
     end
 
-    return string.format("[UI代码: %s] [组件: %s] [父级: %s]\n[文本: %s] [悬浮: %s]\n[屏幕坐标: (%.1f, %.1f)]", 
+    local fmt = D.UI_FMT
+    return string.format(fmt, 
         tostring(ui_code), tostring(raw_name), tostring(parent_name), tostring(text_str), tostring(hover_str), sx, sy)
 end
 
 local function GetContainerSlotDebugString(item, container_inst, slot_name, ui_code, extra_info)
     if not (GLOBAL.NOMU_QA.DATA and GLOBAL.NOMU_QA.DATA.DEBUG_MODE) then return nil end
+    local _, D = GetDebugStrings()
 
     local debug_txt = ""
     if item then
-        local prefix = slot_name and string.format("[槽位: %s]", tostring(slot_name)) or ""
+        local prefix = slot_name and string.format(D.SLOT_PREFIX, tostring(slot_name)) or ""
         debug_txt = GetEntityDebugString(item, prefix) or ""
     end
     if container_inst then
-        local prefix = "[归属容器]"
-        if ui_code then prefix = prefix .. string.format(" [UI代码: %s]", tostring(ui_code)) end
-        if slot_name then prefix = prefix .. string.format(" [槽位: %s]", tostring(slot_name)) end
+        local prefix = D.OWNER_CONTAINER
+        if ui_code then prefix = prefix .. string.format(D.UI_CODE_TAG, tostring(ui_code)) end
+        if slot_name then prefix = prefix .. string.format(D.SLOT_TAG, tostring(slot_name)) end
         if extra_info then prefix = prefix .. " " .. tostring(extra_info) end
 
         local cont_debug = GetEntityDebugString(container_inst, prefix)
@@ -219,17 +229,17 @@ AddClassPostConstruct("widgets/hoverer", function(hoverer)
             if show_mod then
                 local cached_mod = GetModNameForPrefab(query_prefab)
                 if cached_mod then
-                    str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.SHOW_MOD_PREFIX or "模组：") .. cached_mod
+                    str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.SHOW_MOD_PREFIX ) .. cached_mod
                 end
             end
 
             if asset_mode and asset_mode > 0 then
-                str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_PREFAB_PREFIX or "\n代码："):gsub("\n", "") .. query_prefab
+                str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_PREFAB_PREFIX ):gsub("\n", "") .. query_prefab
                 if asset_mode == 2 and target then
                     local bank, build = GetBuildCached(target)
                     if bank and build then
-                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BANK_PREFIX or "\n动画：anim/"):gsub("\n", "") .. bank .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
-                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BUILD_PREFIX or "\n贴图：anim/"):gsub("\n", "") .. build .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
+                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BANK_PREFIX) .. bank .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
+                        str = str .. "\n" .. HIDDEN_TAG .. (LOCAL_STRINGS.HOVER_BUILD_PREFIX) .. build .. (LOCAL_STRINGS.HOVER_ZIP_SUFFIX or ".zip")
                     end
                 end
             end

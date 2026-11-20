@@ -12,10 +12,10 @@ description = [[
 - “shift + alt + 鼠标中键”对自己宣告Ping、对别人打招呼、显示物品信息
 - Meme表情包来自于“驯猫糕手”
 - 添加了自定义宣告同步功能
-- 兼容了 macOS
+- 兼容了 macOS，添加了手柄的支持
 ]]
 
-version = "2026-10-24"
+version = "2026-11-21"
 
 folder_name = folder_name or "quick_announce_nomu"
 if not folder_name:find("workshop-") then

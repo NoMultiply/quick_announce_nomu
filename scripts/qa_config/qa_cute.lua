@@ -13,25 +13,44 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '呀～{WORLD}气温 {TEMPERATURE}，第 {DAYS} 天{WEATHER}（剩：{MINUTES}分{SECONDS}秒）要带小伞哦',
-            NO_RAIN = '唔……{WORLD}气温 {TEMPERATURE}，天空很乖，{WEATHER}还没来呢',
-            STOP_RAIN = '哇！{WORLD}气温 {TEMPERATURE}，第 {DAYS} 天放晴（剩：{MINUTES}分{SECONDS}秒）可以出去玩啦',
-            START_FOG = '呀～{WORLD}气温 {TEMPERATURE}，第 {DAYS} 天起孢子雾（剩：{MINUTES}分{SECONDS}秒）视野会变差呢',
-            FOGGING = '唔……{WORLD}气温 {TEMPERATURE}，现在起好大的孢子雾，看不清啦',
-            BWB_CAVE_WEATHER = '呀～{WORLD}气温 {TEMPERATURE}，{FOG_STATUS}，并且{RAIN_STATUS}呢',
+            DEFAULT = '呀～{WORLD}气温 {TEMPERATURE}{WEATHER_STATUS}{FOG_STATUS}呢',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '下小雨', SUMMER = '下雨啦', AUTUMN = '下雨啦', WINTER = '飘雪花', GREEN = '下雨啦', DRY = '下雨啦', MILD = '下雨啦', WET = '刮大风', TEMPERATE = '下雨啦', HUMID = '下雨啦', LUSH = '下雨啦', APORKALYPSE = '下雨啦', TRANQUIL = '起孢子雾', FROST = '掉小石头', VERDANT = '起孢子雾', UMBRAL = '奇怪天气' },
-                BWB_WORDS = {
-                    RAIN_APPROACH = "调皮的雨水第{DAYS}天来(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_STOP = "雨水第{DAYS}天停下(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_NONE = "天空乖乖的没下雨呢",
-                    FOG_ACTIVE = "正处于朦胧孢子雾中呢",
-                    FOG_APPROACH = "孢子雾第{DAYS}天飘过来(剩{MINUTES}分{SECONDS}秒)",
-                    FOG_NONE = "空气清晰，没有孢子雾呢"
-                }
+                WORLD = {
+                    SURFACE = '地表',
+                    CAVES = '洞穴',
+                    SHIPWRECKED = '海难',
+                    VOLCANO = '火山',
+                    PORKLAND = '猪镇',
+                    WINTERLAND = '冰岛',
+                },
+                WEATHER = {
+                    SPRING = '下小雨',
+                    SUMMER = '下雨啦',
+                    AUTUMN = '下雨啦',
+                    WINTER = '飘雪花',
+                    ACID_RAIN = '酸雨',
+                    SPORE_FOG = '孢子雾',
+                    GREEN = '下雨啦',
+                    DRY = '下雨啦',
+                    MILD = '下雨啦',
+                    WET = '刮大风',
+                    TEMPERATE = '下雨啦',
+                    HUMID = '下雨啦',
+                    LUSH = '下雨啦',
+                    APORKALYPSE = '下雨啦',
+                    TRANQUIL = '起孢子雾',
+                    FROST = '掉小石头',
+                    VERDANT = '起孢子雾',
+                    UMBRAL = '奇怪天气',
+                },
+                WORDS = {
+                    APPROACH = '，第 {DAYS} 天{WEATHER}（剩：{MINUTES}分{SECONDS}秒）',
+                    NONE = '，天空很乖，{WEATHER}还没来',
+                    ACTIVE = '，正处于朦胧{WEATHER}中',
+                    STOP_RAIN = '，第 {DAYS} 天放晴（剩：{MINUTES}分{SECONDS}秒）',
+                },
             }
         }
     },
@@ -217,6 +236,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             PERF = '{NAME} 的网络 {STATUS}，{PING}',
             GREET = '好开心见到你，{NAME}',
             PING = '延迟：{PING}',
+            KUID = '悄悄告诉你～{NAME} 的科雷ID是 {KUID} 哦',
             BADGE = '{NAME} 戴着 {BADGE} 呢',
             BACKGROUND = '{NAME} 的背景是 {BACKGROUND}',
             BODY = '{NAME} 穿着漂亮的 {BODY}',
@@ -238,7 +258,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             PORTAL_ON = '小手已经摸到 {NAME} 啦',
             PORTAL_OFF = '{NAME} 就在这里，大家快来准备传送',
             ME_FROZEN = "呜呜救命！{NAME} 被冻成硬邦邦小冰雕了",
-            THEY_FROZEN = "大家快来生火帮忙！{NAME} 被冻住了好可怜"
+            THEY_FROZEN = "大家快来生火帮忙！{NAME} 被冻住了好可怜",
+            ME_SLEEPING = '呼呼… {NAME} 盖好小被子睡香香啦zzz~',
+            THEY_SLEEPING = '嘘… {NAME} 正在做甜甜的美梦呢zzz~'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -257,7 +279,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             AGE = '世界已度过：{AGE} 个日夜啦',
             NUM_PLAYER = '现在家里有：{NUM} 个小伙伴在玩呢',
             WORLD_SETTING = '小家的【{SETTING}】设置为【{VALUE}】',
-            MOD_SETTING = '模组【{MOD}】把【{SETTING}】设为【{VALUE}】'
+            MOD_SETTING = '模组【{MOD}】把【{SETTING}】设为【{VALUE}】',
+            MOD_ENABLED = '小家开启了可爱的【{MOD}】模组哦'
         },
         MAPPINGS = {}
     },
@@ -289,6 +312,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         },
         MAPPINGS = {
             DEFAULT = {
+                WORDS = {
+                    TENDENCY = ' (趋势: {TENDENCY})',
+                },
                 MESSAGE = {
                     HEALTH_HIGH = "哇！牛牛超级健康，壮得像座小山！（生命：{PCT}%）",
                     HEALTH_NORMAL = "牛牛状态还不错呢，乖乖的。（生命：{PCT}%）",
@@ -326,6 +352,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             SINGLE = '呐～这里有 1个 {NAME}{SHOW_ME}{DISTANCE}呢',
             DEFAULT = '哇～附近一共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}',
             NAMED = '发现啦～有 {NUM_PREFAB}个 {PREFAB_NAME}，其中 {NUM}个 名叫 {NAME}{SHOW_ME}{DISTANCE}',
+            NAMED_THIS = '发现啦～有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这个叫作 {NAME}{SHOW_ME}{DISTANCE}',
+            NAMED_THIS_SINGLE = '这里只有 1个 {PREFAB_NAME}，它的名字叫 {NAME}{SHOW_ME}{DISTANCE}呢',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             FISH_SHOAL = '快来看！有一大群小 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}',
 
@@ -335,6 +363,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             STATE_THIS_SINGLE = '这里有 1个 {NAME}，目前它{ADJ}啦{SHOW_ME}{DISTANCE}',
             STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个藏了 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}',
             STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中 {NUM}个 是空肚子的{SHOW_ME}{DISTANCE}',
+            STORAGE_EMPTY_THIS = '这里有 {TOTAL}个 {NAME}，其中这个是空肚子的{SHOW_ME}{DISTANCE}',
+            STORAGE_EMPTY_THIS_SINGLE = '这里只有 1个 {NAME}，里面空空如也{SHOW_ME}{DISTANCE}呢',
+            STORAGE_EMPTY_EQUAL = '好神奇～这里的 {TOTAL}个 {NAME} 全都是空肚子的{SHOW_ME}{DISTANCE}',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -354,12 +385,10 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     BARREN = '要施肥',
                     SMOLDER = '在冒烟',
                     GOAT_CHARGED = '带电中',
-                    GOAT_NORMAL = '很乖巧',
                     HOTSPRING_BOMBED = '水温正好',
                     HOTSPRING_GLASSED = '变结晶了',
                     HOTSPRING_EMPTY = '干涸了',
                     FRUITDRAGON_RIPE = '熟透了',
-                    FRUITDRAGON_UNRIPE = '未成熟',
                     BIRDCAGE_EMPTY = '空空的',
                     BIRDCAGE_FULL = '有关小鸟',
                     BIRDCAGE_SICK = '生病了',
@@ -444,6 +473,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             WILL_MAKE = '材料都准备好啦～随时可以变出 {ITEM} 哦',
             WE_NEED = '小本本记着呢～我们需要造一个 {ITEM}',
             CAN_SOMEONE = '有谁能帮做个 {ITEM} 吗？需要 {PROTOTYPE} 才能做呢',
+            FILTER_TAB = '去 {TAB} 栏里找找看吧，就在里面哦～',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -466,7 +496,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     NEEDSCHARACTER = "热心小伙伴",
                     NEEDSCRITTERLAB = "宠物小窝旁",
                     NEEDSTUFF_PROTOTYPE = "找齐原型材料",
-                    NEEDSFISHING = "钓具箱",
+                    NEEDSFISHING = "钓鱼箱",
                     NEEDSSHADOWFORGING_TWO = "暗影小基座",
                     NEEDSTUFF = "找齐小零件",
                     NEEDSCHARACTERSKILL = "专属魔法",
@@ -553,7 +583,8 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                 },
                 RECHARGE = {
                     CHARGING = '，还差 {TIME} 充满魔力',
-                    FULL = '，魔力全满啦'
+                    FULL = '，魔力全满啦',
+                    PERCENT = '，还差 {PERCENT}% 冷却时间哦'
                 },
                 PERCENT_TYPE = { DURABILITY = '耐久', FRESHNESS = '新鲜度' },
                 TIME = { MINUTES = '分', SECONDS = '秒' },
@@ -563,7 +594,6 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     ITEM_NUM = ' (一共屯了 {NUM}个)',
                     IN_CONTAINER = ' 藏在可爱的 {NAME} 里',
                     WITH_PERCENT = '，{THIS_ONE}还剩 {PERCENT} {TYPE} 呢',
-                    SUSPICIOUS_MARBLE = '，这是 {NAME}',
                     SHOW_ME = '（含有 {SHOW_ME}）',
 
                     SLOT_HEAD = '小脑袋上',
@@ -581,6 +611,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
         FORMATS = {
             CRAFT_NEED = "需要 {INGREDIENT} 才能做出 {RECIPE}{AND_PROTOTYPE}",
             CRAFT_HAVE = "准备好 {INGREDIENT} 可以做 {RECIPE} 啦{BUT_PROTOTYPE}",
+            CRAFT_HAVE_CATALYST = "准备好了 {INGREDIENT} 可以做 {RECIPE} 啦{BUT_PROTOTYPE}",
             CRAFT_HAVE_ALL = "拍拍小手准备好啦～马上能做出 {RECIPE}{BUT_PROTOTYPE}",
 
             CONS_NEED = "还需要 {INGREDIENT} 才能把 {RECIPE} 建好呢",
@@ -595,8 +626,6 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     AMOUNT_FMT = "{NUM}个 {ITEM}",
-                    COMMA = "，",
-                    ALL_MATERIALS = "所有需要的材料",
                     AND_PROTOTYPE = '，且需要 {PROTOTYPE} 帮忙才能做呢',
                     BUT_PROTOTYPE = '，不过就差 {PROTOTYPE} 帮忙啦'
                 }
@@ -751,9 +780,9 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             WORMWOOD = {
                 MESSAGE = {
                     FULL = '光合作用满格～小叶子舒展开啦',
-                    HIGH = '运转中～能进行光合午睡了',
+                    HIGH = '运转正常～能进行光合午睡了',
                     MID = '土壤探测显示需要施肥了',
-                    LOW = '急需阳光浴和甜甜营养液',
+                    LOW = '急需阳光浴和营养液',
                     EMPTY = '小叶片蔫了～快抱抱复活我',
                 }
             },
@@ -773,6 +802,23 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     MID = '需补充灵魂糖果～恶作剧蓄力中',
                     LOW = '饥饿警报！看见影子都想咬一口',
                     EMPTY = '要变饿扁小恶魔了～要黑化啦',
+                }
+            }
+        }
+    },
+    FUNGUS_INFECTION = {
+        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        MAPPINGS = {
+            DEFAULT = {
+                MESSAGE = {
+                    FULL = '呜呜！要变成圆滚滚的小蘑菇精啦，救命！',
+                    HIGH = '身上长出好多小蘑菇了，好痒好难受……',
+                    MID = '孢子正在欺负我，感觉头晕晕的呢……',
+                    LOW = '咳咳，不小心吸了一小口孢子粉呢……',
+                    EMPTY = '干干净净，一点孢子都没有，超级健康！',
+                },
+                SYMBOL = {
+                    TEXT = '孢子值'
                 }
             }
         }
@@ -924,7 +970,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     FULL = '心里一点都不害怕凡人恐惧',
                     HIGH = '舞台聚光灯就绪～感觉棒极了',
                     MID = '脑袋迷糊～小战士要晕倒了',
-                    LOW = '阴影穿透小长矛～要打不过了',
+                    LOW = '阴影穿透长矛～要打不过了',
                     EMPTY = '退后怪兽！生气了可是很厉害的',
                 }
             },
@@ -941,7 +987,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                 MESSAGE = {
                     FULL = '闻到饭菜香味，神智清醒',
                     HIGH = '油烟吸多了？觉得头有点晕',
-                    MID = '菜谱在跳舞～脑筋完全转不动了',
+                    MID = '菜谱在跳舞～脑筋转不过弯了',
                     LOW = '耳边有人说话～救命是谁',
                     EMPTY = '锅碗瓢盆全成精了～好可怕',
                 }
@@ -1068,7 +1114,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     FULL = '燕尾服没破～完好无损',
                     HIGH = '袖口蹭破一点皮，小意思',
                     MID = '斗篷裂了口子，需要打个可爱补丁',
-                    LOW = '手套染红，虽未到最后但也差不多了',
+                    LOW = '手套染红，还没到最后但也差不多了',
                     EMPTY = '谢幕礼……绝不当逃兵死在这里',
                 }
             },
@@ -1170,7 +1216,6 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     TEXT = '潮湿度'
                 },
             },
-
             WILSON = {
                 MESSAGE = {
                     FULL = '变水煮小蘑菇啦～水分饱和了',
@@ -1184,7 +1229,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                 MESSAGE = {
                     FULL = '雨水是世界上最坏最坏的东西',
                     HIGH = '浑身湿漉漉，最讨厌被淋湿了',
-                    MID = '积水成河，这雨下得太大了',
+                    MID = '积水成河，雨下太大了',
                     LOW = '雨再不停，小火苗要被浇灭了……',
                     EMPTY = '干燥得能擦出火星，一点水灭不了火',
                 }
@@ -1248,7 +1293,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     FULL = '湿透的感觉就好比掉进水池里',
                     HIGH = '礼服吸满水，不认为还能变干了',
                     MID = '脏水会毁了精心定制的西装',
-                    LOW = '领结潮湿让我整个人不整洁了',
+                    LOW = '潮湿让我整个人不整洁了',
                     EMPTY = '干燥蓬松，整洁得不得了',
                 }
             },
@@ -1258,7 +1303,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                     HIGH = '毛毛吸饱水变小海胆了',
                     MID = '蛛网吊床变水床了，身上好湿',
                     LOW = '湿润润的样子一点都不讨喜',
-                    EMPTY = '在干沙坑里玩耍，干燥得很',
+                    EMPTY = '在干沙坑里玩，干燥得很',
                 }
             },
             WATHGRITHR = {
@@ -1273,7 +1318,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             WINONA = {
                 MESSAGE = {
                     FULL = '工具箱要生锈了！无法在湿度下工作',
-                    HIGH = '工作服变潜水服把水全吸了',
+                    HIGH = '工作服全吸满水了',
                     MID = '滑倒了，该放个湿地板警示牌',
                     LOW = '干活时多喝点水补充水分没错的',
                     EMPTY = '干到起静电了，一点水都没有',
@@ -1281,7 +1326,7 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
             },
             WARLY = {
                 MESSAGE = {
-                    FULL = '变海鲜汤了，有小鱼在衬衫里游',
+                    FULL = '变海鲜汤了，有鱼在衬衫里游',
                     HIGH = '小金鱼游出来，水会毁了菜肴',
                     MID = '感冒打喷嚏前必须把衣服烘干',
                     LOW = '现在可不是洗澡的时间和地点',
@@ -1301,18 +1346,18 @@ GLOBAL.STRINGS.CUTE_NOMU_QA = {
                 MESSAGE = {
                     FULL = '跳欢快水上芭蕾，水花到处溅',
                     HIGH = '泡在水里舒服，小鳞片也很舒服',
-                    MID = '舒展鱼鳍，美人鱼最喜欢玩水啦，小花',
+                    MID = '舒展鱼鳍，美人鱼最爱玩水啦，小花',
                     LOW = '身上再多沾点水水就更好了，小花',
                     EMPTY = '尾巴要变鱼干了，太干燥了格鲁',
                 }
             },
             WORTOX = {
                 MESSAGE = {
-                    FULL = '翅膀变沉重降落伞，完全浸透了',
+                    FULL = '翅膀变降落伞，完全浸透了',
                     HIGH = '全街最最潮湿的小恶魔Hyuyu',
                     MID = '尾巴好重，一只湿漉漉的小恶魔',
-                    LOW = '世界赐予一场超级棒的恶作剧淋浴',
-                    EMPTY = '想保持干燥就多留意天气',
+                    LOW = '世界赐予一场恶作剧淋浴',
+                    EMPTY = '保持干燥最好！离水远点',
                 }
             }
         }

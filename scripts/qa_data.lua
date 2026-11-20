@@ -2,40 +2,28 @@ local _G = GLOBAL
 
 _G.NOMU_QA.VERSION = 1
 
--- 深拷贝函数，用于安全地复制 Table
 local function DeepCopy(orig, copies)
     copies = copies or {}
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        if copies[orig] then
-            copy = copies[orig]
-        else
-            copy = {}
-            copies[orig] = copy
-            for orig_key, orig_value in next, orig, nil do
-                copy[DeepCopy(orig_key, copies)] = DeepCopy(orig_value, copies)
-            end
-            setmetatable(copy, DeepCopy(getmetatable(orig), copies))
-        end
-    else
-        copy = orig
+    if type(orig) ~= "table" then return orig end
+    if copies[orig] then return copies[orig] end
+
+    local copy = {}
+    copies[orig] = copy
+    for k, v in next, orig, nil do
+        copy[DeepCopy(k, copies)] = DeepCopy(v, copies)
     end
+    setmetatable(copy, DeepCopy(getmetatable(orig), copies))
     return copy
 end
-_G.NOMU_QA.DeepCopy = DeepCopy -- 尽早暴露供其他模块使用
+_G.NOMU_QA.DeepCopy = DeepCopy
 
--- 转义正则特殊字符
 local function escape_pattern(text)
     return text:gsub("([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
 end
 _G.NOMU_QA.escape_pattern = escape_pattern
 
-local DEFAULT_SCHEME = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
-
--- 初始化 NOMU_QA 核心配置数据
 _G.NOMU_QA.DATA = {
-    ALT_MODE = 1,    
+    ALT_MODE = 1,
     SHIFT_MODE = 1,
     DEFAULT_WHISPER = false,
     CHARACTER_SPECIFIC = true,
@@ -61,7 +49,7 @@ _G.NOMU_QA.DATA = {
     SHOWME_FILTERS = {},
     FORBIDDEN_WORDS = {},
     REPLACEMENTS = {},
-    FORBIDDEN_WORDS_ESCAPED = {}, 
+    FORBIDDEN_WORDS_ESCAPED = {},
     REPLACEMENTS_ESCAPED = {},
     SCHEMES = {
         {
@@ -76,7 +64,7 @@ _G.NOMU_QA.DATA = {
         version = _G.NOMU_QA.VERSION
     }
 }
-_G.NOMU_QA.SCHEME = DEFAULT_SCHEME
+_G.NOMU_QA.SCHEME = _G.STRINGS.DEFAULT_NOMU_QA
 
 local function MergeTables(dst, src)
     for k, v in pairs(src) do
@@ -88,7 +76,6 @@ local function MergeTables(dst, src)
     end
 end
 
--- 递归补全缺失语句
 local function FillMissingData(dst, src)
     if type(src) ~= "table" or type(dst) ~= "table" then return false end
     local changed = false
@@ -97,9 +84,7 @@ local function FillMissingData(dst, src)
             dst[k] = (type(v) == "table") and DeepCopy(v) or v
             changed = true
         elseif type(dst[k]) == "table" and type(v) == "table" then
-            if FillMissingData(dst[k], v) then
-                changed = true
-            end
+            if FillMissingData(dst[k], v) then changed = true end
         end
     end
     return changed
@@ -114,9 +99,6 @@ local function SyncScheme(scheme)
     return FillMissingData(scheme.data, _G.STRINGS.DEFAULT_NOMU_QA)
 end
 
-_G.NOMU_QA.FillMissingData = FillMissingData
-_G.NOMU_QA.SyncScheme = SyncScheme
-
 local function GetMergedBuiltin(target_source)
     local merged = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
     if target_source and target_source ~= _G.STRINGS.DEFAULT_NOMU_QA then
@@ -125,10 +107,20 @@ local function GetMergedBuiltin(target_source)
     return merged
 end
 
+_G.NOMU_QA.GetBuiltinSchemes = function()
+    local S = _G.STRINGS.NOMU_QA
+    return {
+        { name = S.TITLE_TEXT_DEFAULT_SCHEME,  source = _G.STRINGS.DEFAULT_NOMU_QA },
+        { name = S.TITLE_TEXT_CAT_SCHEME,      source = GetMergedBuiltin(_G.STRINGS.CAT_NOMU_QA) },
+        { name = S.TITLE_TEXT_TSUNDERE_SCHEME, source = GetMergedBuiltin(_G.STRINGS.TSUNDERE_NOMU_QA) },
+        { name = S.TITLE_TEXT_CUTE_SCHEME,     source = GetMergedBuiltin(_G.STRINGS.CUTE_NOMU_QA) },
+    }
+end
+
 _G.NOMU_QA.ApplyScheme = function(scheme)
     if not scheme then return end
     if not scheme.data then
-        print("[NoMu QA] 检测到方案数据丢失，已自动修复坏档！")
+        print((_G.STRINGS.NOMU_QA and _G.STRINGS.NOMU_QA.SCHEME_DATA_LOST_MSG))
         scheme.data = DeepCopy(_G.STRINGS.DEFAULT_NOMU_QA)
     else
         SyncScheme(scheme)
@@ -137,31 +129,25 @@ _G.NOMU_QA.ApplyScheme = function(scheme)
     _G.NOMU_QA.ACTIVE_SCHEME = scheme
 end
 
--- 存档文件定义
-local DATA_FILE = 'mod_config_data/nomu_quick_announce_v3'
+local DATA_FILE = "mod_config_data/nomu_quick_announce_v3"
 
 _G.NOMU_QA.UpdateEscapedCaches = function()
     local data = _G.NOMU_QA.DATA
     data.FORBIDDEN_WORDS_ESCAPED = {}
-    if data.FORBIDDEN_WORDS then
-        for _, word in ipairs(data.FORBIDDEN_WORDS) do
-            if word and word ~= "" then table.insert(data.FORBIDDEN_WORDS_ESCAPED, escape_pattern(word)) end
-        end
+    for _, word in ipairs(data.FORBIDDEN_WORDS or {}) do
+        if word and word ~= "" then table.insert(data.FORBIDDEN_WORDS_ESCAPED, escape_pattern(word)) end
     end
     data.REPLACEMENTS_ESCAPED = {}
-    if data.REPLACEMENTS then
-        for _, rule in ipairs(data.REPLACEMENTS) do
-            if rule.target and rule.target ~= "" then
-                table.insert(data.REPLACEMENTS_ESCAPED, { target = escape_pattern(rule.target), result = rule.result or "" })
-            end
+    for _, rule in ipairs(data.REPLACEMENTS or {}) do
+        if rule.target and rule.target ~= "" then
+            table.insert(data.REPLACEMENTS_ESCAPED, { target = escape_pattern(rule.target), result = rule.result or "" })
         end
     end
 end
 
 local function EnsureDataType(template_val, saved_val)
-    if template_val == nil then return saved_val end 
-    local t_type = type(template_val)
-    local s_type = type(saved_val)
+    if template_val == nil then return saved_val end
+    local t_type, s_type = type(template_val), type(saved_val)
     if t_type == s_type then return saved_val end
     if t_type == "number" and s_type == "boolean" then return saved_val and 1 or 0 end
     if t_type == "boolean" and s_type == "number" then return saved_val > 0 end
@@ -179,20 +165,14 @@ _G.NOMU_QA.LoadData = function()
             end
         end
 
-        local BUILTIN_SCHEMES = {
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_DEFAULT_SCHEME, source = _G.STRINGS.DEFAULT_NOMU_QA },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CAT_SCHEME, source = GetMergedBuiltin(_G.STRINGS.CAT_NOMU_QA) },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_TSUNDERE_SCHEME, source = GetMergedBuiltin(_G.STRINGS.TSUNDERE_NOMU_QA) },
-            { name = _G.STRINGS.NOMU_QA.TITLE_TEXT_CUTE_SCHEME, source = GetMergedBuiltin(_G.STRINGS.CUTE_NOMU_QA) }
-        }
-
+        local BUILTIN_SCHEMES = _G.NOMU_QA.GetBuiltinSchemes()
         local schemes = _G.NOMU_QA.DATA.SCHEMES
         if schemes then
             for i, template in ipairs(BUILTIN_SCHEMES) do
                 if not schemes[i] or schemes[i].name ~= template.name then
-                    local new_scheme = { 
-                        name = template.name, 
-                        data = DeepCopy(template.source), 
+                    local new_scheme = {
+                        name = template.name,
+                        data = DeepCopy(template.source),
                         version = _G.NOMU_QA.VERSION,
                         source_template = template.name
                     }
@@ -208,10 +188,10 @@ _G.NOMU_QA.LoadData = function()
         local current = _G.NOMU_QA.DATA.CURRENT_SCHEME
         if current then
             for _, template in ipairs(BUILTIN_SCHEMES) do
-                if current.name == template.name then 
+                if current.name == template.name then
                     current.data = DeepCopy(template.source)
                     current.source_template = template.name
-                    break 
+                    break
                 end
             end
             _G.NOMU_QA.ApplyScheme(current)
