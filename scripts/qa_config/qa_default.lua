@@ -1,13 +1,20 @@
 GLOBAL.STRINGS.NOMU_QA = {
     UNKNOWN_NAME = '未知名称',
     UNKNOWN_PROTOTYPE = '未知科技',
+    UNKNOWN_BUFF = '未知BUFF',
+    UNKNOWN_SKILL = '未知技能',
+    UNKNOWN_VALUE = '未知',
+    UNKNOWN_STATUS = '未知',
+    THAT_PLAYER = '该玩家',
+    DEFAULT_CONTAINER_NAME = '容器',
+    ABNORMAL_WEATHER = '异常天气',
+    EMPTY_VALUE_HINT = '(空)',
     COMMA = '，',
     MEASURE_WORD = '个',
     HOUNDFIRE = '火焰',
     SKETCH = '草图',
     IA_SKETCH = '草图',
     SKETCH_POLAR = '草图',
-    TOADSTOOL_CAP = '蟾蜍洞穴',
     ICEFISHING_HOLE = '冰钓洞',
     FISSURE = '梦魇裂隙',
     OCEAN_SHOAL = '鱼群',
@@ -27,7 +34,6 @@ GLOBAL.STRINGS.NOMU_QA = {
     PILLAR_STALACTITE = '钟乳石',
     ARCHIVE_PILLAR = '档案馆支柱',
     VAULT_PILLAR = '圣殿支柱',
-    ARCHIVE_SWITCH_BASE = '华丽基座底座',
     ARCHIVE_SECURITY_PULSE = '充能光球',
     UNDERWATER_SALVAGEABLE = '沉底物品',
     OCEANFISHABLEFLOTSAM_WATER = '水上漂浮物',
@@ -54,11 +60,15 @@ GLOBAL.STRINGS.NOMU_QA = {
     SHADOW_TRAP  = '暗影陷阱',
     HOVER_TEXT_ANNOUNCE = 'ALT + ' .. STRINGS.LMB .. ' 宣告',
 
+    QUNNIAO_ICON_NAME = '快捷宣告',
+    QUNNIAO_ICON_TIP = STRINGS.LMB .. '打开设置' .. STRINGS.RMB .. '切换风格',
+    SCHEME_SWITCHED_MSG = '宣告风格已切换为: {NAME}',
+    SCHEME_DATA_LOST_MSG = '[NoMu QA] 检测到方案数据丢失，已自动修复坏档！',
+
     BROAD_CATEGORIES = {
         BIRDCORPSE = "死去的鸟",
         FISSURE_LOWER = '梦魇裂隙（遗迹内）',
     },
-
 
     TITLE_TEXT_QA = '快捷宣告（NOMU）',
 
@@ -125,7 +135,6 @@ GLOBAL.STRINGS.NOMU_QA = {
     BUTTON_TEXT_SHOW_ME_OFF = 'Show Me（关）',
     BUTTON_TEXT_SHOW_ME_ON = 'Show Me（开）',
     BUTTON_TEXT_SHOW_ME_GIFT = 'Show Me(仅礼物/血量)',
-
 
     BUTTON_TEXT_SHOW_MOD_NAME_ON = '模组来源（开）',
     BUTTON_TEXT_SHOW_MOD_NAME_OFF = '模组来源（关）',
@@ -205,6 +214,28 @@ GLOBAL.STRINGS.NOMU_QA = {
     MESSAGE_COPY_FORMAT_SUCCEED = '已将该句型复制到方案: {NAME}',
     MESSAGE_COPY_MAPPING_SUCCEED = '已将词条映射复制到方案: {NAME}',
 
+    DEBUG = {
+        NONE = '无',
+        ENTITY_NOT_EXIST = '[实体不存在]',
+        UI_INVALID = '[UI组件无效]',
+        STMT_LOC = '[语句:%s]',
+        INFO_PREFIX = '[NOMU_QA 调试信息] ',
+        UNADAPTED_UI_PREFIX = '[NOMU_QA 未适配UI] ',
+        CODE_TAG = '[代号: %s]',
+        FILTER_CODE = '[分类代码: %s]',
+        RECIPE_CODE = '[配方代码: %s]',
+        TECH_CODE = ' [科技代码: %s]',
+        SITE_CODE = '[施工点代码: %s] [容器代码: %s]',
+        EQUIP_SLOT_CODE = '[装备栏位代码: %s]',
+        CONTAINER_CAP = '[容器容量: %d/%d]',
+        SLOT_PREFIX = '[槽位: %s]',
+        OWNER_CONTAINER = '[归属容器]',
+        UI_CODE_TAG = ' [UI代码: %s]',
+        SLOT_TAG = ' [槽位: %s]',
+        ENTITY_FMT = '[代码: %s] %s[Display: %s] [Basic: %s] [QA: %s] [Override: %s]\n[Tags: %s]\n[AnimState: %s]\n[GUID: %s] [坐标: (%.2f, %.2f, %.2f)]\n[Replica: %s]',
+        UI_FMT = '[UI代码: %s] [组件: %s] [父级: %s]\n[文本: %s] [悬浮: %s]\n[屏幕坐标: (%.1f, %.1f)]',
+    },
+
     INSIGHT_CODE_MAP = {
         ["farming_manager_lordfruitfly"] = "果蝇王重生时间",
         ["lunarthrall_plant"] = "致命亮茄",
@@ -214,7 +245,7 @@ GLOBAL.STRINGS.NOMU_QA = {
         ["mock_dragonfly"] = "时令龙蝇重生时间",
     },
 
-EMOJI_MENU = {
+    EMOJI_MENU = {
         TAB_EMOJI = "emoji",
         TAB_PHRASE = "常用语",
         TAB_MEME = "表情包",
@@ -224,6 +255,23 @@ EMOJI_MENU = {
         ON = "已开启",
         OFF = "已关闭",
         TOOLTIP_KUID = STRINGS.LMB .. "宣告科雷ID",
+    },
+
+    CONTROLLER = {
+        BEEFALO_DOMESTICATION = '牛牛驯化度',
+        BEEFALO_HEALTH = '牛牛生命值',
+        BEEFALO_OBEDIENCE = '牛牛顺从度',
+        BEEFALO_HUNGER = '牛牛饥饿值',
+        BEEFALO_TIMER = '牛牛骑乘时间',
+        OPEN_CONTAINER_SPACE = '当前容器空位',
+        BTN_QA_PANEL = '快捷宣告',
+        HINT_INV_ANNOUNCE = '{BTN} 宣告 / 长按状态',
+        HINT_CRAFT_COMBINED = '{BTN} 宣告配方 / 长按材料',
+        WHEEL_TITLE_STATUS = '【状态宣告】',
+        WHEEL_TITLE_ENTITY = '【周围实体】',
+        WHEEL_TITLE_FMT = '{TITLE} ({INDEX}/{TOTAL})  页码: {PAGE}/{MAX_PAGE}',
+        FOOTER_STATUS = '{A_BTN} 宣告状态   {LB_BTN}/{RB_BTN} 翻页   {CANCEL_BTN} 退出',
+        FOOTER_ENTITY = '{A_BTN} 宣告物品   {LB_BTN}/{RB_BTN} 翻页   {CANCEL_BTN} 退出',
     },
 
     FUNC = {
@@ -284,28 +332,45 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
-            NO_RAIN = '{WORLD}气温：{TEMPERATURE}，{WEATHER}尚未接近。',
-            UNKNOWN_RAIN = '{WORLD}气温：{TEMPERATURE}，降水变化时间暂无法预测。',
-            STOP_RAIN = '{WORLD}气温：{TEMPERATURE}，放晴：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
-            START_FOG = '{WORLD}气温：{TEMPERATURE}，孢子雾：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
-            FOGGING = '{WORLD}气温：{TEMPERATURE}，目前正处于孢子雾天气中！',
-            BWB_CAVE_WEATHER = '{WORLD}气温：{TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}',
+            DEFAULT = '{WORLD}气温：{TEMPERATURE}{WEATHER_STATUS}{FOG_STATUS}。',
             TEST = '测试用{test} {test1} {test2}',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '飓风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨', TRANQUIL = '孢子雾', FROST = '落石', VERDANT = '孢子雾', UMBRAL = '异常天气' },
-                BWB_WORDS = {
-                    RAIN_APPROACH = "降雨第{DAYS}天到达(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_STOP = "降雨第{DAYS}天停(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_NONE = "无降雨迹象",
-                    RAIN_UNKNOWN = "降水变化时间暂无法预测",
-                    FOG_ACTIVE = "正处于孢子雾中",
-                    FOG_APPROACH = "孢子雾第{DAYS}天到达(剩{MINUTES}分{SECONDS}秒)",
-                    FOG_NONE = "无孢子雾迹象"
-                }
+                WORLD = {
+                    SURFACE = '地表',
+                    CAVES = '洞穴',
+                    SHIPWRECKED = '海难',
+                    VOLCANO = '火山',
+                    PORKLAND = '猪镇',
+                    WINTERLAND = '冰岛',
+                },
+                WEATHER = {
+                    SPRING = '降雨',
+                    SUMMER = '降雨',
+                    AUTUMN = '降雨',
+                    WINTER = '降雪',
+                    ACID_RAIN = '酸雨',
+                    SPORE_FOG = '孢子雾',
+                    GREEN = '降雨',
+                    DRY = '降雨',
+                    MILD = '降雨',
+                    WET = '飓风',
+                    TEMPERATE = '降雨',
+                    HUMID = '降雨',
+                    LUSH = '降雨',
+                    APORKALYPSE = '降雨',
+                    TRANQUIL = '孢子雾',
+                    FROST = '落石',
+                    VERDANT = '孢子雾',
+                    UMBRAL = '异常天气',
+                },
+                WORDS = {
+                    APPROACH = '，{WEATHER}：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
+                    NONE = '，{WEATHER}尚未接近',
+                    ACTIVE = '，正处于{WEATHER}中',
+                    STOP_RAIN = '，放晴：第{DAYS}天（还剩：{MINUTES}分{SECONDS}秒）',
+                },
             }
         }
     },
@@ -524,7 +589,9 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
             PORTAL_ON = '我已经在摸 {NAME} 了！',
             PORTAL_OFF = '{NAME} 在我这儿，快准备触摸。',
             ME_FROZEN = '救命啊！{NAME} 被冻成冰雕了！',
-            THEY_FROZEN = '大家快来烤火帮忙！{NAME} 被冻住了！'
+            THEY_FROZEN = '大家快来烤火帮忙！{NAME} 被冻住了！',
+            ME_SLEEPING = '呼呼… {NAME} 呼呼睡大觉zzz~',
+            THEY_SLEEPING = '嘘… {NAME} 正在梦乡里呢zzz~'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -548,7 +615,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
         },
         MAPPINGS = {}
     },
-   SKILL_TREE = {
+    SKILL_TREE = {
         FORMATS = {
             ACTIVATED = '{NAME} 已点亮技能：{SKILL}。',
             CAN_ACTIVATE = '{NAME} 可点亮技能：{SKILL}。',
@@ -566,7 +633,7 @@ GLOBAL.STRINGS.DEFAULT_NOMU_QA = {
         },
         MAPPINGS = {}
     },
-BEEFALO = {
+    BEEFALO = {
         FORMATS = {
             HEALTH = '{MESSAGE}',
             HUNGER = '{MESSAGE}',
@@ -576,6 +643,9 @@ BEEFALO = {
         },
         MAPPINGS = {
             DEFAULT = {
+                WORDS = {
+                    TENDENCY = ' (趋势: {TENDENCY})',
+                },
                 MESSAGE = {
                     HEALTH_HIGH = "我的牛牛壮得像头……哦，它就是牛！(生命：{PCT}%)",
                     HEALTH_NORMAL = "牛牛状态尚可。(生命：{PCT}%)",
@@ -608,7 +678,7 @@ BEEFALO = {
             }
         }
     },
-ENV = {
+    ENV = {
         FORMATS = {
             SINGLE = '这里有 1个 {NAME}{SHOW_ME}{DISTANCE}。',
             DEFAULT = '这里有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
@@ -644,68 +714,59 @@ ENV = {
                     ASSET_INFO = '，动画：{BANK}，贴图：{BUILD}',
                 },
                 ADJ = {
-                    BURNT = '被烧毁了',
-                    FIRE = '正燃烧中',
+                    BURNT = '烧毁了',
+                    FIRE = '燃烧中',
                     WITHERED = '枯萎了',
-                    BARREN = '需要施肥',
-                    SMOLDER = '正冒烟中',
+                    BARREN = '需施肥',
+                    SMOLDER = '冒烟中',
                     GOAT_CHARGED = '是带电的',
-                    HOTSPRING_BOMBED = '水温正合适',
-                    HOTSPRING_GLASSED = '已经结晶了',
-                    HOTSPRING_EMPTY = '已经干涸了',
                     FRUITDRAGON_RIPE = '红温了',
                     BIRDCAGE_EMPTY = '空空的',
-                    BIRDCAGE_FULL = '关着小鸟',
-                    BIRDCAGE_SICK = '里的鸟生病了',
-                    BIRDCAGE_DEAD = '里的鸟饿死了',
-                    ARCHIVE_SWITCH_FULL = '处于激活状态',
-                    ARCHIVE_SWITCH_EMPTY = '还未被激活',
-                    TOADSTOOL_EMPTY = '空空的',
-                    TOADSTOOL_NORMAL = '藏着毒菌蟾蜍',
-                    TOADSTOOL_DARK = '藏着悲惨的毒菌蟾蜍',
-                    OASISLAKE_EMPTY = '已经干涸了',
-                    OASISLAKE_FULL = '装满了清澈的湖水',
+                    BIRDCAGE_FULL = '内有小鸟',
+                    BIRDCAGE_SICK = '鸟生病了',
+                    BIRDCAGE_DEAD = '鸟饿死了',
+                    ARCHIVE_SWITCH_FULL = '已激活',
+                    ARCHIVE_SWITCH_EMPTY = '未激活',
                     BEEFALO_SHAVED = '被剃光了毛',
 
-                    WITH_BARNACLES = "长满了藤壶",
+                    WITH_BARNACLES = "长满藤壶",
                     NO_BARNACLES = "光秃秃的",
-                    SEED = "还是种子",
-                    GROW = "在生长期",
-                    FULL = "已经成熟了",
-                    OVER = "已经巨大了",
-                    ROT = "已经腐烂了",
-                    SALT_FULL = "长满了盐晶",
-                    SALT_MED = "正在结晶中",
-                    SALT_LOW = "只有一点盐晶",
-                    SALT_EMPTY = "已经被开采过了",
-                    MARBLE_TALL = "完全长大了",
-                    MARBLE_NORMAL = "处于中等体型",
-                    MARBLE_SHORT = "才刚刚破土而出",
+                    SEED = "刚种下",
+                    GROW = "生长中",
+                    FULL = "成熟了",
+                    OVER = "巨大了",
+                    ROT = "腐烂了",
+                    SALT_FULL = "长满盐晶",
+                    SALT_MED = "正在结晶",
+                    SALT_LOW = "少量盐晶",
+                    SALT_EMPTY = "已被采空",
+                    MARBLE_TALL = "是阶段三",
+                    MARBLE_NORMAL = "是阶段二",
+                    MARBLE_SHORT = "是阶段一",
                     BEEBOX_FULL = "满满的",
                     BEEBOX_SOME = "有一些蜜",
                     BEEBOX_EMPTY = "空空的",
-                    PICKABLE_READY = "可以采摘了",
-                    PICKABLE_EMPTY = "在生长中",
+                    PICKABLE_READY = "成熟了",
+                    PICKABLE_EMPTY = "生长中",
                     NEST_HAS_EGG = "有鸟蛋",
-                    NEST_EMPTY = "是空空的",
-                    MUSHROOMFARM_ROTTEN = "变成烂木头了",
-                    MUSHROOMFARM_EMPTY = "还没种东西",
-                    MUSHROOMFARM_STAGE1 = "才刚种下不久",
-                    MUSHROOMFARM_STAGE2 = "长势挺喜人的",
-                    MUSHROOMFARM_STAGE3 = "已经长大了",
-                    MUSHROOMFARM_STAGE4 = "长得快爆满啦",
+                    NEST_EMPTY = "空空的",
+                    MUSHROOMFARM_ROTTEN = "是烂木头",
+                    MUSHROOMFARM_EMPTY = "空空的",
+                    MUSHROOMFARM_STAGE1 = "刚种下",
+                    MUSHROOMFARM_STAGE2 = "生长中",
+                    MUSHROOMFARM_STAGE3 = "成熟了",
+                    MUSHROOMFARM_STAGE4 = "爆满了",
 
-                    STUMP = "变成树桩了",
-                    SAPLING = "是小树苗",
-                    SHORT = "才刚刚长出",
-                    NORMAL = "长得正茂盛",
-                    TALL = "长得高高的",
-                    BOULDER = "已经变成矿床了",
-                    ANCIENT_READY = "结满了果实",
+                    STUMP = "是树桩",
+                    SAPLING = "是树苗",
+                    SHORT = "刚长出",
+                    NORMAL = "正茂盛",
+                    TALL = "高高的",
+                    BOULDER = "已经砍伐",
+                    ANCIENT_READY = "长出果实",
                     ANCIENT_EMPTY = "没有果实",
-                    MARBLE_TREE = "是天然的",
 
-                    TROPHYSCALE_EMPTY = '是空空的',
+                    TROPHYSCALE_EMPTY = '空空的',
                     TROPHYSCALE_HAS = '放有物品',
 
                     L1 = "是一级的",
@@ -742,7 +803,7 @@ ENV = {
         },
         MAPPINGS = {
             DEFAULT = {
-            PROTOTYPER = {
+                PROTOTYPER = {
                     UNKNOWN_PROTOTYPE = "一个未知科技",
                     CANTRESEARCH = "一份未知蓝图",
                     NEEDSTECH = "一份技术图纸",
@@ -819,7 +880,7 @@ ENV = {
             }
         }
     },
-MEDAL_BUFF = {
+    MEDAL_BUFF = {
         FORMATS = {
             DEFAULT = '我当前拥有 "{BUFF_NAME}" BUFF，剩余时间：{TIME}。',
             FOREVER = '我当前拥有 "{BUFF_NAME}" BUFF，永久生效。',
@@ -897,7 +958,7 @@ MEDAL_BUFF = {
             }
         }
     },
-WOBY_HUNGER = {
+    WOBY_HUNGER = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
             DEFAULT = {
@@ -1076,7 +1137,7 @@ WOBY_HUNGER = {
             }
         }
     },
-FUNGUS_INFECTION = {
+    FUNGUS_INFECTION = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
             DEFAULT = {
@@ -1093,7 +1154,7 @@ FUNGUS_INFECTION = {
             }
         }
     },
-BLOOMNESS = {
+    BLOOMNESS = {
         FORMATS = { DEFAULT = '({SYMBOL} Lv.{LEVEL} | {CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
             DEFAULT = {
@@ -1111,7 +1172,7 @@ BLOOMNESS = {
             }
         }
     },
-NAUGHTINESS = {
+    NAUGHTINESS = {
         FORMATS = { 
             DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}',
             LUCK = '我当前的幸运值为：{CURRENT}' 
@@ -1458,7 +1519,7 @@ NAUGHTINESS = {
             }
         }
     },
-THIRST = {
+    THIRST = {
         FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
             DEFAULT = {
@@ -1491,7 +1552,6 @@ THIRST = {
                     TEXT = '雨露'
                 },
             },
-
             WILSON = {
                 MESSAGE = {
                     FULL = '我已经达到饱和点了！',

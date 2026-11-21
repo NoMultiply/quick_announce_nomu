@@ -13,25 +13,44 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喂！{WORLD}气温{TEMPERATURE}，{WEATHER}将在第{DAYS}天到来（还剩：{MINUTES}分{SECONDS}秒）。自己记得撑伞，我才不管你！',
-            NO_RAIN = '哼，{WORLD}气温{TEMPERATURE}，{WEATHER}暂时还没来。稍微放松一下也可以……就一下！',
-            STOP_RAIN = '喂！{WORLD}气温{TEMPERATURE}，将在第{DAYS}天放晴（还剩：{MINUTES}分{SECONDS}秒）。快出去干活，别偷懒！',
-            START_FOG = '喂！{WORLD}气温{TEMPERATURE}，第{DAYS}天就要起孢子雾了（还剩：{MINUTES}分{SECONDS}秒）！给我睁大眼睛看路！',
-            FOGGING = '啧，{WORLD}气温{TEMPERATURE}，现在孢子雾这么大，你瞎跑什么！',
-            BWB_CAVE_WEATHER = '喂，{WORLD}气温{TEMPERATURE}，{FOG_STATUS}，而且{RAIN_STATUS}，给我当心点！',
+            DEFAULT = '喂！{WORLD}气温{TEMPERATURE}{WEATHER_STATUS}{FOG_STATUS}。',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '下雨', SUMMER = '下雨', AUTUMN = '下雨', WINTER = '暴雪', GREEN = '下雨', DRY = '下雨', MILD = '下雨', WET = '狂风暴雨', TEMPERATE = '下雨', HUMID = '下雨', LUSH = '下雨', APORKALYPSE = '下雨', TRANQUIL = '起雾', FROST = '落石', VERDANT = '起雾', UMBRAL = '鬼天气' },
-                BWB_WORDS = {
-                    RAIN_APPROACH = "破雨第{DAYS}天就来(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_STOP = "这雨第{DAYS}天就会停(剩{MINUTES}分{SECONDS}秒)",
-                    RAIN_NONE = "暂时没看到要下雨",
-                    FOG_ACTIVE = "现在全是烦人的孢子雾",
-                    FOG_APPROACH = "孢子雾第{DAYS}天就来了(剩{MINUTES}分{SECONDS}秒)",
-                    FOG_NONE = "没看到孢子雾，算你走运"
-                }
+                WORLD = {
+                    SURFACE = '地表',
+                    CAVES = '洞穴',
+                    SHIPWRECKED = '海难',
+                    VOLCANO = '火山',
+                    PORKLAND = '猪镇',
+                    WINTERLAND = '冰岛',
+                },
+                WEATHER = {
+                    SPRING = '下雨',
+                    SUMMER = '下雨',
+                    AUTUMN = '下雨',
+                    WINTER = '暴雪',
+                    ACID_RAIN = '酸雨',
+                    SPORE_FOG = '孢子雾',
+                    GREEN = '下雨',
+                    DRY = '下雨',
+                    MILD = '下雨',
+                    WET = '狂风暴雨',
+                    TEMPERATE = '下雨',
+                    HUMID = '下雨',
+                    LUSH = '下雨',
+                    APORKALYPSE = '下雨',
+                    TRANQUIL = '起雾',
+                    FROST = '落石',
+                    VERDANT = '起雾',
+                    UMBRAL = '鬼天气',
+                },
+                WORDS = {
+                    APPROACH = '，{WEATHER}将在第{DAYS}天到来（还剩：{MINUTES}分{SECONDS}秒），自己记得准备',
+                    NONE = '，{WEATHER}暂时还没来，稍微放松一下也可以',
+                    ACTIVE = '，现在正处于烦人的{WEATHER}中',
+                    STOP_RAIN = '，将在第{DAYS}天放晴（还剩：{MINUTES}分{SECONDS}秒），快出去干活',
+                },
             }
         }
     },
@@ -212,6 +231,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             PERF = '{NAME} 的网络 {STATUS}哼。{PING}',
             GREET = '哟，{NAME}。才、才不是在等你呢！',
             PING = '延迟：{PING}',
+            KUID = '听好了，{NAME} 的科雷ID是 {KUID}，自己记牢！',
             BADGE = '{NAME}戴着{BADGE}的头像。',
             BACKGROUND = '{NAME}的背景是{BACKGROUND}。',
             BODY = '{NAME}穿着{BODY}。勉强能看吧。',
@@ -233,7 +253,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             PORTAL_ON = '我已经摸到{NAME}了，快点过来！',
             PORTAL_OFF = '{NAME}在我这，快点准备摸它笨蛋！',
             ME_FROZEN = "喂！{NAME} 被冻成冰块了！快想办法啊笨蛋！",
-            THEY_FROZEN = "{NAME} 被冻住了！还不快生火！"
+            THEY_FROZEN = "{NAME} 被冻住了！还不快生火！",
+            ME_SLEEPING = '看什么看！{NAME} 只是稍微闭目养神一下而已！zzz~',
+            THEY_SLEEPING = '嘘……{NAME} 这笨蛋睡得跟猪一样，别吵醒他了！'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -252,7 +274,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             AGE = '服务器运行了：{AGE}天。居然还没塌。',
             NUM_PLAYER = '现在有：{NUM}个人。人多眼杂的。',
             WORLD_SETTING = '这破房间的【{SETTING}】世界设置被调成了【{VALUE}】，别搞砸了！',
-            MOD_SETTING = '模组【{MOD}】的【{SETTING}】竟然变成了【{VALUE}】，真是不让人省心！'
+            MOD_SETTING = '模组【{MOD}】的【{SETTING}】竟然变成了【{VALUE}】，真是不让人省心！',
+            MOD_ENABLED = '哼，这个房间居然开了【{MOD}】模组，自己注意着点！'
         },
         MAPPINGS = {}
     },
@@ -284,6 +307,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         },
         MAPPINGS = {
             DEFAULT = {
+                WORDS = {
+                    TENDENCY = ' (趋势: {TENDENCY})',
+                },
                 MESSAGE = {
                     HEALTH_HIGH = "这头笨牛结实得很！（生命：{PCT}%）",
                     HEALTH_NORMAL = "牛的状态还凑合。（生命：{PCT}%）",
@@ -317,6 +343,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             SINGLE = '喂！这里有 1个 {NAME} 啦{SHOW_ME}{DISTANCE}。',
             DEFAULT = '听好了，这里总共有 {NUM}个 {NAME}{SHOW_ME}{DISTANCE}。',
             NAMED = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中有 {NUM}个 叫作 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED_THIS = '看好了！这里有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这一个叫作 {NAME}{SHOW_ME}{DISTANCE}。',
+            NAMED_THIS_SINGLE = '喂！这里只有 1个 {PREFAB_NAME}，它的名字叫作 {NAME}{SHOW_ME}{DISTANCE}。',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             FISH_SHOAL = '哼，这里居然有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}，真是不让人省心！',
 
@@ -326,6 +354,9 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             STATE_THIS_SINGLE = '这里有 1个 {NAME} 啦，目前它正{ADJ}{SHOW_ME}{DISTANCE}！',
             STORAGE_HAS = '听好了，这里有 {TOTAL}个 {NAME}，唯独这个装了 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE}。',
             STORAGE_EMPTY = '喂，这里有 {TOTAL}个 {NAME}，其中有 {NUM}个 里面是空的{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY_THIS = '喂，这里有 {TOTAL}个 {NAME}，其中你点的这个是空的{SHOW_ME}{DISTANCE}。',
+            STORAGE_EMPTY_THIS_SINGLE = '这里只有 1个 {NAME} 啦，而且里面空空如也{SHOW_ME}{DISTANCE}！',
+            STORAGE_EMPTY_EQUAL = '真是的，这里有 {TOTAL}个 {NAME}，里面竟然全都是空的{SHOW_ME}{DISTANCE}！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -345,12 +376,10 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     BARREN = '急需施肥（你还在看什么呢）',
                     SMOLDER = '在冒烟马上要烧起来了（救命啊）',
                     GOAT_CHARGED = '处于危险的带电状态',
-                    GOAT_NORMAL = '是普普通通的温顺状态',
                     HOTSPRING_BOMBED = '水温勉勉强强正合适吧',
                     HOTSPRING_GLASSED = '已经结晶硬邦邦的了',
                     HOTSPRING_EMPTY = '已经干涸得一滴都不剩了',
                     FRUITDRAGON_RIPE = '红温熟透了（还不快采）',
-                    FRUITDRAGON_UNRIPE = '还是没成熟的普通状态啦',
                     BIRDCAGE_EMPTY = '空荡荡的什么都没有',
                     BIRDCAGE_FULL = '里面关着毫无生气的鸟',
                     BIRDCAGE_SICK = '里面的小鸟生病了（真麻烦）',
@@ -435,6 +464,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             WILL_MAKE = '材料齐了，我勉强可以给你做一个{ITEM}。',
             WE_NEED = '喂，我们需要造个{ITEM}，别问为什么，去拿材料就是了！',
             CAN_SOMEONE = '喂！谁来帮我做个{ITEM}啊！我需要{PROTOTYPE}才能造它！',
+            FILTER_TAB = '自己去 {TAB} 栏里翻一翻，连这都要我教吗！',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -544,7 +574,8 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                 },
                 RECHARGE = {
                     CHARGING = '，还差{TIME}才能充满，烦死了',
-                    FULL = '，魔力已经满了'
+                    FULL = '，魔力已经满了',
+                    PERCENT = '，还差{PERCENT}%冷却时间，催什么催'
                 },
                 PERCENT_TYPE = { DURABILITY = '的耐久度', FRESHNESS = '新鲜度' },
                 TIME = { MINUTES = '分', SECONDS = '秒' },
@@ -554,7 +585,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     ITEM_NUM = ' (一共屯了{NUM}个)',
                     IN_CONTAINER = ' 藏在这个破{NAME}里',
                     WITH_PERCENT = '，{THIS_ONE}还剩下{PERCENT}{TYPE}',
-                    SUSPICIOUS_MARBLE = '，喂这是{NAME}',
                     SHOW_ME = '（这个有 {SHOW_ME}）',
 
                     SLOT_HEAD = '头上',
@@ -572,6 +602,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
         FORMATS = {
             CRAFT_NEED = "喂！要造{RECIPE}还差{INGREDIENT}{AND_PROTOTYPE}，快给我去找啊笨蛋！",
             CRAFT_HAVE = "我已经准备好{INGREDIENT}来造{RECIPE}了{BUT_PROTOTYPE}，快点夸我！",
+            CRAFT_HAVE_CATALYST = "我顺便准备好了 {INGREDIENT} 来造 {RECIPE}{BUT_PROTOTYPE}，可别误会！",
             CRAFT_HAVE_ALL = "材料刚好凑齐了……顺便帮你造个{RECIPE}吧{BUT_PROTOTYPE}，感恩戴德吧！",
 
             CONS_NEED = "我们还需要{INGREDIENT}才能把{RECIPE}建完，快点去干活！",
@@ -586,8 +617,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     AMOUNT_FMT = "{NUM}个{ITEM}",
-                    COMMA = "，",
-                    ALL_MATERIALS = "所有需要的破材料",
                     AND_PROTOTYPE = '，而且还需要{PROTOTYPE}帮忙',
                     BUT_PROTOTYPE = '，不过现在就差{PROTOTYPE}帮忙了'
                 }
@@ -764,6 +793,23 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     MID = '我需要少量的灵魂，快点！',
                     LOW = '我想要一个美味的灵魂！快交出来！',
                     EMPTY = '我对灵魂的渴望要控制不住了！',
+                }
+            }
+        }
+    },
+    FUNGUS_INFECTION = {
+        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        MAPPINGS = {
+            DEFAULT = {
+                MESSAGE = {
+                    FULL = '喂！我要变异长满蘑菇了，快想办法啊笨蛋！',
+                    HIGH = '身上长出好多讨厌的蘑菇了，别盯着看！',
+                    MID = '孢子正在侵蚀我……才不需要你担心呢！',
+                    LOW = '咳咳，吸入了点破孢子而已，大惊小怪！',
+                    EMPTY = '哼，我健康得很，一点孢子都没有！',
+                },
+                SYMBOL = {
+                    TEXT = '孢子值'
                 }
             }
         }
@@ -959,7 +1005,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                 MESSAGE = {
                     FULL = '头脑清醒，欢乐时光来了！Hyuyu！',
                     HIGH = '给我吸点灵魂保持清醒！快点！',
-                    MID = '跳太欢了，有点头痛……别笑我！',
+                    MID = '跳太欢了，脑袋有点痛……别笑我！',
                     LOW = '这影子的戏法真气人！快帮忙！',
                     EMPTY = '我陷入疯狂了！快点拿理智药来！',
                 }
@@ -1014,7 +1060,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     FULL = '痊愈了。但我迟早还会受伤的。',
                     HIGH = '有点痛。但我能忍。',
                     MID = '好痛……我讨厌受伤。',
-                    LOW = '流了好多血……是不是放弃比较好……',
+                    LOW = '流了好多血……放弃会很轻松吧……',
                     EMPTY = '我要去见阿比盖尔了……再见，笨蛋……',
                 }
             },
@@ -1161,7 +1207,6 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     TEXT = '雨露值'
                 },
             },
-
             WILSON = {
                 MESSAGE = {
                     FULL = '彻底湿透了！快给我火堆烤干！',
@@ -1222,7 +1267,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
                     HIGH = '格子披风都不保暖了，冷死我了！',
                     MID = '获得了相当多的水分，太湿了！',
                     LOW = '格子花纹很温暖但也很潮湿，难受。',
-                    EMPTY = '对我几乎没影响，继续干活！',
+                    EMPTY = '对我来说几乎没影响，继续干活！',
                 }
             },
             WES = {
@@ -1255,7 +1300,7 @@ GLOBAL.STRINGS.TSUNDERE_NOMU_QA = {
             WATHGRITHR = {
                 MESSAGE = {
                     FULL = '我完全湿透了！铠甲好重！',
-                    HIGH = '战士在这样的雨天没法战斗！快想办法！',
+                    HIGH = '战士在雨天没法战斗！快想办法！',
                     MID = '我的护甲要生锈了！还不快给我擦干！',
                     LOW = '我不需要洗澡，讨厌水！',
                     EMPTY = '干干净净！继续战斗！',

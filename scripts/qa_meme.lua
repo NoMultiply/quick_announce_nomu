@@ -17,17 +17,17 @@ local LIST = {
     List_6 = {}, List_7 = {}, List_8 = {}, List_9 = {}, List_10 = {},
     List_11 = {}
 }
-for i = 1, 182 do table.insert(LIST.List_1, "zayu_"..i) end
+for i = 1, 185 do table.insert(LIST.List_1, "zayu_"..i) end
 for i = 1, 80  do table.insert(LIST.List_2, "feibi_"..i) end
 for i = 1, 101 do table.insert(LIST.List_3, "hewu_"..i) end
-for i = 1, 165  do table.insert(LIST.List_4, "chaijun_"..i) end
+for i = 1, 160  do table.insert(LIST.List_4, "chaijun_"..i) end
 for i = 1, 78  do table.insert(LIST.List_5, "gif_catmeme_"..i) end
 for i = 1, 80  do table.insert(LIST.List_6, "taff_"..i) end
 for i = 1, 20  do table.insert(LIST.List_7, "yuexin_"..i) end
 for i = 1, 129 do table.insert(LIST.List_8, "xiyy_"..i) end
 for i = 1, 30  do table.insert(LIST.List_9, "mtcat_"..i) end
 for i = 1, 25  do table.insert(LIST.List_10, "jiaran_"..i) end
-for i = 1, 69  do table.insert(LIST.List_11, "doro_"..i) end
+for i = 1, 70  do table.insert(LIST.List_11, "doro_"..i) end
 
 local LIST_DATA = {
     List_0 = { title = "收藏", atlas = nil, prefix = nil },

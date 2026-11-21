@@ -13,25 +13,44 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
     },
     WORLD_TEMPERATURE_AND_RAIN = {
         FORMATS = {
-            START_RAIN = '喵呜～{WORLD}气温 {TEMPERATURE}，{WEATHER}第 {DAYS} 天来喵（剩：{MINUTES}分{SECONDS}秒）',
-            NO_RAIN = '嗅嗅……{WORLD}气温 {TEMPERATURE}，肉垫预报{WEATHER}还没来喵',
-            STOP_RAIN = '喵！{WORLD}气温 {TEMPERATURE}，第 {DAYS} 天放晴喵（剩：{MINUTES}分{SECONDS}秒）',
-            START_FOG = '{WORLD}气温 {TEMPERATURE}，孢子雾第 {DAYS} 天来喵（剩：{MINUTES}分{SECONDS}秒）',
-            FOGGING = '喵呜～{WORLD}气温 {TEMPERATURE}，起大浓雾看不清路喵',
-            BWB_CAVE_WEATHER = '{WORLD}气温 {TEMPERATURE}，{FOG_STATUS}，{RAIN_STATUS}',
+            DEFAULT = '喵呜～{WORLD}气温 {TEMPERATURE}{WEATHER_STATUS}{FOG_STATUS}喵',
         },
         MAPPINGS = {
             DEFAULT = {
-                WORLD = { SURFACE = '地表', CAVES = '洞穴', SHIPWRECKED = '海难', VOLCANO = '火山', PORKLAND = '猪镇', WINTERLAND = '冰岛' },
-                WEATHER = { SPRING = '降雨', SUMMER = '降雨', AUTUMN = '降雨', WINTER = '降雪', GREEN = '降雨', DRY = '降雨', MILD = '降雨', WET = '大风', TEMPERATE = '降雨', HUMID = '降雨', LUSH = '降雨', APORKALYPSE = '降雨', TRANQUIL = '孢子雾', FROST = '落石', VERDANT = '孢子雾', UMBRAL = '异象' },
-                BWB_WORDS = {
-                    RAIN_APPROACH = "雨水第 {DAYS} 天来(剩 {MINUTES}分{SECONDS}秒)",
-                    RAIN_STOP = "雨水第 {DAYS} 天停(剩 {MINUTES}分{SECONDS}秒)",
-                    RAIN_NONE = "没下雨迹象喵",
-                    FOG_ACTIVE = "陷在孢子雾中喵",
-                    FOG_APPROACH = "孢子雾第 {DAYS} 天来(剩 {MINUTES}分{SECONDS}秒)",
-                    FOG_NONE = "没孢子雾迹象喵"
-                }
+                WORLD = {
+                    SURFACE = '地表',
+                    CAVES = '洞穴',
+                    SHIPWRECKED = '海难',
+                    VOLCANO = '火山',
+                    PORKLAND = '猪镇',
+                    WINTERLAND = '冰岛',
+                },
+                WEATHER = {
+                    SPRING = '降雨',
+                    SUMMER = '降雨',
+                    AUTUMN = '降雨',
+                    WINTER = '降雪',
+                    ACID_RAIN = '酸雨',
+                    SPORE_FOG = '孢子雾',
+                    GREEN = '降雨',
+                    DRY = '降雨',
+                    MILD = '降雨',
+                    WET = '大风',
+                    TEMPERATE = '降雨',
+                    HUMID = '降雨',
+                    LUSH = '降雨',
+                    APORKALYPSE = '降雨',
+                    TRANQUIL = '孢子雾',
+                    FROST = '落石',
+                    VERDANT = '孢子雾',
+                    UMBRAL = '异象',
+                },
+                WORDS = {
+                    APPROACH = '，{WEATHER}第 {DAYS} 天来（剩：{MINUTES}分{SECONDS}秒）',
+                    NONE = '，肉垫预报{WEATHER}还没来',
+                    ACTIVE = '，正陷在{WEATHER}中',
+                    STOP_RAIN = '，第 {DAYS} 天放晴（剩：{MINUTES}分{SECONDS}秒）',
+                },
             }
         }
     },
@@ -224,6 +243,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             PERF = '{NAME} 的网络 {STATUS}～{PING}',
             GREET = '主人的脚步声最好认啦喵～你好，{NAME}',
             PING = '延迟：{PING}',
+            KUID = '主人记好喵～{NAME} 的科雷ID是 {KUID} 喵',
             CHOOSING = '{NAME} 正在挑角色喵',
             CONNECTING = '{NAME} 猫爪信号连接中喵',
             ME_RIDING = '正在骑着 {MOUNT} 兜风喵',
@@ -242,25 +262,16 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             BOTH_GHOST = "呜呜，{NAME}，我们变成幽灵猫了喵",
             ME_GHOST = "拜托 {NAME} 救救我，需要救赎之心复活喵",
             THEY_GHOST = "{NAME} 撑住！猫爪救援马上就到喵",
-            I_AM_HERE = "{NAME}，人家在这里喵",
+            I_AM_HERE = "{NAME}，人家就在这里喵",
             I_AM_GHOST = "救命喵嗷～变成幽灵猫啦！谁来救救人家",
             ME_FISHING = '嘘——{NAME} 在屏息钓鱼鱼喵，快咬钩',
             THEY_FISHING = '{NAME} 正在专注钓鱼，祝钓到大鱼干喵',
             PORTAL_ON = '肉垫已经在摸 {NAME} 了喵',
             PORTAL_OFF = '{NAME} 在这里，快准备触摸传送喵',
             ME_FROZEN = '救命喵呜！{NAME} 冻成冰镇猫猫啦',
-            THEY_FROZEN = '快拿火把来！{NAME} 被冻成大冰块啦喵'
-        },
-        MAPPINGS = {}
-    },
-    SERVER = {
-        FORMATS = {
-            NAME = '猫窝叫：{NAME} 喵',
-            AGE = '猫窝已运行：{AGE} 天喵',
-            NUM_PLAYER = '当前有：{NUM} 只猫猫喵',
-            WORLD_SETTING = '猫窝【{SETTING}】规则为【{VALUE}】喵',
-            MOD_SETTING = '模组【{MOD}】的【{SETTING}】设为【{VALUE}】喵',
-            MOD_ENABLED = '猫窝开启了模组：{MOD} 喵'
+            THEY_FROZEN = '快拿火把来！{NAME} 被冻成大冰块啦喵',
+            ME_SLEEPING = '呼噜噜… {NAME} 蜷成猫团子睡着啦喵zzz~',
+            THEY_SLEEPING = '嘘… {NAME} 正在打呼噜睡午觉喵zzz~'
         },
         MAPPINGS = {
             DEFAULT = {
@@ -272,6 +283,17 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 }
             }
         }
+    },
+    SERVER = {
+        FORMATS = {
+            NAME = '猫窝叫：{NAME} 喵',
+            AGE = '猫窝已运行：{AGE} 天喵',
+            NUM_PLAYER = '当前有：{NUM} 只猫猫喵',
+            WORLD_SETTING = '猫窝【{SETTING}】规则为【{VALUE}】喵',
+            MOD_SETTING = '模组【{MOD}】的【{SETTING}】设为【{VALUE}】喵',
+            MOD_ENABLED = '猫窝开启了模组：{MOD} 喵'
+        },
+        MAPPINGS = {}
     },
     SKILL_TREE = {
         FORMATS = {
@@ -301,6 +323,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
         },
         MAPPINGS = {
             DEFAULT = {
+                WORDS = {
+                    TENDENCY = ' (趋势: {TENDENCY})',
+                },
                 MESSAGE = {
                     HEALTH_HIGH = "牛牛壮得像座山！（生命：{PCT}%）",
                     HEALTH_NORMAL = "牛牛状态尚可，还能驮人跑喵！（生命：{PCT}%）",
@@ -308,7 +333,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     
                     HUNGER_FULL = "嗝喵～牛牛吃圆了，塞不下啦！（饥饿：{VAL}）",
                     HUNGER_NORMAL = "牛牛肚子不饿喵～（饥饿：{VAL}）",
-                    HUNGER_HUNGRY = "牛牛肚子叫了，想吃草草喵！（饥饿：{VAL}）",
+                    HUNGER_HUNGRY = "牛牛肚子叫了，想喂它吃草草喵！（饥饿：{VAL}）",
                     HUNGER_STARVING = "牛牛饿得要啃尾巴了喵！快喂它！（饥饿：{VAL}）",
                     
                     OBEDIENCE_HIGH = "看喵！牛牛像小猫一样听话！（顺从：{PCT}%）",
@@ -338,6 +363,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             SINGLE = '主人～这里有 1个 {NAME} 喵{SHOW_ME}{DISTANCE}',
             DEFAULT = '喵呜～附近共有 {NUM}个 {NAME} 喵{SHOW_ME}{DISTANCE}',
             NAMED = '肉垫发现！有 {NUM_PREFAB}个 {PREFAB_NAME}，其中 {NUM}个 名叫 {NAME} 喵{SHOW_ME}{DISTANCE}',
+            NAMED_THIS = '肉垫发现！有 {NUM_PREFAB}个 {PREFAB_NAME}，其中这个叫 {NAME} 喵{SHOW_ME}{DISTANCE}',
+            NAMED_THIS_SINGLE = '这里只有 1个 {PREFAB_NAME}，它的名字叫 {NAME} 喵{SHOW_ME}{DISTANCE}',
             CODE = '名称：{NAME}，代码：{PREFAB}{MOD_INFO}{ASSET_INFO}',
             FISH_SHOAL = '快看喵！有一群 {FISH}（共 {NUM} 条）{SHOW_ME}{DISTANCE}',
 
@@ -348,6 +375,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
 
             STORAGE_HAS = '这里有 {TOTAL}个 {NAME}，其中这个装有 {NUM}个 {ITEM}{SHOW_ME}{DISTANCE} 喵',
             STORAGE_EMPTY = '这里有 {TOTAL}个 {NAME}，其中 {NUM}个 空空如也{SHOW_ME}{DISTANCE} 喵',
+            STORAGE_EMPTY_THIS = '这里有 {TOTAL}个 {NAME}，其中这个是空空的{SHOW_ME}{DISTANCE} 喵',
+            STORAGE_EMPTY_THIS_SINGLE = '这里只有 1个 {NAME}，里面空空如也{SHOW_ME}{DISTANCE} 喵',
+            STORAGE_EMPTY_EQUAL = '喵呜～这里的 {TOTAL}个 {NAME} 全都空空如也{SHOW_ME}{DISTANCE} 喵',
         },
         MAPPINGS = {
             DEFAULT = {
@@ -367,12 +397,10 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     BARREN = '缺肥料',
                     SMOLDER = '在冒烟',
                     GOAT_CHARGED = '带电中',
-                    GOAT_NORMAL = '很温顺',
                     HOTSPRING_BOMBED = '水温正好',
                     HOTSPRING_GLASSED = '已结晶',
                     HOTSPRING_EMPTY = '干涸了',
                     FRUITDRAGON_RIPE = '熟透了',
-                    FRUITDRAGON_UNRIPE = '未成熟',
                     BIRDCAGE_EMPTY = '空空的',
                     BIRDCAGE_FULL = '有关鸟',
                     BIRDCAGE_SICK = '生病了',
@@ -502,7 +530,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     NEEDSCARNIVAL_HOSTSHOP_WANDER = "鸦年华良羽鸦",
                     NEEDSWINTERSFEASTCOOKING = "砖砌烤炉",
                     NEEDSWARGSHRINE = "座狼神龛献祭",
-                    NEEDSMADSCIENCE = "疯狂科学家实验室",
+                    NEEDSMADSCIENCE = "神秘实验室",
                     NEEDSRABBITKINGSHOP = "兔子国王",
                     NEEDSYOTG = "火鸡之年",
                     NEEDSYOTR = "兔人之年",
@@ -578,7 +606,6 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     ITEM_NUM = ' (共 {NUM}个)',
                     IN_CONTAINER = ' 藏在 {NAME} 里',
                     WITH_PERCENT = '，{THIS_ONE}有 {PERCENT} {TYPE} 喵',
-                    SUSPICIOUS_MARBLE = '，这是 {NAME} 喵',
                     SHOW_ME = '（含有 {SHOW_ME}）',
 
                     SLOT_HEAD = '头上',
@@ -611,8 +638,6 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             DEFAULT = {
                 WORDS = {
                     AMOUNT_FMT = "{NUM}个 {ITEM}",
-                    COMMA = "，",
-                    ALL_MATERIALS = "所有发光材料",
                     AND_PROTOTYPE = '，且需 {PROTOTYPE} 认证喵',
                     BUT_PROTOTYPE = '，但还差 {PROTOTYPE} 认证喵'
                 }
@@ -653,13 +678,13 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     HIGH = '能量充足，暂不需要投喂喵',
                     MID = '小肚打鼓啦喵～想吃秋刀鱼',
                     LOW = '饿到尾巴竖不直了喵！求空投小鱼干',
-                    EMPTY = '视线模糊了喵……毛线球看成罐头了',
+                    EMPTY = '视线模糊惹～树枝看成饼干了喵',
                 }
             },
             WILLOW = {
                 MESSAGE = {
                     FULL = '再吃要变圆毛球啦喵',
-                    HIGH = '火焰燃烧稳定，不需要燃料喵',
+                    HIGH = '能量燃烧稳定，不需要燃料喵',
                     MID = '火苗变小了～需要鱼干助燃喵',
                     LOW = '尾巴火要灭了～求投喂喵',
                     EMPTY = '饿扁了～伯尼快帮找罐头喵',
@@ -679,7 +704,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     FULL = '和姐姐的绒毛一样饱满喵',
                     HIGH = '姐姐～分你一半小鱼干喵',
                     MID = '肚子空落落，像悲伤的秋风喵',
-                    LOW = '饿着看夕阳，添了新饿喵',
+                    LOW = '饿着看夕阳～添了新饿喵',
                     EMPTY = '姐姐……肉垫快抬不起来了喵',
                 }
             },
@@ -697,7 +722,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     FULL = '知识填满肚子啦，暂不需投喂喵',
                     HIGH = '能量充足，继续研究薄荷星图喵',
                     MID = '学术能量下降～要补充智慧鱼干喵',
-                    LOW = '看不清古喵文字了～求应急投喂',
+                    LOW = '看不清书上的字啦～求应急投喂',
                     EMPTY = '启动纸箱避难……钥匙交给你了喵',
                 }
             },
@@ -723,7 +748,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     FULL = '盛宴填满胃袋喵～尾巴卷成心啦',
                     HIGH = '优雅淑女保持身材，不吃下午茶喵',
-                    MID = '肚子打鼓～想来份皇家猫罐头喵',
+                    MID = '肚子打鼓～想来份精致小点心喵',
                     LOW = '帽子变餐盘啦～快变出小鱼干',
                     EMPTY = '人家的自由要被饥饿夺走了喵',
                 }
@@ -740,8 +765,8 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             WATHGRITHR = {
                 MESSAGE = {
                     FULL = '长矛吃饱饱喵！能打十个怪',
-                    HIGH = '呼吸带鱼干香，战斗欲望MAX喵',
-                    MID = '闻到猫罐头香味，尾巴动了喵',
+                    HIGH = '呼吸都是肉香，战斗欲望MAX喵',
+                    MID = '闻到肉汤香味，尾巴动了喵',
                     LOW = '饿得能吞下仓库喵！大餐在哪',
                     EMPTY = '饿成纸片猫也绝不吃素喵',
                 }
@@ -779,7 +804,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     HIGH = '还能再塞下几只小虾米喵',
                     MID = '鱼尾摇不动了～要投喂恢复活力',
                     LOW = '腮帮子瘪了～求喂食FLORP喵',
-                    EMPTY = '眼睛冒漩涡～看见海底星空了喵',
+                    EMPTY = '眼睛冒漩涡～看见好吃的在飞了喵',
                 }
             },
             WORTOX = {
@@ -793,6 +818,23 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             }
         }
     },
+    FUNGUS_INFECTION = {
+        FORMATS = { DEFAULT = '({SYMBOL}：{CURRENT}/{MAX}) {MESSAGE}' },
+        MAPPINGS = {
+            DEFAULT = {
+                MESSAGE = {
+                    FULL = '喵嗷！要变成会走路的蘑菇猫了喵',
+                    HIGH = '耳朵和尾巴都快长满蘑菇了喵',
+                    MID = '孢子钻进毛毛里了，痒痒的喵',
+                    LOW = '阿嚏！吸进了一点点孢子粉喵',
+                    EMPTY = '毛发干干净净，一点孢子都没有喵',
+                },
+                SYMBOL = {
+                    TEXT = '孢子值'
+                }
+            }
+        }
+    },
     BLOOMNESS = {
         FORMATS = { DEFAULT = '({SYMBOL} Lv.{LEVEL} | {CURRENT}/{MAX}) {MESSAGE}' },
         MAPPINGS = {
@@ -800,7 +842,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     STAGE_0 = '尾巴需要肥料喵',
                     STAGE_1 = '小花花要开啦喵',
-                    STAGE_2 = '花苞努力长大中喵',
+                    STAGE_2 = '花苞努力长大中哦',
                     STAGE_3 = '当当！花花盛开啦喵',
                     STAGE_4 = '花瓣变黄了喵',
                     STAGE_5 = '花花要谢了喵',
@@ -837,7 +879,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             DEFAULT = {
                 MESSAGE = {
                     FULL = '>75%……胡须感应全开～脑力巅峰喵',
-                    HIGH = '55%……精神很好，能表演后空翻喵',
+                    HIGH = '55%……精神很好，能原地转圈圈喵',
                     MID = '35%……毛线球打结喵～有点焦虑',
                     LOW = '15%……尾巴有自己想法了喵～好疯狂',
                     EMPTY = '<15%……尾巴炸毛！暗影恶魔在追人家喵',
@@ -848,7 +890,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     FULL = '导航系统正常喵～理智满分',
                     HIGH = '有点波动，但会好起来的喵',
-                    MID = '像被猫薄荷轰炸过～头好痛喵',
+                    MID = '像被敲了一下～头好痛',
                     LOW = '看见影子在跳舞喵～什么怪物',
                     EMPTY = '救命喵！黑暗军团要把人家吃了',
                 }
@@ -858,7 +900,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     FULL = '精神火旺，能烤棉花糖喵',
                     HIGH = '刚才伯尼动了一下喵？不用在意',
                     MID = '寒意爬上尾巴～感觉好冷喵',
-                    LOW = '伯尼，为什么觉得这么冷喵',
+                    LOW = '伯尼，为什么我觉得这么冷喵',
                     EMPTY = '伯尼护驾喵！怪物要咬尾巴了',
                 }
             },
@@ -893,7 +935,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     FULL = '感应精确～一切都很理智喵',
                     HIGH = '波动在控，稍微有点头痛喵',
-                    MID = '古文看多了～偏头痛难忍喵',
+                    MID = '古文看多了～偏头痛好难忍喵',
                     LOW = '墨水在跳舞～分不清虚实了喵',
                     EMPTY = '知识溢出！帮人家逃离敌人喵',
                 }
@@ -954,7 +996,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             },
             WARLY = {
                 MESSAGE = {
-                    FULL = '菜肴香气让人神智清醒喵',
+                    FULL = '菜肴香气让我神智清醒喵',
                     HIGH = '闻到迷迭香，觉得有点晕喵',
                     MID = '菜谱在跳舞～脑筋转不动了喵',
                     LOW = '听见低语～救命啊喵',
@@ -983,7 +1025,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     FULL = '头脑清醒，恶作剧时间到喵Hyuyu',
                     HIGH = '吸点灵魂保持清醒喵',
-                    MID = '跳太快了，脑袋有点痛喵',
+                    MID = '跳太快了，脑袋有点痛痛的……',
                     LOW = '好羡慕影子的恶作剧戏法喵',
                     EMPTY = '思想进入纯粹疯狂境界啦喵Hyuyu',
                 }
@@ -1001,7 +1043,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     FULL = '100%……绒毛发亮喵～血槽全满',
                     HIGH = '75%……爪垫擦伤，挂了点彩喵',
                     MID = '50%……缠着绷带也要守护主人喵',
-                    LOW = '25%……一瘸一拐喵～严重受伤了',
+                    LOW = '25%……一瘸一拐～严重受伤了',
                     EMPTY = '<25%……最后一条猫命！看好家当喵',
                 },
                 SYMBOL = { EMOJI = 'heart', TEXT = '猫命' },
@@ -1065,7 +1107,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     FULL = '健康得像清脆小哨子喵',
                     HIGH = '大难不死，继续去冒险喵',
                     MID = '包好松果绷带，需要药草喵',
-                    LOW = '爪子裂开，痛苦开始了喵',
+                    LOW = '爪子裂开好痛，苦日子要来了喵',
                     EMPTY = '让我在猫抓树下永眠吧喵',
                 }
             },
@@ -1136,7 +1178,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                 MESSAGE = {
                     FULL = '铠甲锃亮～我很健康小花喵',
                     HIGH = '鱼鳍划伤一丢丢，还好喵',
-                    MID = '需要珍珠粉，掉鳞片了喵',
+                    MID = '掉鳞片了，要好多珍珠粉补补喵',
                     LOW = '气泡快没了，疼得直哭喵',
                     EMPTY = '吐出最后的气泡……救命啊喵',
                 }
@@ -1185,10 +1227,9 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
                     TEXT = '潮湿度'
                 },
             },
-
             WILSON = {
                 MESSAGE = {
-                    FULL = '变成水煮猫猫了～水分饱和喵',
+                    FULL = '变成水煮小蘑菇了～水分饱和喵',
                     HIGH = '讨厌的水快点蒸发喵',
                     MID = '毛结成缕了，衣服全湿透了喵',
                     LOW = '胡须挂水珠，讨厌的 H2O 喵',
@@ -1288,7 +1329,7 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             WINONA = {
                 MESSAGE = {
                     FULL = '工具要生锈了！无法在湿度下工作喵',
-                    HIGH = '工作服全吸饱水了喵',
+                    HIGH = '工作服全吸满水了喵',
                     MID = '滑倒了，该放个防滑警示牌喵',
                     LOW = '干活时补充点水分挺好喵',
                     EMPTY = '干到起静电了，一点水都没有喵',
@@ -1305,17 +1346,17 @@ GLOBAL.STRINGS.CAT_NOMU_QA = {
             },
             WORMWOOD = {
                 MESSAGE = {
-                    FULL = '储水全满啦，真的好湿好湿喵',
+                    FULL = '储水装满满的，真的好湿好湿喵',
                     HIGH = '叶子淋浴，真的湿透了喵',
-                    MID = '夜露收集，身上有点湿漉漉喵',
+                    MID = '夜露收集工作中，身体有点湿湿的喵',
                     LOW = '掉水珠了！发芽了！哦吼喵',
                     EMPTY = '树皮干巴巴，感到很干燥喵',
                 }
             },
             WURT = {
                 MESSAGE = {
-                    FULL = '跳水上芭蕾，水花溅四处喵',
-                    HIGH = '泡澡舒服，小鳞片也很舒服喵',
+                    FULL = '跳欢快水上芭蕾，水花到处溅喵',
+                    HIGH = '泡在水里舒服，小鳞片也很舒服喵',
                     MID = '舒展鱼鳍，美人鱼最爱玩水，小花喵',
                     LOW = '再多沾点水就更好了，小花喵',
                     EMPTY = '尾巴要变鱼干了，太干燥了格鲁喵',
