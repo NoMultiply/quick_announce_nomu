@@ -383,69 +383,76 @@ function QA.HandleEnvironmentAndTime(HUD, status)
             local is_winterland = TheWorld.components.winterlands_manager
                 and TheWorld.components.winterlands_manager:IsWinterlandsAtPoint(px, py, pz)
 
-            local world_name = is_winterland and QA.GetMapping(qa_wtemp, "WORLD", "WINTERLAND")
-                or QA.GetMapping(qa_wtemp, "WORLD", GLOBAL.QA_UTILS.GetWorldType())
-            local is_bwb_cave = TheWorld:HasTag("cave")
+            local is_cave = TheWorld:HasTag("cave")
+            local is_bwb_cave = is_cave
                 and (raw_season == "TRANQUIL" or raw_season == "FROST" or raw_season == "VERDANT" or raw_season == "UMBRAL")
 
-            if is_bwb_cave then
-                local rain_status = ""
-                if TheWorld.state.pop ~= 1 then
-                    local _, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
-                    if rain then
-                        local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                        rain_status = GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "BWB_WORDS", "RAIN_APPROACH"), { DAYS = d, MINUTES = m, SECONDS = s })
-                    else
-                        rain_status = QA.GetMapping(qa_wtemp, "BWB_WORDS", "RAIN_NONE")
+            local is_acid_raining = TheWorld.state.isacidraining == true
+            local is_cave_acid_env = is_cave and (is_acid_raining or TheWorld.state.islunarportalactive == true)
+            local is_raining = (TheWorld.state.pop == 1) or (TheWorld.state.israining == true) or is_acid_raining
+
+            local function BuildWeatherBlock(weather_name, is_active, has_approach, total_seconds, stop_seconds)
+                if is_active then
+                    local block = GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "WORDS", "ACTIVE"), { WEATHER = weather_name })
+                    if stop_seconds then
+                        local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(stop_seconds)
+                        block = block .. GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "WORDS", "STOP_RAIN"), {
+                            DAYS = d, MINUTES = m, SECONDS = s
+                        })
                     end
-                else
-                    local _, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
+                    return block
+                elseif has_approach then
                     local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                    rain_status = GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "BWB_WORDS", "RAIN_STOP"), { DAYS = d, MINUTES = m, SECONDS = s })
-                end
-
-                local fog_status = ""
-                local is_fungusfog_active, fungusfog_cd = GLOBAL.QA_UTILS.PredictFungusFog()
-                if is_fungusfog_active then
-                    fog_status = QA.GetMapping(qa_wtemp, "BWB_WORDS", "FOG_ACTIVE")
-                elseif raw_season == "VERDANT" and fungusfog_cd > 0 then
-                    local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(fungusfog_cd)
-                    fog_status = GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "BWB_WORDS", "FOG_APPROACH"), { DAYS = d, MINUTES = m, SECONDS = s })
+                    return GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "WORDS", "APPROACH"), {
+                        WEATHER = weather_name, DAYS = d, MINUTES = m, SECONDS = s
+                    })
                 else
-                    fog_status = QA.GetMapping(qa_wtemp, "BWB_WORDS", "FOG_NONE")
+                    return GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "WORDS", "NONE"), {
+                        WEATHER = weather_name
+                    })
                 end
-
-                return QA.Announce(GLOBAL.subfmt(qa_wtemp.FORMATS.BWB_CAVE_WEATHER, {
-                    WORLD = world_name,
-                    TEMPERATURE = display_temp,
-                    FOG_STATUS = fog_status,
-                    RAIN_STATUS = rain_status
-                }), nil, nil, QA.GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", "BWB_CAVE_WEATHER"))
-            else
-                local fmts = {
-                    TEMPERATURE = display_temp,
-                    SEASON = SEASON,
-                    WEATHER = QA.GetMapping(qa_wtemp, "WEATHER", raw_season) or LOCAL_STRINGS.ABNORMAL_WEATHER,
-                    WORLD = world_name
-                }
-                local fmt_key = "NO_RAIN"
-
-                if TheWorld.state.pop ~= 1 then
-                    local world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
-                    fmts.WORLD = is_winterland and QA.GetMapping(qa_wtemp, "WORLD", "WINTERLAND") or QA.GetMapping(qa_wtemp, "WORLD", world)
-                    if rain then
-                        fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                        fmt_key = "START_RAIN"
-                    end
-                else
-                    local world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
-                    fmts.WORLD = is_winterland and QA.GetMapping(qa_wtemp, "WORLD", "WINTERLAND") or QA.GetMapping(qa_wtemp, "WORLD", world)
-                    fmts.DAYS, fmts.MINUTES, fmts.SECONDS = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
-                    fmt_key = "STOP_RAIN"
-                end
-
-                return QA.Announce(GLOBAL.subfmt(qa_wtemp.FORMATS[fmt_key], fmts), nil, nil, QA.GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", fmt_key))
             end
+
+            local world_key = GLOBAL.QA_UTILS.GetWorldType()
+            local weather_key = is_cave_acid_env and "ACID_RAIN" or raw_season
+            local weather_name = QA.GetMapping(qa_wtemp, "WEATHER", weather_key) or LOCAL_STRINGS.ABNORMAL_WEATHER
+            local weather_status = ""
+
+            if not is_raining then
+                local pred_world, total_seconds, rain = GLOBAL.QA_UTILS.PredictRainStart()
+                world_key = pred_world or world_key
+                weather_status = BuildWeatherBlock(weather_name, false, rain, total_seconds)
+            else
+                local pred_world, total_seconds = GLOBAL.QA_UTILS.PredictRainStop()
+                world_key = pred_world or world_key
+                if is_cave_acid_env then
+                    weather_status = BuildWeatherBlock(weather_name, true, false, nil, total_seconds)
+                else
+                    local d, m, s = GLOBAL.QA_UTILS.FormatSeconds(total_seconds)
+                    weather_status = GLOBAL.subfmt(QA.GetMapping(qa_wtemp, "WORDS", "STOP_RAIN"), {
+                        DAYS = d, MINUTES = m, SECONDS = s
+                    })
+                end
+            end
+
+            local world_name = is_winterland
+                and QA.GetMapping(qa_wtemp, "WORLD", "WINTERLAND")
+                or QA.GetMapping(qa_wtemp, "WORLD", world_key)
+
+            local fog_status = ""
+            if is_bwb_cave then
+                local fog_name = QA.GetMapping(qa_wtemp, "WEATHER", "SPORE_FOG")
+                local is_fungusfog_active, fungusfog_cd = GLOBAL.QA_UTILS.PredictFungusFog()
+                local fog_approaching = (raw_season == "VERDANT" and fungusfog_cd > 0)
+                fog_status = BuildWeatherBlock(fog_name, is_fungusfog_active, fog_approaching, fungusfog_cd)
+            end
+
+            return QA.Announce(GLOBAL.subfmt(qa_wtemp.FORMATS.DEFAULT, {
+                WORLD = world_name,
+                TEMPERATURE = display_temp,
+                WEATHER_STATUS = weather_status,
+                FOG_STATUS = fog_status,
+            }), nil, nil, QA.GetStatementLoc("WORLD_TEMPERATURE_AND_RAIN", "DEFAULT"))
         end
 
         if is_season_focus then
@@ -939,7 +946,6 @@ AddClassPostConstruct("screens/playerhud", function(self)
         return oldOnMouseButton(self, button, down, ...)
     end
 
-    -- 兼容依赖原版 Status Announcements 接口的第三方模组
     self._StatusAnnouncer = {
         stat_names = { IA_BOAT = "船" },
         char_messages = setmetatable({}, {
